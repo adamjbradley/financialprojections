@@ -1,30 +1,36 @@
-# Aadhaar Revenue Projections System - PRD
+# APAC Revenue Projections System - PRD
 
 ## 1. Executive Summary
 
 ### Product Vision
-Build a comprehensive financial modeling and analysis system to project revenue opportunities from India's Aadhaar authentication services following the January 2025 policy change allowing commercial entity access.
+Build a comprehensive financial modeling and analysis system to project revenue opportunities from digital authentication services across Asia-Pacific countries, with specialized focus on India's Aadhaar authentication services following the January 2025 policy change allowing commercial entity access. The system now includes standardized pension percentage tracking across all APAC countries for enhanced demographic analysis.
 
 ### Business Context
-- **Market Size**: 1.3+ billion Aadhaar enrollments, 221+ crore monthly transactions
+- **Market Size**: 1.3+ billion Aadhaar enrollments, 221+ crore monthly transactions (India), with additional coverage for Singapore, Australia
 - **Policy Change**: January 2025 amendment allows private sector authentication access
-- **Revenue Opportunity**: ₹4,000-15,000 crores annually from commercial fees
-- **Volume Growth**: 2-4x authentication volume expansion expected
+- **Revenue Opportunity**: ₹4,000-15,000 crores annually from commercial fees, plus pension authentication services
+- **Volume Growth**: 2-4x authentication volume expansion expected across APAC
+- **Pension Services**: New revenue stream from pension authentication across multiple countries
 
 ## 2. Product Objectives
 
 ### Primary Goals
-1. **Revenue Modeling**: Build comprehensive revenue projection models across sectors
-2. **Market Analysis**: Quantify market opportunities by sector and use case
+1. **Revenue Modeling**: Build comprehensive revenue projection models across sectors and countries
+2. **Market Analysis**: Quantify market opportunities by sector, use case, and country
 3. **Scenario Planning**: Model multiple growth scenarios with sensitivity analysis
 4. **Infrastructure Planning**: Project capacity needs and investment requirements
 5. **ROI Analysis**: Calculate government returns and break-even timelines
+6. **Pension Analytics**: Track and project pension authentication revenues across APAC countries
+7. **Demographic Insights**: Provide comprehensive demographic analysis with pension data
 
 ### Success Metrics
 - Accurate revenue projections with 90%+ confidence intervals
 - Sector-specific volume and pricing models
 - Infrastructure cost optimization recommendations
 - Actionable insights for policy and pricing decisions
+- Comprehensive pension percentage tracking across 3+ APAC countries
+- Integration of pension authentication revenue in all financial models
+- Real-time demographic insights with pension rate analysis
 
 ## 3. User Stories & Requirements
 
@@ -80,6 +86,18 @@ Build a comprehensive financial modeling and analysis system to project revenue 
 - Model policy change impacts and regulatory scenarios
 - Generate confidence intervals and risk assessments
 
+#### US5: Pension Analytics and Multi-Country Support
+**As a** policy analyst  
+**I want to** analyze pension authentication patterns across APAC countries  
+**So that** I can identify pension-specific revenue opportunities and compare demographic trends
+
+**Acceptance Criteria:**
+- Access standardized pension percentage data for India, Singapore, Australia
+- Generate pension-specific revenue projections separate from general authentication
+- Export pension data in Excel reports with country comparisons
+- View real-time pension rate insights in demographic dashboard
+- Compare pension coverage across different economic tiers and segments
+
 ## 4. Functional Requirements
 
 ### 4.1 Data Models
@@ -121,6 +139,37 @@ volume_projections = {
 }
 ```
 
+#### Demographic Data Model (APAC Countries)
+```python
+demographic_data = {
+    "country": {
+        "key": "singapore",
+        "name": "Singapore",
+        "currency": "SGD",
+        "exchangeRate": 1.35,
+        "population": 5.9
+    },
+    "demographicSegments": [
+        {
+            "name": "Central Region - Citizens",
+            "population": 2.8,
+            "authPct": 95,          # Authentication percentage
+            "pensionPct": 22,       # Pension recipient percentage
+            "authFreq": 2.5,
+            "digitalAdoption": 98,
+            "economicTier": "high",
+            "urbanization": 100,
+            "authGrowthRate": 8
+        }
+    ],
+    "summary": {
+        "averageAuthRate": 87.6,
+        "averagePensionRate": 16.9,  # New pension rate summary
+        "totalPopulation": 9.9
+    }
+}
+```
+
 ### 4.2 Calculation Engines
 
 #### Revenue Calculator
@@ -128,12 +177,22 @@ volume_projections = {
 - License fee revenue (₹5-20 lakhs per entity)
 - Tiered pricing models
 - Peak hour surcharges
+- Pension authentication revenue (separate calculations)
+- Multi-country revenue aggregation
 
 #### Market Sizing Calculator
 - TAM/SAM/SOM calculations
 - Penetration rate modeling
 - Competitive displacement analysis
 - Market growth projections
+- Pension market sizing by country
+
+#### Demographic Analytics Calculator
+- Authentication rate analysis by segment
+- Pension percentage tracking across countries
+- Economic tier correlation analysis
+- Digital adoption vs pension coverage analysis
+- Urbanization impact on pension authentication
 
 #### Infrastructure Cost Calculator
 - Server capacity scaling models
@@ -169,12 +228,16 @@ volume_projections = {
 - Market size data (IBEF, industry reports)
 - Pricing benchmarks (competitive analysis)
 - Infrastructure costs (cloud provider pricing)
+- **APAC Demographic Data**: Standardized JSON files with pension percentages
+- **Pension System Data**: Country-specific pension coverage statistics
+- **Economic Tier Data**: GDP per capita, formal sector employment rates
 
 ### 5.3 Output Formats
-- **Excel Models**: Comprehensive financial models with scenarios
-- **PDF Reports**: Executive summaries and detailed analysis
-- **Interactive Dashboards**: Web-based exploration tools
-- **JSON/CSV**: Data exports for further analysis
+- **Excel Models**: Comprehensive financial models with scenarios and pension data
+- **PDF Reports**: Executive summaries and detailed analysis with demographic insights
+- **Interactive Dashboards**: Web-based exploration tools with pension analytics
+- **JSON/CSV**: Data exports for further analysis including pension percentages
+- **Demographic Exports**: Country-specific demographic data with pension tracking
 
 ## 6. Non-Functional Requirements
 
@@ -268,12 +331,17 @@ volume_projections = {
 - **Performance**: Analysis completion within 30 seconds
 - **Coverage**: Models for 6+ major sectors (e-commerce, travel, healthcare, etc.)
 - **Scenarios**: Support for 5+ distinct scenario types
+- **Pension Data Coverage**: Comprehensive pension percentages for 3+ APAC countries
+- **Data Completeness**: 95%+ demographic segments include pension percentage data
+- **Export Integration**: 100% of Excel exports include pension data where applicable
 
 ### Qualitative Metrics
 - **Usability**: Non-technical users can generate projections without assistance
-- **Comprehensiveness**: Models address key stakeholder questions
-- **Actionability**: Outputs provide clear recommendations for decision-making
+- **Comprehensiveness**: Models address key stakeholder questions including pension analytics
+- **Actionability**: Outputs provide clear recommendations for decision-making with pension insights
 - **Maintainability**: Models can be updated with new data and assumptions
+- **Multi-Country Consistency**: Standardized data format across all APAC countries
+- **Pension Insights Quality**: Clear correlation analysis between pension rates and economic factors
 
 ## 10. Risk Considerations
 

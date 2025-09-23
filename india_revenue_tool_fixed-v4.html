@@ -1923,6 +1923,7 @@
                             <div>Total Population: <span id="totalPopulation">-</span>M</div>
                             <div>Available Segments: <span id="totalSegments">-</span></div>
                             <div>Average Auth Rate: <span id="avgAuthRate">-</span>%</div>
+                            <div>Average Pension Rate: <span id="avgPensionRate">-</span>%</div>
                         </div>
                     </div>
                     <div class="insight-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb;">
@@ -1993,6 +1994,7 @@
                                 <div>Total Segments: <span id="totalSegmentsOverview">-</span></div>
                                 <div>Combined Population: <span id="totalPopulationOverview">-</span>M</div>
                                 <div>Avg Auth Rate: <span id="avgAuthRateOverview">-</span>%</div>
+                                <div>Avg Pension Rate: <span id="avgPensionRateOverview">-</span>%</div>
                             </div>
                         </div>
                         <div class="overview-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
@@ -3137,6 +3139,7 @@
                         { id: 'totalSegmentsOverview', value: 'Loading...' },
                         { id: 'totalPopulationOverview', value: 'Loading...' },
                         { id: 'avgAuthRateOverview', value: 'Loading...' },
+                        { id: 'avgPensionRateOverview', value: 'Loading...' },
                         { id: 'avgDigitalAdoptionOverview', value: 'Loading...' }
                     ];
                     
@@ -3159,6 +3162,7 @@
             let totalPopulation = 0;
             let totalSegments = 0;
             let weightedAuthRate = 0;
+            let weightedPensionRate = 0;
             let weightedDigitalAdoption = 0;
             let countryCount = 0;
             
@@ -3173,6 +3177,7 @@
                 const countryPopulation = segments.reduce((sum, seg) => sum + (seg.population || 0), 0);
                 const countrySegmentCount = segments.length;
                 const countryAvgAuthRate = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / segments.length : 0;
+                const countryAvgPensionRate = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.pensionPct || 0), 0) / segments.length : 0;
                 const countryAvgDigitalAdoption = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / segments.length : 0;
                 const highEconomicSegments = segments.filter(seg => seg.economicTier === 'high').length;
                 const avgUrbanization = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / segments.length : 0;
@@ -3180,6 +3185,7 @@
                 totalPopulation += countryPopulation;
                 totalSegments += countrySegmentCount;
                 weightedAuthRate += countryAvgAuthRate * countryPopulation;
+                weightedPensionRate += countryAvgPensionRate * countryPopulation;
                 weightedDigitalAdoption += countryAvgDigitalAdoption * countryPopulation;
                 countryCount++;
                 
@@ -3197,6 +3203,7 @@
             
             // Update regional summary
             const finalWeightedAuthRate = totalPopulation > 0 ? weightedAuthRate / totalPopulation : 0;
+            const finalWeightedPensionRate = totalPopulation > 0 ? weightedPensionRate / totalPopulation : 0;
             const finalWeightedDigitalAdoption = totalPopulation > 0 ? weightedDigitalAdoption / totalPopulation : 0;
             
             // Update overview cards with correct element IDs
@@ -3204,12 +3211,14 @@
             const totalSegmentsEl = document.getElementById('totalSegmentsOverview');
             const totalPopulationEl = document.getElementById('totalPopulationOverview');
             const avgAuthRateEl = document.getElementById('avgAuthRateOverview');
+            const avgPensionRateEl = document.getElementById('avgPensionRateOverview');
             const avgDigitalAdoptionEl = document.getElementById('avgDigitalAdoptionOverview');
             
             if (totalCountriesEl) totalCountriesEl.textContent = countryCount;
             if (totalSegmentsEl) totalSegmentsEl.textContent = totalSegments;
             if (totalPopulationEl) totalPopulationEl.textContent = `${totalPopulation.toFixed(1)}`;
             if (avgAuthRateEl) avgAuthRateEl.textContent = `${finalWeightedAuthRate.toFixed(1)}`;
+            if (avgPensionRateEl) avgPensionRateEl.textContent = `${finalWeightedPensionRate.toFixed(1)}`;
             if (avgDigitalAdoptionEl) avgDigitalAdoptionEl.textContent = `${finalWeightedDigitalAdoption.toFixed(1)}`;
             
             // Render country summary table
@@ -5636,9 +5645,10 @@
                 summaryData.push(['SEGMENT DETAILS', '']);
                 window.segments.forEach(segment => {
                     const monthlyRevenue = segment.monthlyVolume * segment.pricePerTransaction;
+                    const pensionInfo = segment.pensionPct ? `, Pension: ${segment.pensionPct}%` : '';
                     summaryData.push([
                         segment.name,
-                        `Vol: ${(segment.monthlyVolume/1000000).toFixed(2)}M, Price: ₹${segment.pricePerTransaction}, Revenue: ₹${monthlyRevenue.toLocaleString('en-IN')}`
+                        `Vol: ${(segment.monthlyVolume/1000000).toFixed(2)}M, Price: ₹${segment.pricePerTransaction}${pensionInfo}, Revenue: ₹${monthlyRevenue.toLocaleString('en-IN')}`
                     ]);
                 });
             }
@@ -6447,8 +6457,9 @@
                     const economicTier = segment.economicTier || 'N/A';
                     const urbanization = segment.urbanization || 'N/A';
                     const authGrowthRate = segment.authGrowthRate || 'N/A';
+                    const pensionPct = segment.pensionPct || 'N/A';
                     
-                    notes = `Region: ${segment.name}, Pop: ${segment.population}M, Auth: ${segment.authPct}%, Digital: ${digitalAdoption}%, Economic: ${economicTier}, Urban: ${urbanization}%, Growth: ${authGrowthRate}%`;
+                    notes = `Region: ${segment.name}, Pop: ${segment.population}M, Auth: ${segment.authPct}%, Pension: ${pensionPct}%, Digital: ${digitalAdoption}%, Economic: ${economicTier}, Urban: ${urbanization}%, Growth: ${authGrowthRate}%`;
                 }
                 
                 // Monthly authentication volume = Population * Auth Rate * Monthly Auth Frequency
@@ -6486,6 +6497,7 @@
                     volumeGrowth: segmentGrowthRate,
                     category: 'biometric',
                     notes: notes,
+                    pensionPct: segment.pensionPct || null,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 });
@@ -6601,6 +6613,7 @@
                     volumeGrowth: 3, // Conservative 3% monthly growth
                     category: 'biometric',
                     notes: `State: ${state.name.split(' -')[0]}, Population: ${state.population}M, Pension Coverage: ${state.pensionPct}%`,
+                    pensionPct: state.pensionPct,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 });
@@ -7971,7 +7984,8 @@
             // Calculate insights
             const totalPopulation = demographicData.reduce((sum, seg) => sum + (seg.population || 0), 0);
             const totalSegments = demographicData.length;
-            const avgAuthRate = demographicData.reduce((sum, seg) => sum + (seg.authPct || seg.pensionPct || 0), 0) / totalSegments;
+            const avgAuthRate = demographicData.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / totalSegments;
+            const avgPensionRate = demographicData.reduce((sum, seg) => sum + (seg.pensionPct || 0), 0) / totalSegments;
             const avgDigitalAdoption = demographicData.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / totalSegments;
             const avgUrbanization = demographicData.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / totalSegments;
             const avgGrowthRate = demographicData.reduce((sum, seg) => sum + (seg.authGrowthRate || 3), 0) / totalSegments;
@@ -7990,9 +8004,10 @@
             // Calculate revenue opportunity (simplified)
             const revenueOpportunity = demographicData.reduce((sum, seg) => {
                 const population = seg.population || 0;
-                const authRate = (seg.authPct || seg.pensionPct || 0) / 100;
+                const authRate = (seg.authPct || 0) / 100;
+                const pensionRate = (seg.pensionPct || 0) / 100;
                 const authFreq = seg.authFreq || 1.0;
-                const monthlyVolume = population * 1000000 * authRate * authFreq;
+                const monthlyVolume = population * 1000000 * (authRate + pensionRate) * authFreq;
                 
                 let price = 0.12;
                 if (seg.economicTier === 'high') price = 0.18;
@@ -8006,6 +8021,7 @@
             document.getElementById('totalPopulation').textContent = totalPopulation.toFixed(1);
             document.getElementById('totalSegments').textContent = totalSegments;
             document.getElementById('avgAuthRate').textContent = avgAuthRate.toFixed(1);
+            document.getElementById('avgPensionRate').textContent = avgPensionRate.toFixed(1);
             document.getElementById('avgDigitalAdoption').textContent = avgDigitalAdoption.toFixed(1);
             document.getElementById('highDigitalSegments').textContent = highDigitalSegments;
             document.getElementById('avgUrbanization').textContent = avgUrbanization.toFixed(1);
