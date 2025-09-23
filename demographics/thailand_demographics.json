@@ -1,0 +1,169 @@
+{
+  "country": {
+    "key": "thailand",
+    "name": "Thailand",
+    "currency": "THB",
+    "currencySymbol": "฿",
+    "exchangeRate": 35.8,
+    "population": 70.0
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-20",
+    "description": "Comprehensive demographic data for Thailand including population, authentication rates, digital adoption, economic tiers, and growth projections.",
+    "dataSource": "Enhanced APAC Revenue Projections System",
+    "totalSegments": 14
+  },
+  "demographicSegments": [
+    {
+      "name": "Bangkok Metropolitan",
+      "population": 10.7,
+      "authPct": 75,
+      "authFreq": 2.2,
+      "digitalAdoption": 88,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Central Region",
+      "population": 18.5,
+      "authPct": 65,
+      "authFreq": 1.8,
+      "digitalAdoption": 72,
+      "economicTier": "medium",
+      "urbanization": 45,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Northern Region",
+      "population": 12.2,
+      "authPct": 55,
+      "authFreq": 1.5,
+      "digitalAdoption": 63,
+      "economicTier": "medium",
+      "urbanization": 35,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Northeastern Region",
+      "population": 21.3,
+      "authPct": 48,
+      "authFreq": 1.3,
+      "digitalAdoption": 54,
+      "economicTier": "low",
+      "urbanization": 28,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Southern Region",
+      "population": 9.0,
+      "authPct": 60,
+      "authFreq": 1.6,
+      "digitalAdoption": 67,
+      "economicTier": "medium",
+      "urbanization": 42,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Eastern Region",
+      "population": 4.8,
+      "authPct": 68,
+      "authFreq": 1.9,
+      "digitalAdoption": 75,
+      "economicTier": "medium",
+      "urbanization": 58,
+      "authGrowthRate": 9
+    },
+    {
+      "name": "Western Region",
+      "population": 3.1,
+      "authPct": 52,
+      "authFreq": 1.4,
+      "digitalAdoption": 58,
+      "economicTier": "low",
+      "urbanization": 32,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Urban Workers",
+      "population": 15.0,
+      "authPct": 80,
+      "authFreq": 2.5,
+      "digitalAdoption": 85,
+      "economicTier": "medium",
+      "urbanization": 100,
+      "authGrowthRate": 10
+    },
+    {
+      "name": "Rural Farmers",
+      "population": 25.0,
+      "authPct": 35,
+      "authFreq": 0.8,
+      "digitalAdoption": 42,
+      "economicTier": "low",
+      "urbanization": 0,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Tourism Industry",
+      "population": 2.5,
+      "authPct": 85,
+      "authFreq": 3.0,
+      "digitalAdoption": 92,
+      "economicTier": "medium",
+      "urbanization": 80,
+      "authGrowthRate": 15
+    },
+    {
+      "name": "Manufacturing Workers",
+      "population": 8.5,
+      "authPct": 72,
+      "authFreq": 2.0,
+      "digitalAdoption": 78,
+      "economicTier": "medium",
+      "urbanization": 65,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Government Employees",
+      "population": 3.2,
+      "authPct": 88,
+      "authFreq": 2.6,
+      "digitalAdoption": 89,
+      "economicTier": "medium",
+      "urbanization": 70,
+      "authGrowthRate": 9
+    },
+    {
+      "name": "Financial Services",
+      "population": 1.8,
+      "authPct": 92,
+      "authFreq": 3.2,
+      "digitalAdoption": 96,
+      "economicTier": "high",
+      "urbanization": 95,
+      "authGrowthRate": 14
+    },
+    {
+      "name": "E-commerce Users",
+      "population": 12.5,
+      "authPct": 78,
+      "authFreq": 2.4,
+      "digitalAdoption": 82,
+      "economicTier": "medium",
+      "urbanization": 75,
+      "authGrowthRate": 16
+    }
+  ],
+  "summary": {
+    "totalPopulation": 148.1,
+    "averageAuthRate": 68.1,
+    "averageDigitalAdoption": 74.4,
+    "highEconomicTierSegments": 2,
+    "mediumEconomicTierSegments": 9,
+    "lowEconomicTierSegments": 3,
+    "averageUrbanization": 58.9,
+    "averageGrowthRate": 9.1
+  }
+}

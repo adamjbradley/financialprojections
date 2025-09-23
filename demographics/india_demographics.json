@@ -1,0 +1,309 @@
+{
+  "country": {
+    "key": "india",
+    "name": "India",
+    "currency": "INR",
+    "currencySymbol": "₹",
+    "exchangeRate": 83.5,
+    "population": 1417.2
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-20",
+    "description": "Comprehensive demographic data for India including population, authentication rates, digital adoption, economic tiers, and growth projections.",
+    "dataSource": "Enhanced APAC Revenue Projections System",
+    "totalSegments": 28
+  },
+  "demographicSegments": [
+    {
+      "name": "Uttar Pradesh",
+      "population": 237.9,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 45,
+      "economicTier": "medium",
+      "urbanization": 22,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Maharashtra",
+      "population": 123.1,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 68,
+      "economicTier": "high",
+      "urbanization": 45,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Bihar",
+      "population": 124.8,
+      "authPct": 10,
+      "authFreq": 1.0,
+      "digitalAdoption": 35,
+      "economicTier": "low",
+      "urbanization": 11,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "West Bengal",
+      "population": 98.9,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 52,
+      "economicTier": "medium",
+      "urbanization": 32,
+      "authGrowthRate": 9
+    },
+    {
+      "name": "Madhya Pradesh",
+      "population": 85.0,
+      "authPct": 12,
+      "authFreq": 1.0,
+      "digitalAdoption": 42,
+      "economicTier": "medium",
+      "urbanization": 28,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Rajasthan",
+      "population": 79.5,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 48,
+      "economicTier": "medium",
+      "urbanization": 25,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Tamil Nadu",
+      "population": 77.8,
+      "authPct": 12,
+      "authFreq": 1.0,
+      "digitalAdoption": 72,
+      "economicTier": "high",
+      "urbanization": 48,
+      "authGrowthRate": 14
+    },
+    {
+      "name": "Karnataka",
+      "population": 67.7,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 75,
+      "economicTier": "high",
+      "urbanization": 39,
+      "authGrowthRate": 15
+    },
+    {
+      "name": "Gujarat",
+      "population": 63.9,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 65,
+      "economicTier": "high",
+      "urbanization": 43,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Andhra Pradesh",
+      "population": 54.0,
+      "authPct": 13,
+      "authFreq": 1.0,
+      "digitalAdoption": 58,
+      "economicTier": "medium",
+      "urbanization": 33,
+      "authGrowthRate": 10
+    },
+    {
+      "name": "Odisha",
+      "population": 46.4,
+      "authPct": 13,
+      "authFreq": 1.0,
+      "digitalAdoption": 38,
+      "economicTier": "low",
+      "urbanization": 17,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Kerala",
+      "population": 35.3,
+      "authPct": 14,
+      "authFreq": 1.0,
+      "digitalAdoption": 82,
+      "economicTier": "high",
+      "urbanization": 48,
+      "authGrowthRate": 16
+    },
+    {
+      "name": "Jharkhand",
+      "population": 38.6,
+      "authPct": 10,
+      "authFreq": 1.0,
+      "digitalAdoption": 32,
+      "economicTier": "low",
+      "urbanization": 24,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Assam",
+      "population": 35.6,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 41,
+      "economicTier": "low",
+      "urbanization": 14,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Punjab",
+      "population": 30.5,
+      "authPct": 12,
+      "authFreq": 1.0,
+      "digitalAdoption": 62,
+      "economicTier": "medium",
+      "urbanization": 37,
+      "authGrowthRate": 11
+    },
+    {
+      "name": "Chhattisgarh",
+      "population": 29.4,
+      "authPct": 10,
+      "authFreq": 1.0,
+      "digitalAdoption": 36,
+      "economicTier": "low",
+      "urbanization": 23,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Haryana",
+      "population": 28.2,
+      "authPct": 11,
+      "authFreq": 1.0,
+      "digitalAdoption": 67,
+      "economicTier": "high",
+      "urbanization": 35,
+      "authGrowthRate": 13
+    },
+    {
+      "name": "Telangana",
+      "population": 37.2,
+      "authPct": 8,
+      "authFreq": 1.0,
+      "digitalAdoption": 74,
+      "economicTier": "high",
+      "urbanization": 39,
+      "authGrowthRate": 18
+    },
+    {
+      "name": "Delhi NCT",
+      "population": 19.3,
+      "authPct": 10,
+      "authFreq": 1.0,
+      "digitalAdoption": 88,
+      "economicTier": "high",
+      "urbanization": 98,
+      "authGrowthRate": 20
+    },
+    {
+      "name": "Uttarakhand",
+      "population": 11.3,
+      "authPct": 9,
+      "authFreq": 1.0,
+      "digitalAdoption": 55,
+      "economicTier": "medium",
+      "urbanization": 31,
+      "authGrowthRate": 9
+    },
+    {
+      "name": "Himachal Pradesh",
+      "population": 7.3,
+      "authPct": 12,
+      "authFreq": 1.0,
+      "digitalAdoption": 58,
+      "economicTier": "medium",
+      "urbanization": 25,
+      "authGrowthRate": 10
+    },
+    {
+      "name": "Tripura",
+      "population": 4.2,
+      "authPct": 9,
+      "authFreq": 1.0,
+      "digitalAdoption": 44,
+      "economicTier": "low",
+      "urbanization": 26,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Meghalaya",
+      "population": 3.4,
+      "authPct": 8,
+      "authFreq": 1.0,
+      "digitalAdoption": 38,
+      "economicTier": "low",
+      "urbanization": 20,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Manipur",
+      "population": 3.2,
+      "authPct": 9,
+      "authFreq": 1.0,
+      "digitalAdoption": 42,
+      "economicTier": "low",
+      "urbanization": 28,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Nagaland",
+      "population": 2.2,
+      "authPct": 8,
+      "authFreq": 1.0,
+      "digitalAdoption": 41,
+      "economicTier": "low",
+      "urbanization": 29,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Goa",
+      "population": 1.6,
+      "authPct": 15,
+      "authFreq": 1.0,
+      "digitalAdoption": 78,
+      "economicTier": "high",
+      "urbanization": 62,
+      "authGrowthRate": 15
+    },
+    {
+      "name": "Arunachal Pradesh",
+      "population": 1.5,
+      "authPct": 7,
+      "authFreq": 1.0,
+      "digitalAdoption": 35,
+      "economicTier": "low",
+      "urbanization": 23,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Mizoram",
+      "population": 1.2,
+      "authPct": 9,
+      "authFreq": 1.0,
+      "digitalAdoption": 46,
+      "economicTier": "low",
+      "urbanization": 52,
+      "authGrowthRate": 8
+    }
+  ],
+  "summary": {
+    "totalPopulation": 1349.0,
+    "averageAuthRate": 10.6,
+    "averageDigitalAdoption": 54.2,
+    "highEconomicTierSegments": 9,
+    "mediumEconomicTierSegments": 8,
+    "lowEconomicTierSegments": 11,
+    "averageUrbanization": 34.2,
+    "averageGrowthRate": 9.9
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "country": {
+    "key": "australia",
+    "name": "Australia",
+    "currency": "AUD",
+    "currencySymbol": "A$",
+    "exchangeRate": 1.52,
+    "population": 26.0
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-20",
+    "description": "Comprehensive demographic data for Australia including population, authentication rates, digital adoption, economic tiers, and growth projections.",
+    "dataSource": "Enhanced APAC Revenue Projections System",
+    "totalSegments": 14
+  },
+  "demographicSegments": [
+    {
+      "name": "New South Wales",
+      "population": 8.2,
+      "authPct": 78,
+      "authFreq": 1.8,
+      "digitalAdoption": 84,
+      "economicTier": "high",
+      "urbanization": 74,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Victoria",
+      "population": 6.7,
+      "authPct": 80,
+      "authFreq": 1.9,
+      "digitalAdoption": 86,
+      "economicTier": "high",
+      "urbanization": 76,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Queensland",
+      "population": 5.2,
+      "authPct": 72,
+      "authFreq": 1.6,
+      "digitalAdoption": 79,
+      "economicTier": "medium",
+      "urbanization": 69,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Western Australia",
+      "population": 2.7,
+      "authPct": 75,
+      "authFreq": 1.7,
+      "digitalAdoption": 82,
+      "economicTier": "high",
+      "urbanization": 78,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "South Australia",
+      "population": 1.8,
+      "authPct": 77,
+      "authFreq": 1.8,
+      "digitalAdoption": 81,
+      "economicTier": "medium",
+      "urbanization": 72,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Tasmania",
+      "population": 0.54,
+      "authPct": 74,
+      "authFreq": 1.5,
+      "digitalAdoption": 76,
+      "economicTier": "medium",
+      "urbanization": 65,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Northern Territory",
+      "population": 0.25,
+      "authPct": 65,
+      "authFreq": 1.3,
+      "digitalAdoption": 68,
+      "economicTier": "medium",
+      "urbanization": 79,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "ACT",
+      "population": 0.43,
+      "authPct": 85,
+      "authFreq": 2.2,
+      "digitalAdoption": 92,
+      "economicTier": "high",
+      "urbanization": 88,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Indigenous Population",
+      "population": 0.8,
+      "authPct": 45,
+      "authFreq": 0.8,
+      "digitalAdoption": 52,
+      "economicTier": "low",
+      "urbanization": 35,
+      "authGrowthRate": 2
+    },
+    {
+      "name": "Temporary Residents",
+      "population": 2.2,
+      "authPct": 60,
+      "authFreq": 1.0,
+      "digitalAdoption": 68,
+      "economicTier": "medium",
+      "urbanization": 85,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Financial Services Workers",
+      "population": 1.2,
+      "authPct": 95,
+      "authFreq": 2.8,
+      "digitalAdoption": 97,
+      "economicTier": "high",
+      "urbanization": 95,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Government Employees",
+      "population": 2.1,
+      "authPct": 88,
+      "authFreq": 2.4,
+      "digitalAdoption": 89,
+      "economicTier": "high",
+      "urbanization": 78,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Healthcare Workers",
+      "population": 1.8,
+      "authPct": 82,
+      "authFreq": 2.1,
+      "digitalAdoption": 85,
+      "economicTier": "high",
+      "urbanization": 80,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Mining & Resources",
+      "population": 0.6,
+      "authPct": 76,
+      "authFreq": 1.9,
+      "digitalAdoption": 78,
+      "economicTier": "high",
+      "urbanization": 65,
+      "authGrowthRate": 5
+    }
+  ],
+  "summary": {
+    "totalPopulation": 34.5,
+    "averageAuthRate": 75.1,
+    "averageDigitalAdoption": 79.8,
+    "highEconomicTierSegments": 8,
+    "mediumEconomicTierSegments": 5,
+    "lowEconomicTierSegments": 1,
+    "averageUrbanization": 74.2,
+    "averageGrowthRate": 5.9
+  }
+}

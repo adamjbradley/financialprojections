@@ -1,0 +1,149 @@
+{
+  "country": {
+    "key": "singapore",
+    "name": "Singapore",
+    "currency": "SGD",
+    "currencySymbol": "S$",
+    "exchangeRate": 1.35,
+    "population": 5.9
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-20",
+    "description": "Comprehensive demographic data for Singapore including population, authentication rates, digital adoption, economic tiers, and growth projections.",
+    "dataSource": "Enhanced APAC Revenue Projections System",
+    "totalSegments": 12
+  },
+  "demographicSegments": [
+    {
+      "name": "Central Region - Citizens",
+      "population": 2.8,
+      "authPct": 95,
+      "authFreq": 2.5,
+      "digitalAdoption": 98,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "East Region - Citizens",
+      "population": 1.4,
+      "authPct": 92,
+      "authFreq": 2.2,
+      "digitalAdoption": 95,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "North Region - Citizens",
+      "population": 0.8,
+      "authPct": 90,
+      "authFreq": 2.0,
+      "digitalAdoption": 93,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Northeast Region - Citizens",
+      "population": 0.5,
+      "authPct": 88,
+      "authFreq": 1.8,
+      "digitalAdoption": 91,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "West Region - Citizens",
+      "population": 0.4,
+      "authPct": 93,
+      "authFreq": 2.3,
+      "digitalAdoption": 96,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Permanent Residents",
+      "population": 0.5,
+      "authPct": 85,
+      "authFreq": 1.5,
+      "digitalAdoption": 88,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Work Permit Holders",
+      "population": 1.0,
+      "authPct": 60,
+      "authFreq": 1.0,
+      "digitalAdoption": 65,
+      "economicTier": "medium",
+      "urbanization": 100,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Student Pass Holders",
+      "population": 0.2,
+      "authPct": 70,
+      "authFreq": 0.8,
+      "digitalAdoption": 85,
+      "economicTier": "medium",
+      "urbanization": 100,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Financial Services Sector",
+      "population": 0.8,
+      "authPct": 98,
+      "authFreq": 3.2,
+      "digitalAdoption": 99,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 15
+    },
+    {
+      "name": "Technology Sector",
+      "population": 0.6,
+      "authPct": 97,
+      "authFreq": 3.8,
+      "digitalAdoption": 99,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 18
+    },
+    {
+      "name": "Healthcare Workers",
+      "population": 0.4,
+      "authPct": 94,
+      "authFreq": 2.8,
+      "digitalAdoption": 96,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Retail & E-commerce",
+      "population": 0.5,
+      "authPct": 89,
+      "authFreq": 2.4,
+      "digitalAdoption": 92,
+      "economicTier": "medium",
+      "urbanization": 100,
+      "authGrowthRate": 14
+    }
+  ],
+  "summary": {
+    "totalPopulation": 9.9,
+    "averageAuthRate": 87.6,
+    "averageDigitalAdoption": 91.4,
+    "highEconomicTierSegments": 9,
+    "mediumEconomicTierSegments": 3,
+    "lowEconomicTierSegments": 0,
+    "averageUrbanization": 100.0,
+    "averageGrowthRate": 9.2
+  }
+}

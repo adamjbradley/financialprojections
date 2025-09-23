@@ -1,0 +1,232 @@
+{
+  "version": "1.0",
+  "exportDate": "2025-09-23T08:44:03.996Z",
+  "exportedBy": "India Revenue Projection Tool",
+  "totalModels": 1,
+  "models": [
+    {
+      "id": "default-pension-model-1758603671037",
+      "name": "Default Pension Authentication Model (All States)",
+      "description": "Comprehensive pension authentication model covering all Indian states with OTP SMS (55%), OTP SMS Pension Auth (15%), Fingerprint Biometric (20%), Iris Biometric (5%), and General authentication (5%) methods. Based on realistic market data and state-wise digital adoption rates.",
+      "tags": [
+        "default",
+        "pension",
+        "authentication",
+        "biometric",
+        "otp",
+        "all-states",
+        "realistic-market-share"
+      ],
+      "version": 1,
+      "baseModelId": null,
+      "parentVersionId": null,
+      "versionHistory": [],
+      "createdAt": "2025-09-23T05:01:11.037Z",
+      "updatedAt": "2025-09-23T05:01:11.038Z",
+      "data": {
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 4,
+          "projectionMonths": 12,
+          "costPercentage": 35,
+          "operatingExpenses": 8500000,
+          "seasonality": "none",
+          "usdRate": 83.5
+        },
+        "segments": [
+          {
+            "id": 1758603671024.5325,
+            "name": "UP - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 18048000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.927,
+            "name": "MH - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 13158000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.877,
+            "name": "Bihar - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 6300000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.8062,
+            "name": "WB - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 13608000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.3452,
+            "name": "MP - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 7344000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.0994,
+            "name": "TN - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 14774400,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.2283,
+            "name": "Karnataka - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 10309200,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.8281,
+            "name": "Gujarat - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 8232000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.4917,
+            "name": "AP - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 9345600,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.5415,
+            "name": "Rajasthan - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 7581600,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.4014,
+            "name": "Odisha - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 5233200,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.9478,
+            "name": "Kerala - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 6926400,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.6753,
+            "name": "Jharkhand - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 3182400,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.3813,
+            "name": "Assam - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 2505599.9999999995,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.4949,
+            "name": "Punjab - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 4416000,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.4834,
+            "name": "Chhattisgarh - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 2818800,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.0479,
+            "name": "Haryana - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 3549599.9999999995,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.741,
+            "name": "Telangana - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 6451200,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.746,
+            "name": "HP - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 883200,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.0803,
+            "name": "Uttarakhand - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 1252799.9999999998,
+            "volumeGrowth": 3
+          },
+          {
+            "id": 1758603671024.6748,
+            "name": "Delhi - Pension Auth",
+            "type": "sku",
+            "pricePerTransaction": 0.08,
+            "costPerTransaction": 0.05,
+            "monthlyVolume": 2990400,
+            "volumeGrowth": 3
+          }
+        ],
+        "currentView": "consolidated",
+        "currentSegmentType": "sku"
+      }
+    }
+  ]
+}

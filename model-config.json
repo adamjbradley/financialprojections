@@ -1,0 +1,829 @@
+{
+  "countries": {
+    "india": {
+      "name": "India",
+      "currency": "INR",
+      "currencySymbol": "₹",
+      "exchangeRate": 83.5,
+      "population": 1417.2,
+      "defaultModel": {
+        "name": "Default Pension Authentication Model (All States)",
+        "description": "Comprehensive pension authentication model covering all Indian states with realistic state-wise coverage and volume projections.",
+        "version": 1,
+        "tags": [
+          "default",
+          "pension",
+          "authentication",
+          "biometric",
+          "all-states"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 4,
+          "projectionMonths": 12,
+          "costPercentage": 35,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 15,
+          "seasonality": "none"
+        },
+        "segments": []
+      }
+    },
+    "singapore": {
+      "name": "Singapore",
+      "currency": "SGD",
+      "currencySymbol": "S$",
+      "exchangeRate": 1.35,
+      "population": 5.9,
+      "defaultModel": {
+        "name": "Default Singapore Authentication Model",
+        "description": "Digital authentication services model for Singapore's smart nation initiatives and financial hub status.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "smart-nation",
+          "fintech"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 6,
+          "projectionMonths": 12,
+          "costPercentage": 30,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 12,
+          "seasonality": "low"
+        },
+        "segments": []
+      }
+    },
+    "australia": {
+      "name": "Australia",
+      "currency": "AUD",
+      "currencySymbol": "A$",
+      "exchangeRate": 1.52,
+      "population": 26.0,
+      "defaultModel": {
+        "name": "Default Australia Authentication Model",
+        "description": "Digital authentication services model for Australian market with focus on government services and banking.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "government",
+          "banking"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 3.5,
+          "projectionMonths": 12,
+          "costPercentage": 38,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 16,
+          "seasonality": "low"
+        },
+        "segments": []
+      }
+    },
+    "japan": {
+      "name": "Japan",
+      "currency": "JPY",
+      "currencySymbol": "¥",
+      "exchangeRate": 149.0,
+      "population": 125.0,
+      "defaultModel": {
+        "name": "Default Japan Authentication Model",
+        "description": "Digital authentication services model for Japanese market emphasizing security and traditional integration.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "security",
+          "traditional-integration"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 2.5,
+          "projectionMonths": 12,
+          "costPercentage": 42,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 18,
+          "seasonality": "none"
+        },
+        "segments": []
+      }
+    },
+    "south_korea": {
+      "name": "South Korea",
+      "currency": "KRW",
+      "currencySymbol": "₩",
+      "exchangeRate": 1320.0,
+      "population": 51.8,
+      "defaultModel": {
+        "name": "Default South Korea Authentication Model",
+        "description": "Digital authentication services model for South Korean market with advanced mobile and fintech integration.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "mobile",
+          "fintech",
+          "advanced"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 4.5,
+          "projectionMonths": 12,
+          "costPercentage": 35,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 14,
+          "seasonality": "low"
+        },
+        "segments": []
+      }
+    },
+    "thailand": {
+      "name": "Thailand",
+      "currency": "THB",
+      "currencySymbol": "฿",
+      "exchangeRate": 35.8,
+      "population": 70.0,
+      "defaultModel": {
+        "name": "Default Thailand Authentication Model",
+        "description": "Digital authentication services model for Thai market focusing on digital transformation and tourism.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "digital-transformation",
+          "tourism"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 5.5,
+          "projectionMonths": 12,
+          "costPercentage": 33,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 15,
+          "seasonality": "moderate"
+        },
+        "segments": []
+      }
+    },
+    "indonesia": {
+      "name": "Indonesia",
+      "currency": "IDR",
+      "currencySymbol": "Rp",
+      "exchangeRate": 15750.0,
+      "population": 275.5,
+      "defaultModel": {
+        "name": "Default Indonesia Authentication Model",
+        "description": "Digital authentication services model for Indonesian market with focus on financial inclusion and e-commerce growth.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "financial-inclusion",
+          "e-commerce",
+          "archipelago"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 7.0,
+          "projectionMonths": 12,
+          "costPercentage": 32,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 14,
+          "seasonality": "moderate"
+        },
+        "segments": []
+      }
+    },
+    "philippines": {
+      "name": "Philippines",
+      "currency": "PHP",
+      "currencySymbol": "₱",
+      "exchangeRate": 56.2,
+      "population": 113.9,
+      "defaultModel": {
+        "name": "Default Philippines Authentication Model",
+        "description": "Digital authentication services model for Philippine market emphasizing remittances and mobile-first services.",
+        "version": 1,
+        "tags": [
+          "default",
+          "authentication",
+          "remittances",
+          "mobile-first",
+          "bpo"
+        ],
+        "baseParams": {
+          "startRevenue": 0,
+          "growthRate": 6.5,
+          "projectionMonths": 12,
+          "costPercentage": 30,
+          "operatingExpenses": 0,
+          "operatingExpenseType": "fixed",
+          "operatingExpensePercentage": 13,
+          "seasonality": "low"
+        },
+        "segments": []
+      }
+    }
+  },
+  "defaultCountry": "india",
+  "segmentLibraries": {
+    "india": [
+      {
+        "name": "Basic Authentication",
+        "category": "authentication",
+        "market": "General",
+        "price": 0.15,
+        "cost": 0.05,
+        "volume": 10000000,
+        "volumeGrowth": 8,
+        "description": "Basic Aadhaar authentication service for general verification"
+      },
+      {
+        "name": "eKYC Service",
+        "category": "kyc",
+        "market": "Financial Services",
+        "price": 2.5,
+        "cost": 0.75,
+        "volume": 5000000,
+        "volumeGrowth": 12,
+        "description": "Electronic KYC service for financial institutions"
+      },
+      {
+        "name": "Biometric Auth",
+        "category": "biometric",
+        "market": "Government",
+        "price": 0.25,
+        "cost": 0.08,
+        "volume": 25000000,
+        "volumeGrowth": 5,
+        "description": "Biometric authentication for government services"
+      },
+      {
+        "name": "Tokenization Service",
+        "category": "tokenization",
+        "market": "E-commerce",
+        "price": 1.0,
+        "cost": 0.3,
+        "volume": 8000000,
+        "volumeGrowth": 15,
+        "description": "Tokenization service for secure e-commerce transactions"
+      },
+      {
+        "name": "Face Authentication",
+        "category": "biometric",
+        "market": "Banking",
+        "price": 0.5,
+        "cost": 0.15,
+        "volume": 3000000,
+        "volumeGrowth": 20,
+        "description": "Face authentication for banking applications"
+      },
+      {
+        "name": "OTP Service",
+        "category": "authentication",
+        "market": "Telecom",
+        "price": 0.08,
+        "cost": 0.02,
+        "volume": 50000000,
+        "volumeGrowth": 6,
+        "description": "OTP-based authentication for telecom services"
+      },
+      {
+        "name": "Offline eKYC",
+        "category": "kyc",
+        "market": "Rural Banking",
+        "price": 3.0,
+        "cost": 1.0,
+        "volume": 2000000,
+        "volumeGrowth": 10,
+        "description": "Offline KYC for areas with limited connectivity"
+      },
+      {
+        "name": "Iris Scan Auth",
+        "category": "biometric",
+        "market": "High Security",
+        "price": 0.75,
+        "cost": 0.25,
+        "volume": 1000000,
+        "volumeGrowth": 8,
+        "description": "Iris scan authentication for high-security applications"
+      },
+      {
+        "name": "Demographic Auth",
+        "category": "authentication",
+        "market": "Social Services",
+        "price": 0.1,
+        "cost": 0.03,
+        "volume": 30000000,
+        "volumeGrowth": 7,
+        "description": "Demographic-based authentication for social services"
+      },
+      {
+        "name": "Virtual ID Service",
+        "category": "tokenization",
+        "market": "Privacy-focused",
+        "price": 0.35,
+        "cost": 0.1,
+        "volume": 5000000,
+        "volumeGrowth": 18,
+        "description": "Virtual ID service for privacy-conscious applications"
+      }
+    ],
+    "singapore": [
+      {
+        "name": "SingPass Authentication",
+        "category": "authentication",
+        "market": "Government",
+        "price": 1.2,
+        "cost": 0.35,
+        "volume": 8000000,
+        "volumeGrowth": 15,
+        "description": "National digital identity authentication via SingPass"
+      },
+      {
+        "name": "Digital Banking KYC",
+        "category": "kyc",
+        "market": "Financial Services",
+        "price": 3.5,
+        "cost": 1.0,
+        "volume": 2000000,
+        "volumeGrowth": 25,
+        "description": "Comprehensive KYC for digital banking services"
+      },
+      {
+        "name": "PayNow Verification",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 0.4,
+        "cost": 0.12,
+        "volume": 15000000,
+        "volumeGrowth": 20,
+        "description": "PayNow instant payment verification"
+      },
+      {
+        "name": "Smart Nation ID",
+        "category": "authentication",
+        "market": "Government",
+        "price": 0.8,
+        "cost": 0.25,
+        "volume": 5000000,
+        "volumeGrowth": 18,
+        "description": "Smart Nation digital identity verification"
+      }
+    ],
+    "australia": [
+      {
+        "name": "myGov ID Verification",
+        "category": "authentication",
+        "market": "Government",
+        "price": 2.0,
+        "cost": 0.6,
+        "volume": 12000000,
+        "volumeGrowth": 12,
+        "description": "Australian government digital identity verification"
+      },
+      {
+        "name": "ABN Verification",
+        "category": "authentication",
+        "market": "Business",
+        "price": 1.5,
+        "cost": 0.45,
+        "volume": 3000000,
+        "volumeGrowth": 10,
+        "description": "Australian Business Number verification"
+      },
+      {
+        "name": "Bank Account Verification",
+        "category": "kyc",
+        "market": "Financial Services",
+        "price": 1.8,
+        "cost": 0.55,
+        "volume": 8000000,
+        "volumeGrowth": 8,
+        "description": "Australian bank account verification"
+      },
+      {
+        "name": "Mobile Authentication",
+        "category": "authentication",
+        "market": "Telecom",
+        "price": 0.6,
+        "cost": 0.18,
+        "volume": 20000000,
+        "volumeGrowth": 15,
+        "description": "Mobile number verification for authentication"
+      }
+    ],
+    "japan": [
+      {
+        "name": "My Number Verification",
+        "category": "authentication",
+        "market": "Government",
+        "price": 180,
+        "cost": 55,
+        "volume": 15000000,
+        "volumeGrowth": 8,
+        "description": "Japanese social security number verification"
+      },
+      {
+        "name": "JCB Card Authentication",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 120,
+        "cost": 35,
+        "volume": 25000000,
+        "volumeGrowth": 5,
+        "description": "JCB credit card authentication service"
+      },
+      {
+        "name": "Digital Hanko",
+        "category": "authentication",
+        "market": "Business",
+        "price": 300,
+        "cost": 90,
+        "volume": 5000000,
+        "volumeGrowth": 12,
+        "description": "Digital seal (hanko) authentication for business"
+      },
+      {
+        "name": "LINE Pay Verification",
+        "category": "authentication",
+        "market": "E-commerce",
+        "price": 80,
+        "cost": 25,
+        "volume": 30000000,
+        "volumeGrowth": 15,
+        "description": "LINE Pay mobile payment authentication"
+      }
+    ],
+    "south_korea": [
+      {
+        "name": "Korean ID Verification",
+        "category": "authentication",
+        "market": "Government",
+        "price": 1500,
+        "cost": 450,
+        "volume": 20000000,
+        "volumeGrowth": 10,
+        "description": "Korean resident registration number verification"
+      },
+      {
+        "name": "KakaoPay Authentication",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 800,
+        "cost": 240,
+        "volume": 35000000,
+        "volumeGrowth": 18,
+        "description": "KakaoPay mobile payment authentication"
+      },
+      {
+        "name": "Samsung Pass",
+        "category": "biometric",
+        "market": "Technology",
+        "price": 1200,
+        "cost": 360,
+        "volume": 15000000,
+        "volumeGrowth": 22,
+        "description": "Samsung biometric authentication service"
+      },
+      {
+        "name": "Naver Certification",
+        "category": "authentication",
+        "market": "E-commerce",
+        "price": 600,
+        "cost": 180,
+        "volume": 25000000,
+        "volumeGrowth": 15,
+        "description": "Naver platform identity verification"
+      }
+    ],
+    "thailand": [
+      {
+        "name": "Thai ID Authentication",
+        "category": "authentication",
+        "market": "Government",
+        "price": 25,
+        "cost": 8,
+        "volume": 30000000,
+        "volumeGrowth": 15,
+        "description": "Thai national ID card verification"
+      },
+      {
+        "name": "PromptPay Verification",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 15,
+        "cost": 5,
+        "volume": 45000000,
+        "volumeGrowth": 25,
+        "description": "PromptPay instant payment verification"
+      },
+      {
+        "name": "Bangkok Bank eKYC",
+        "category": "kyc",
+        "market": "Financial Services",
+        "price": 80,
+        "cost": 25,
+        "volume": 8000000,
+        "volumeGrowth": 20,
+        "description": "Digital KYC for Thai banking services"
+      },
+      {
+        "name": "Tourism Visa Check",
+        "category": "authentication",
+        "market": "Tourism",
+        "price": 120,
+        "cost": 35,
+        "volume": 12000000,
+        "volumeGrowth": 30,
+        "description": "Tourist visa and passport verification"
+      }
+    ],
+    "indonesia": [
+      {
+        "name": "KTP Digital Verification",
+        "category": "authentication",
+        "market": "Government",
+        "price": 5000,
+        "cost": 1500,
+        "volume": 80000000,
+        "volumeGrowth": 18,
+        "description": "Indonesian national ID card (KTP) digital verification"
+      },
+      {
+        "name": "OVO Authentication",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 2500,
+        "cost": 750,
+        "volume": 120000000,
+        "volumeGrowth": 25,
+        "description": "OVO e-wallet authentication and verification"
+      },
+      {
+        "name": "GoPay Verification",
+        "category": "authentication",
+        "market": "E-commerce",
+        "price": 2000,
+        "cost": 600,
+        "volume": 150000000,
+        "volumeGrowth": 22,
+        "description": "GoPay mobile payment authentication"
+      },
+      {
+        "name": "Bank Indonesia eKYC",
+        "category": "kyc",
+        "market": "Financial Services",
+        "price": 15000,
+        "cost": 4500,
+        "volume": 25000000,
+        "volumeGrowth": 20,
+        "description": "Central bank compliant eKYC for financial institutions"
+      },
+      {
+        "name": "Telkomsel Mobile Auth",
+        "category": "authentication",
+        "market": "Telecom",
+        "price": 1500,
+        "cost": 450,
+        "volume": 180000000,
+        "volumeGrowth": 15,
+        "description": "Mobile number-based authentication via Telkomsel"
+      },
+      {
+        "name": "Tokopedia Merchant Verification",
+        "category": "kyc",
+        "market": "E-commerce",
+        "price": 8000,
+        "cost": 2400,
+        "volume": 12000000,
+        "volumeGrowth": 28,
+        "description": "E-commerce merchant identity verification"
+      }
+    ],
+    "philippines": [
+      {
+        "name": "PhilID Authentication",
+        "category": "authentication",
+        "market": "Government",
+        "price": 150,
+        "cost": 45,
+        "volume": 60000000,
+        "volumeGrowth": 25,
+        "description": "Philippine National ID (PhilID) verification system"
+      },
+      {
+        "name": "GCash Verification",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 80,
+        "cost": 25,
+        "volume": 100000000,
+        "volumeGrowth": 30,
+        "description": "GCash mobile wallet authentication service"
+      },
+      {
+        "name": "PayMaya Authentication",
+        "category": "authentication",
+        "market": "Financial Services",
+        "price": 75,
+        "cost": 22,
+        "volume": 80000000,
+        "volumeGrowth": 25,
+        "description": "PayMaya digital payment authentication"
+      },
+      {
+        "name": "Remittance Verification",
+        "category": "kyc",
+        "market": "Remittances",
+        "price": 300,
+        "cost": 90,
+        "volume": 35000000,
+        "volumeGrowth": 15,
+        "description": "International remittance sender/receiver verification"
+      },
+      {
+        "name": "BSP Banking eKYC",
+        "category": "kyc",
+        "market": "Financial Services",
+        "price": 450,
+        "cost": 135,
+        "volume": 20000000,
+        "volumeGrowth": 20,
+        "description": "Bangko Sentral compliant banking KYC verification"
+      },
+      {
+        "name": "Globe Mobile Authentication",
+        "category": "authentication",
+        "market": "Telecom",
+        "price": 40,
+        "cost": 12,
+        "volume": 90000000,
+        "volumeGrowth": 18,
+        "description": "Globe Telecom mobile number authentication"
+      },
+      {
+        "name": "BPO Employee Verification",
+        "category": "authentication",
+        "market": "Business Process",
+        "price": 200,
+        "cost": 60,
+        "volume": 15000000,
+        "volumeGrowth": 12,
+        "description": "Background verification for BPO industry workers"
+      }
+    ]
+  },
+  "regionalData": {
+    "_deprecated": "This data has been moved to external files. Use demographicDataConfig to load current data.",
+    "_migrationDate": "2025-01-20",
+    "_newLocation": "./demographics/",
+    "india": {
+      "demographicSegments": [
+        {
+          "name": "Sample - Uttar Pradesh",
+          "population": 237.9,
+          "authPct": 11,
+          "authFreq": 1.0,
+          "digitalAdoption": 45,
+          "economicTier": "medium",
+          "urbanization": 22,
+          "authGrowthRate": 8,
+          "_note": "This is sample data. Load full data from demographics/india_demographics.json"
+        }
+      ]
+    }
+  },
+  "scenarioDefinitions": [
+    {
+      "name": "Conservative",
+      "volumeGrowthMultiplier": 0.6,
+      "priceMultiplier": 0.95,
+      "costMultiplier": 1.1,
+      "operatingExpenseMultiplier": 1.15
+    },
+    {
+      "name": "Base Case",
+      "volumeGrowthMultiplier": 1.0,
+      "priceMultiplier": 1.0,
+      "costMultiplier": 1.0,
+      "operatingExpenseMultiplier": 1.0
+    },
+    {
+      "name": "Optimistic",
+      "volumeGrowthMultiplier": 1.5,
+      "priceMultiplier": 1.08,
+      "costMultiplier": 0.92,
+      "operatingExpenseMultiplier": 0.95
+    }
+  ],
+  "seasonalityFactors": {
+    "none": {
+      "multipliers": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ]
+    },
+    "low": {
+      "multipliers": [
+        0.95,
+        0.97,
+        1.02,
+        1.03,
+        1.0,
+        0.98,
+        0.96,
+        0.97,
+        1.01,
+        1.04,
+        1.03,
+        1.04
+      ]
+    },
+    "moderate": {
+      "multipliers": [
+        0.9,
+        0.94,
+        1.05,
+        1.08,
+        1.02,
+        0.96,
+        0.92,
+        0.95,
+        1.04,
+        1.08,
+        1.06,
+        1.1
+      ]
+    },
+    "high": {
+      "multipliers": [
+        0.85,
+        0.9,
+        1.1,
+        1.15,
+        1.05,
+        0.92,
+        0.88,
+        0.92,
+        1.08,
+        1.15,
+        1.1,
+        1.2
+      ]
+    }
+  },
+  "uiConfig": {
+    "colors": {
+      "primary": "#667eea",
+      "secondary": "#764ba2",
+      "success": "#22c55e",
+      "warning": "#f59e0b",
+      "danger": "#ef4444"
+    },
+    "chartOptions": {
+      "defaultMetric": "revenue",
+      "showDataLabels": false,
+      "animationDuration": 1000
+    }
+  },
+  "demographicDataConfig": {
+    "externalFiles": true,
+    "demographicsDirectory": "./demographics/",
+    "indexFile": "./demographics/index.json",
+    "availableCountries": [
+      "india",
+      "singapore",
+      "australia",
+      "japan",
+      "south_korea",
+      "thailand",
+      "indonesia",
+      "philippines"
+    ],
+    "filePattern": "{country}_demographics.json",
+    "lastMigrated": "2025-01-20"
+  }
+}
