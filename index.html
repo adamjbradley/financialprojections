@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Projection Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-container">
+            <h1 id="mainTitle">🌏 APAC Revenue Projection Tool</h1>
+            <div class="country-selector">
+                <label for="countrySelect">Country:</label>
+                <select id="countrySelect" onchange="changeCountry(this.value)">
+                    <option value="india">🇮🇳 India</option>
+                    <option value="singapore">🇸🇬 Singapore</option>
+                    <option value="australia">🇦🇺 Australia</option>
+                    <option value="japan">🇯🇵 Japan</option>
+                    <option value="south_korea">🇰🇷 South Korea</option>
+                    <option value="thailand">🇹🇭 Thailand</option>
+                    <option value="indonesia">🇮🇩 Indonesia</option>
+                    <option value="philippines">🇵🇭 Philippines</option>
+                </select>
+            </div>
+        </div>
+        <p class="subtitle">APAC Authentication Services Revenue Modeling with SKU-wise Market Intelligence (2024-25)</p>
+        <p style="text-align: center; color: #8b5cf6; font-size: 0.9em; margin-bottom: 20px; font-weight: 500;">
+            Version 2.2.0 - Enhanced CRUD Operations & Segment Management (Vite Development Version)
+        </p>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('setup')">📊 Setup & Segments</div>
+            <div class="tab" onclick="switchTab('projections')">📈 Projections</div>
+            <div class="tab" onclick="switchTab('analysis')">🔍 Analysis</div>
+            <div class="tab" onclick="switchTab('demographics')">🌏 Demographics</div>
+            <div class="tab" onclick="switchTab('models')">💾 Saved Models</div>
+        </div>
+
+        <!-- Setup Tab -->
+        <div class="tab-content active" id="setup">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="startRevenue">Base Monthly Revenue (₹)</label>
+                    <input type="number" id="startRevenue" value="0" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="yearsToProject">Years to Project</label>
+                    <input type="number" id="yearsToProject" value="5" min="1" max="20">
+                </div>
+
+                <div class="input-group">
+                    <label for="usdExchangeRate">USD Exchange Rate (₹)</label>
+                    <input type="number" id="usdExchangeRate" step="0.01" value="83.15" min="1">
+                </div>
+
+                <div class="input-group">
+                    <label for="inflationRate">Annual Inflation Rate (%)</label>
+                    <input type="number" id="inflationRate" step="0.1" value="4.5" min="0" max="20">
+                </div>
+
+                <div class="input-group">
+                    <label for="taxRate">Corporate Tax Rate (%)</label>
+                    <input type="number" id="taxRate" step="0.1" value="30" min="0" max="50">
+                </div>
+
+                <div class="input-group">
+                    <label for="companyName">Company/Region Name</label>
+                    <input type="text" id="companyName" value="UIDAI India" placeholder="Enter company name">
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="calculateProjections()">🚀 Calculate Projections</button>
+                    <button class="btn-secondary" onclick="resetAll()">🔄 Reset All</button>
+                </div>
+            </div>
+            
+            <div class="segments-section">
+                <div class="section-header">
+                    <h3>📦 Revenue Segments</h3>
+                    <div class="segment-controls">
+                        <button class="btn-primary" onclick="addSegment()">➕ Add Segment</button>
+                        <button class="btn-secondary" onclick="importSegments()">📂 Import</button>
+                        <button class="btn-secondary" onclick="exportSegments()">📤 Export</button>
+                        <button class="btn-secondary" onclick="loadPredefinedSegments()">📋 Load Templates</button>
+                    </div>
+                </div>
+                
+                <div id="segmentsList" class="segments-list">
+                    <!-- Segments will be dynamically populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Projections Tab -->
+        <div class="tab-content" id="projections">
+            <div class="projections-header">
+                <h3>📈 Financial Projections</h3>
+                <div class="projection-controls">
+                    <button class="btn-secondary" onclick="exportProjections('excel')">📊 Export Excel</button>
+                    <button class="btn-secondary" onclick="exportProjections('csv')">📄 Export CSV</button>
+                    <button class="btn-primary" onclick="runScenarios()">🎯 Run Scenarios</button>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+            
+            <div id="projectionsTable" class="projections-table">
+                <!-- Projections table will be populated here -->
+            </div>
+        </div>
+
+        <!-- Analysis Tab -->
+        <div class="tab-content" id="analysis">
+            <div class="analysis-section">
+                <h3>🔍 Financial Analysis</h3>
+                
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>💰 Total Revenue (5yr)</h4>
+                        <div class="metric-value" id="totalRevenue5yr">₹0</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>📊 Average Profit Margin</h4>
+                        <div class="metric-value" id="avgProfitMargin">0%</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>📈 CAGR</h4>
+                        <div class="metric-value" id="cagr">0%</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <h4>💼 Break-even Month</h4>
+                        <div class="metric-value" id="breakEvenMonth">N/A</div>
+                    </div>
+                </div>
+
+                <div class="scenario-analysis">
+                    <h4>📊 Scenario Analysis</h4>
+                    <div id="scenarioResults" class="scenario-grid">
+                        <!-- Scenario results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demographics Tab -->
+        <div class="tab-content" id="demographics">
+            <div class="demographics-section">
+                <h3>🌏 APAC Demographics & Market Data</h3>
+                
+                <div class="demographics-controls">
+                    <button class="btn-primary" onclick="loadCountryDetails()">🔄 Refresh Data</button>
+                    <button class="btn-secondary" onclick="exportDemographicData()">📤 Export Demographics</button>
+                    <button class="btn-secondary" onclick="loadPensionModel()">👥 Load Pension Model</button>
+                </div>
+                
+                <div id="demographicsOverview" class="demographics-overview">
+                    <!-- Demographics overview will be populated here -->
+                </div>
+                
+                <div id="demographicsTable" class="demographics-table">
+                    <!-- Demographics table will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved Models Tab -->
+        <div class="tab-content" id="models">
+            <div class="models-section">
+                <h3>💾 Saved Revenue Models</h3>
+                
+                <div class="models-controls">
+                    <div class="input-group">
+                        <input type="text" id="modelName" placeholder="Enter model name" style="width: 200px;">
+                        <button class="btn-primary" onclick="saveCurrentModel()">💾 Save Current Model</button>
+                    </div>
+                    <button class="btn-secondary" onclick="exportAllModels()">📤 Export All Models</button>
+                    <button class="btn-secondary" onclick="importModels()">📂 Import Models</button>
+                </div>
+                
+                <div id="savedModelsList" class="saved-models-list">
+                    <!-- Saved models will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for segment editing -->
+    <div id="segmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Segment</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="segmentName">Segment Name</label>
+                    <input type="text" id="segmentName" placeholder="E.g., E-commerce Authentication">
+                </div>
+                
+                <div class="input-group">
+                    <label for="segmentType">Type</label>
+                    <select id="segmentType">
+                        <option value="sku">SKU</option>
+                        <option value="service">Service</option>
+                        <option value="subscription">Subscription</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="pricePerTransaction">Price per Transaction (₹)</label>
+                    <input type="number" id="pricePerTransaction" step="0.01" value="1.50">
+                </div>
+                
+                <div class="input-group">
+                    <label for="costPerTransaction">Cost per Transaction (₹)</label>
+                    <input type="number" id="costPerTransaction" step="0.01" value="0.30">
+                </div>
+                
+                <div class="input-group">
+                    <label for="monthlyVolume">Monthly Volume</label>
+                    <input type="number" id="monthlyVolume" value="1000000">
+                </div>
+                
+                <div class="input-group">
+                    <label for="volumeGrowth">Volume Growth Rate (% per year)</label>
+                    <input type="number" id="volumeGrowth" step="0.1" value="15">
+                </div>
+                
+                <div class="input-group">
+                    <label for="category">Category</label>
+                    <select id="category">
+                        <option value="authentication">Authentication</option>
+                        <option value="verification">Verification</option>
+                        <option value="ekyc">eKYC</option>
+                        <option value="fraud-prevention">Fraud Prevention</option>
+                        <option value="compliance">Compliance</option>
+                        <option value="pension">Pension Services</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label for="pensionPct">Pension Percentage (%)</label>
+                    <input type="number" id="pensionPct" step="0.1" value="12.5" min="0" max="100">
+                    <small>Percentage of transactions related to pension/senior services</small>
+                </div>
+                
+                <div class="input-group">
+                    <label for="segmentNotes">Notes</label>
+                    <textarea id="segmentNotes" placeholder="Additional notes about this segment..."></textarea>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveSegment()">Save Segment</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notifications container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Load all modular JavaScript files as ES modules -->
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>

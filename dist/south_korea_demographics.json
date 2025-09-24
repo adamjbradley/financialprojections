@@ -1,0 +1,209 @@
+{
+  "country": {
+    "key": "south_korea",
+    "name": "South Korea",
+    "currency": "KRW",
+    "currencySymbol": "₩",
+    "exchangeRate": 1320.0,
+    "population": 51.8
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-20",
+    "description": "Comprehensive demographic data for South Korea including population, authentication rates, digital adoption, economic tiers, and growth projections.",
+    "dataSource": "Enhanced APAC Revenue Projections System",
+    "totalSegments": 18
+  },
+  "demographicSegments": [
+    {
+      "name": "Seoul Metropolitan",
+      "population": 9.7,
+      "authPct": 92,
+      "authFreq": 3.5,
+      "digitalAdoption": 96,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Busan Metropolitan",
+      "population": 3.4,
+      "authPct": 88,
+      "authFreq": 3.0,
+      "digitalAdoption": 92,
+      "economicTier": "high",
+      "urbanization": 95,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Incheon Metropolitan",
+      "population": 3.0,
+      "authPct": 90,
+      "authFreq": 3.2,
+      "digitalAdoption": 94,
+      "economicTier": "high",
+      "urbanization": 98,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Daegu Metropolitan",
+      "population": 2.4,
+      "authPct": 85,
+      "authFreq": 2.8,
+      "digitalAdoption": 89,
+      "economicTier": "medium",
+      "urbanization": 92,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Daejeon Metropolitan",
+      "population": 1.5,
+      "authPct": 87,
+      "authFreq": 3.0,
+      "digitalAdoption": 91,
+      "economicTier": "high",
+      "urbanization": 95,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Gwangju Metropolitan",
+      "population": 1.5,
+      "authPct": 84,
+      "authFreq": 2.7,
+      "digitalAdoption": 88,
+      "economicTier": "medium",
+      "urbanization": 88,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Gyeonggi Province",
+      "population": 13.4,
+      "authPct": 91,
+      "authFreq": 3.4,
+      "digitalAdoption": 95,
+      "economicTier": "high",
+      "urbanization": 82,
+      "authGrowthRate": 7
+    },
+    {
+      "name": "Gangwon Province",
+      "population": 1.5,
+      "authPct": 75,
+      "authFreq": 2.2,
+      "digitalAdoption": 78,
+      "economicTier": "medium",
+      "urbanization": 58,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "North Chungcheong",
+      "population": 1.6,
+      "authPct": 79,
+      "authFreq": 2.4,
+      "digitalAdoption": 82,
+      "economicTier": "medium",
+      "urbanization": 62,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "South Chungcheong",
+      "population": 2.1,
+      "authPct": 81,
+      "authFreq": 2.5,
+      "digitalAdoption": 84,
+      "economicTier": "medium",
+      "urbanization": 68,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "North Gyeongsang",
+      "population": 2.7,
+      "authPct": 76,
+      "authFreq": 2.3,
+      "digitalAdoption": 79,
+      "economicTier": "medium",
+      "urbanization": 65,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "South Gyeongsang",
+      "population": 3.4,
+      "authPct": 78,
+      "authFreq": 2.4,
+      "digitalAdoption": 81,
+      "economicTier": "medium",
+      "urbanization": 72,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "North Jeolla",
+      "population": 1.8,
+      "authPct": 74,
+      "authFreq": 2.1,
+      "digitalAdoption": 77,
+      "economicTier": "medium",
+      "urbanization": 60,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "South Jeolla",
+      "population": 1.9,
+      "authPct": 75,
+      "authFreq": 2.2,
+      "digitalAdoption": 78,
+      "economicTier": "medium",
+      "urbanization": 58,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Jeju Province",
+      "population": 0.7,
+      "authPct": 82,
+      "authFreq": 2.6,
+      "digitalAdoption": 85,
+      "economicTier": "medium",
+      "urbanization": 70,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Foreign Residents",
+      "population": 2.5,
+      "authPct": 65,
+      "authFreq": 1.8,
+      "digitalAdoption": 72,
+      "economicTier": "medium",
+      "urbanization": 85,
+      "authGrowthRate": 2
+    },
+    {
+      "name": "Tech Industry Workers",
+      "population": 2.8,
+      "authPct": 98,
+      "authFreq": 4.2,
+      "digitalAdoption": 99,
+      "economicTier": "high",
+      "urbanization": 95,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Chaebol Employees",
+      "population": 4.5,
+      "authPct": 95,
+      "authFreq": 3.8,
+      "digitalAdoption": 97,
+      "economicTier": "high",
+      "urbanization": 90,
+      "authGrowthRate": 9
+    }
+  ],
+  "summary": {
+    "totalPopulation": 60.4,
+    "averageAuthRate": 83.1,
+    "averageDigitalAdoption": 86.5,
+    "highEconomicTierSegments": 7,
+    "mediumEconomicTierSegments": 11,
+    "lowEconomicTierSegments": 0,
+    "averageUrbanization": 79.6,
+    "averageGrowthRate": 5.3
+  }
+}

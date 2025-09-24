@@ -1,0 +1,4310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revenue Projection Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-container">
+            <h1 id="mainTitle">🌏 APAC Revenue Projection Tool</h1>
+            <div class="country-selector">
+                <label for="countrySelect">Country:</label>
+                <select id="countrySelect" onchange="changeCountry(this.value)">
+                    <option value="india">🇮🇳 India</option>
+                    <option value="singapore">🇸🇬 Singapore</option>
+                    <option value="australia">🇦🇺 Australia</option>
+                    <option value="japan">🇯🇵 Japan</option>
+                    <option value="south_korea">🇰🇷 South Korea</option>
+                    <option value="thailand">🇹🇭 Thailand</option>
+                    <option value="indonesia">🇮🇩 Indonesia</option>
+                    <option value="philippines">🇵🇭 Philippines</option>
+                </select>
+            </div>
+        </div>
+        <p class="subtitle">APAC Authentication Services Revenue Modeling with SKU-wise Market Intelligence (2024-25)</p>
+        <p style="text-align: center; color: #8b5cf6; font-size: 0.9em; margin-bottom: 20px; font-weight: 500;">
+            Version 2.2.0 - Enhanced CRUD Operations & Segment Management (Single-Page Build 2025-09-24)</p>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('setup')">📊 Setup & Segments</div>
+            <div class="tab" onclick="switchTab('projections')">📈 Projections</div>
+            <div class="tab" onclick="switchTab('analysis')">🔍 Analysis</div>
+            <div class="tab" onclick="switchTab('demographics')">🌏 Demographics</div>
+            <div class="tab" onclick="switchTab('models')">💾 Saved Models</div>
+        </div>
+
+        <!-- Setup Tab -->
+        <div class="tab-content active" id="setup">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="startRevenue">Base Monthly Revenue (₹)</label>
+                    <input type="number" id="startRevenue" value="0" min="0">
+                </div>
+                
+                <div class="input-group">
+                    <label for="projectionMonths">Projection Period (Months)</label>
+                    <input type="number" id="projectionMonths" value="12" min="1" max="120">
+                </div>
+
+                <div class="input-group">
+                    <label for="usdRate">USD Exchange Rate</label>
+                    <input type="number" id="usdRate" value="83.50" step="0.01" min="1">
+                </div>
+
+                <div class="input-group">
+                    <label for="seasonality">Seasonality Pattern</label>
+                    <select id="seasonality">
+                        <option value="none">No Seasonality</option>
+                        <option value="festival">Festival Season (Oct-Dec Peak)</option>
+                        <option value="summer">Summer Peak (Jun-Aug)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="operatingExpenseType">Operating Expenses</label>
+                    <select id="operatingExpenseType" onchange="toggleOperatingExpenseInputs()">
+                        <option value="fixed">Fixed Monthly Amount</option>
+                        <option value="percentage">Percentage of Revenue</option>
+                        <option value="hybrid">Both Fixed + Percentage</option>
+                    </select>
+                </div>
+
+                <div class="input-group" id="fixedExpenseGroup" style="display: block;">
+                    <label for="operatingExpenses">Fixed Operating Expenses (₹/month)</label>
+                    <input type="number" id="operatingExpenses" value="0" min="0">
+                </div>
+
+                <div class="input-group" id="percentageExpenseGroup" style="display: none;">
+                    <label for="operatingExpensePercentage">Operating Expense Percentage (%)</label>
+                    <input type="number" id="operatingExpensePercentage" value="0" min="0" max="100" step="0.1">
+                </div>
+            </div>
+
+            <!-- SKU Management Section -->
+            <div class="sku-management-section">
+                <h2>📦 SKU Management</h2>
+                
+                <!-- SKU Controls -->
+                <div class="sku-controls">
+                    <div class="sku-filters">
+                        <input type="text" id="segmentSearchFilter" placeholder="🔍 Search segments..." class="search-input">
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="all">All Categories</option>
+                            <option value="authentication">Authentication</option>
+                            <option value="biometric">Biometric</option>
+                            <option value="kyc">KYC</option>
+                            <option value="tokenization">Tokenization</option>
+                        </select>
+                        <button class="btn-secondary" onclick="clearFilters()">Clear Filters</button>
+                    </div>
+                    
+                    <div class="sku-actions">
+                        <button class="btn-primary" onclick="loadPensionModel()">📊 Load Demographic Data</button>
+                        <button class="btn-secondary" onclick="addTestSegment()">🧪 Add Test SKU</button>
+                        <span class="segment-count">SKUs: <span id="segmentCount">0</span></span>
+                    </div>
+                </div>
+
+                <!-- Add New SKU Form -->
+                <div class="add-sku-form">
+                    <h3>➕ Add New SKU</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="segmentName">SKU Name *</label>
+                            <input type="text" id="segmentName" placeholder="e.g., OTP Authentication - Banking">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="segmentCategory">Category</label>
+                            <select id="segmentCategory">
+                                <option value="authentication">Authentication</option>
+                                <option value="biometric">Biometric</option>
+                                <option value="kyc">KYC</option>
+                                <option value="tokenization">Tokenization</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pricePerTransaction">Price per Transaction (₹) *</label>
+                            <input type="number" id="pricePerTransaction" step="0.01" min="0" placeholder="e.g., 2.50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="costPerTransaction">Cost per Transaction (₹) *</label>
+                            <input type="number" id="costPerTransaction" step="0.01" min="0" placeholder="e.g., 1.50">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="monthlyVolume">Monthly Volume *</label>
+                            <input type="number" id="monthlyVolume" min="0" placeholder="e.g., 1000000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="volumeGrowth">Annual Volume Growth (%)</label>
+                            <input type="number" id="volumeGrowth" value="5" step="0.1" placeholder="e.g., 5">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="segmentNotes">Notes (Optional)</label>
+                        <textarea id="segmentNotes" placeholder="Additional notes about this SKU..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn-primary" onclick="addOrUpdateSegment()">Add SKU</button>
+                        <button class="btn-secondary" onclick="clearSegmentForm()">Clear Form</button>
+                    </div>
+                    
+                    <!-- Profitability Check -->
+                    <div id="profitabilityCheck" class="profitability-check"></div>
+                </div>
+
+                <!-- SKUs List -->
+                <div class="segments-list-container">
+                    <h3>📋 Current SKUs</h3>
+                    <div id="segmentsList" class="segments-list">
+                        <!-- SKUs will be dynamically rendered here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="buttons">
+                <button class="btn-primary" onclick="calculateProjections()">Calculate Projections</button>
+                <button class="btn-warning" onclick="loadPensionModel()">📊 Load Demographic Data</button>
+                <button class="btn-warning" onclick="runScenarios()">Run Scenarios</button>
+                <button class="btn-success" onclick="showSaveModelDialog()">💾 Save Current Model</button>
+                <button class="btn-primary" onclick="loadExternalModelConfig()">📁 Load External Config</button>
+                <input type="file" id="modelConfigFile" accept=".json" style="display: none;" onchange="handleModelConfigFile(event)">
+            </div>
+        </div>
+        
+        <!-- Projections Tab -->
+        <div class="tab-content" id="projections">
+            <div class="results-section" id="results" style="display: none;">
+                <div class="summary-cards" id="summaryCards"></div>
+                <div class="segment-breakdown" id="segmentBreakdown" style="display: none;"></div>
+                <div class="chart-container">
+                    <div class="chart-controls">
+                        <div class="chart-control">
+                            <label for="chartMetric">Metric:</label>
+                            <select id="chartMetric" onchange="updateChart()">
+                                <option value="revenue">Revenue</option>
+                                <option value="profit">Net Profit</option>
+                                <option value="margin">Profit Margin</option>
+                                <option value="volume">Transaction Volume</option>
+                            </select>
+                        </div>
+                        <div class="chart-control">
+                            <label for="chartView">View:</label>
+                            <select id="chartView" onchange="updateChart()">
+                                <option value="total">Total</option>
+                                <option value="segments">By Segment</option>
+                            </select>
+                        </div>
+                        <div class="chart-control">
+                            <label for="chartPeriod">Period:</label>
+                            <select id="chartPeriod" onchange="updateChart()">
+                                <option value="1M">1 Month (Daily)</option>
+                                <option value="1Y" selected>1 Year</option>
+                                <option value="2Y">2 Years</option>
+                                <option value="5Y">5 Years</option>
+                                <option value="10Y">10 Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="table-controls" id="tableControls" style="display: none; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="monthlyBreakdown" onchange="toggleMonthlyBreakdown()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span>Show Monthly Breakdown</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary btn-small" onclick="exportTableData('csv')">📄 Export CSV</button>
+                            <button class="btn-secondary btn-small" onclick="exportTableData('excel')">📊 Export Excel</button>
+                        </div>
+                    </div>
+                </div>
+                <table id="projectionTable"></table>
+            </div>
+        </div>
+        
+        <!-- Analysis Tab -->
+        <div class="tab-content" id="analysis">
+            <!-- Demographic Insights Section -->
+            <div class="demographic-insights" id="demographicInsights" style="margin-bottom: 25px;">
+                <h2>📊 Demographic Insights</h2>
+                <div class="insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div class="insight-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb;">
+                        <h4 style="margin: 0 0 10px 0; color: #374151;">Current Country Overview</h4>
+                        <div id="countryOverview">
+                            <div>Total Population: <span id="totalPopulation">-</span>M</div>
+                            <div>Available Segments: <span id="totalSegments">-</span></div>
+                            <div>Average Auth Rate: <span id="avgAuthRate">-</span>%</div>
+                            <div>Average Pension Rate: <span id="avgPensionRate">-</span>%</div>
+                        </div>
+                    </div>
+                    <div class="insight-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb;">
+                        <h4 style="margin: 0 0 10px 0; color: #374151;">Digital Readiness</h4>
+                        <div id="digitalReadiness">
+                            <div>Avg Digital Adoption: <span id="avgDigitalAdoption">-</span>%</div>
+                            <div>High Digital Segments: <span id="highDigitalSegments">-</span></div>
+                            <div>Urbanization Level: <span id="avgUrbanization">-</span>%</div>
+                        </div>
+                    </div>
+                    <div class="insight-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb;">
+                        <h4 style="margin: 0 0 10px 0; color: #374151;">Economic Profile</h4>
+                        <div id="economicProfile">
+                            <div>High Economic Tier: <span id="highEconomicSegments">-</span></div>
+                            <div>Medium Economic Tier: <span id="mediumEconomicSegments">-</span></div>
+                            <div>Low Economic Tier: <span id="lowEconomicSegments">-</span></div>
+                        </div>
+                    </div>
+                    <div class="insight-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; background: #f9fafb;">
+                        <h4 style="margin: 0 0 10px 0; color: #374151;">Growth Potential</h4>
+                        <div id="growthPotential">
+                            <div>Avg Growth Rate: <span id="avgGrowthRate">-</span>%</div>
+                            <div>Fast Growing Segments: <span id="fastGrowingSegments">-</span></div>
+                            <div>Revenue Potential: <span id="revenueOpportunity">-</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="demographic-controls">
+                    <button class="btn-info" onclick="refreshDemographicInsights()" style="margin-right: 10px;">🔄 Refresh Insights</button>
+                    <button class="btn-secondary" onclick="showDemographicDetails()">📈 View Details</button>
+                </div>
+            </div>
+            
+            <div class="scenario-section" id="scenarioSection" style="display: none;">
+                <h2>Scenario Analysis</h2>
+                <div class="scenario-results" id="scenarioResults"></div>
+            </div>
+            <div class="buttons">
+                <button class="btn-success" onclick="exportToExcel()">Export to Excel</button>
+            </div>
+        </div>
+        
+        <!-- Demographics Tab -->
+        <div class="tab-content" id="demographics">
+            <div class="demographics-header">
+                <h2>🌏 APAC Demographics Intelligence</h2>
+                <p style="color: #666; margin-bottom: 25px;">Explore comprehensive demographic data across all APAC countries with advanced comparison and analysis tools.</p>
+                
+                <!-- Demographics Navigation -->
+                <div class="demo-nav">
+                    <button class="demo-nav-btn active" data-section="overview" onclick="showDemographicOverview()">📊 Overview</button>
+                    <button class="demo-nav-btn" data-section="explorer" onclick="showCountryExplorer()">🔍 Country Explorer</button>
+                    <button class="demo-nav-btn" data-section="comparison" onclick="showCountryComparison()">⚖️ Compare Countries</button>
+                    <button class="demo-nav-btn" data-section="analysis" onclick="showSegmentAnalysis()">📈 Segment Analysis</button>
+                </div>
+            </div>
+
+            <!-- Overview Section -->
+            <div id="demographicOverviewSection" style="display: block;">
+                <div class="overview-cards">
+                    <div class="overview-card">
+                        <h3>Total Countries</h3>
+                        <div class="overview-value" id="totalCountriesOverview">-</div>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Total Segments</h3>
+                        <div class="overview-value" id="totalSegmentsOverview">-</div>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Total Population</h3>
+                        <div class="overview-value" id="totalPopulationOverview">-</div>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Avg Auth Rate</h3>
+                        <div class="overview-value" id="avgAuthRateOverview">-</div>
+                    </div>
+                    <div class="overview-card">
+                        <h3>Avg Pension Rate</h3>
+                        <div class="overview-value" id="avgPensionRateOverview">-</div>
+                    </div>
+                </div>
+
+                <div class="countries-table-container">
+                    <h3>APAC Countries Overview</h3>
+                    <table id="countriesOverviewTable" class="demographics-table">
+                        <!-- Table will be populated by JavaScript -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- Country Explorer Section -->
+            <div id="countryExplorerSection" style="display: none;">
+                <div class="country-explorer">
+                    <div class="explorer-header">
+                        <div class="country-selector-demo">
+                            <label for="explorerCountrySelect">Select Country:</label>
+                            <select id="explorerCountrySelect" onchange="loadCountryDetails(this.value)">
+                                <option value="india">🇮🇳 India</option>
+                                <option value="singapore">🇸🇬 Singapore</option>
+                                <option value="australia">🇦🇺 Australia</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="country-details">
+                        <div class="country-header">
+                            <h3 id="explorerCountryName">Select a country</h3>
+                            <div class="country-stats">
+                                <span>Population: <span id="explorerCountryPopulation">-</span>M</span>
+                                <span>Currency: <span id="explorerCountryCurrency">-</span></span>
+                            </div>
+                        </div>
+
+                        <div class="country-summary">
+                            <div class="summary-metric">
+                                <span>Segments:</span>
+                                <span id="explorerTotalSegments">-</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span>Avg Auth Rate:</span>
+                                <span id="explorerAvgAuthRate">-</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span>Avg Pension Rate:</span>
+                                <span id="explorerAvgPensionRate">-</span>
+                            </div>
+                            <div class="summary-metric">
+                                <span>Avg Digital Adoption:</span>
+                                <span id="explorerAvgDigitalAdoption">-</span>
+                            </div>
+                        </div>
+
+                        <div class="segments-table-container">
+                            <table id="explorerSegmentsTable" class="demographics-table">
+                                <!-- Table will be populated by JavaScript -->
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Country Comparison Section -->
+            <div id="countryComparisonSection" style="display: none;">
+                <div class="country-comparison">
+                    <div class="comparison-controls">
+                        <div class="comparison-selectors">
+                            <div class="selector-group">
+                                <label for="compareCountry1">Country 1:</label>
+                                <select id="compareCountry1">
+                                    <option value="india">🇮🇳 India</option>
+                                    <option value="singapore">🇸🇬 Singapore</option>
+                                    <option value="australia">🇦🇺 Australia</option>
+                                </select>
+                            </div>
+                            <div class="vs-indicator">VS</div>
+                            <div class="selector-group">
+                                <label for="compareCountry2">Country 2:</label>
+                                <select id="compareCountry2">
+                                    <option value="singapore">🇸🇬 Singapore</option>
+                                    <option value="india">🇮🇳 India</option>
+                                    <option value="australia">🇦🇺 Australia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="compareCountries()">📊 Compare</button>
+                    </div>
+
+                    <div id="comparisonResults" class="comparison-results">
+                        <!-- Comparison results will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Segment Analysis Section -->
+            <div id="segmentAnalysisSection" style="display: none;">
+                <div class="segment-analysis">
+                    <h3>📈 Demographic Segment Analysis</h3>
+                    <p>Advanced segment analysis features coming soon...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Models Tab -->
+        <div class="tab-content" id="models">
+            <div class="models-section">
+                <h2>💾 Saved Models</h2>
+                <div class="models-controls">
+                    <button class="btn-success" onclick="showSaveModelDialog()">💾 Save Current Model</button>
+                    <button class="btn-primary" onclick="exportAllModels()">📤 Export All</button>
+                    <button class="btn-secondary" onclick="importModels()">📥 Import Models</button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                </div>
+                
+                <div class="models-grid" id="modelsGrid">
+                    <!-- Models will be dynamically rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SKU Edit Dialog -->
+    <div id="skuEditDialog" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="skuEditTitle">✏️ Edit SKU</h2>
+                <button class="modal-close" onclick="closeSkuEditDialog()">&times;</button>
+            </div>
+            <form id="skuEditForm" class="modal-body">
+                <div id="skuEditValidation" class="validation-messages" style="display: none;"></div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editSkuName">SKU Name *</label>
+                        <input type="text" id="editSkuName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editSkuCategory">Category</label>
+                        <select id="editSkuCategory">
+                            <option value="authentication">Authentication</option>
+                            <option value="biometric">Biometric</option>
+                            <option value="kyc">KYC</option>
+                            <option value="tokenization">Tokenization</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editSkuPrice">Price per Transaction (₹) *</label>
+                        <input type="number" id="editSkuPrice" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editSkuCost">Cost per Transaction (₹) *</label>
+                        <input type="number" id="editSkuCost" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editSkuVolume">Monthly Volume *</label>
+                        <input type="number" id="editSkuVolume" min="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editSkuGrowth">Annual Volume Growth (%)</label>
+                        <input type="number" id="editSkuGrowth" step="0.1">
+                    </div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="editSkuNotes">Notes</label>
+                    <textarea id="editSkuNotes"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeSkuEditDialog()">Cancel</button>
+                <button type="button" class="btn-primary" onclick="updateSku()">Update SKU</button>
+                <button type="button" class="btn-warning" onclick="duplicateCurrentSku()">📋 Duplicate</button>
+                <button type="button" class="btn-danger" onclick="deleteCurrentSku()">🗑️ Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Combined JavaScript -->
+    <script>
+/**
+ * Combined JavaScript for APAC Revenue Projections System
+ * Generated on: 2025-09-24T01:53:09.809Z
+ * Modules included: 6
+ */
+
+
+/* ================================================
+ * MODULE 1: JS/CORE.JS
+ * Lines: 396
+ * ================================================ */
+
+
+// Global variables
+window.segments = [];
+window.projectionData = [];
+window.segmentProjections = {};
+window.chart = null;
+window.currentSegmentType = 'sku';
+window.currentView = 'consolidated';
+window.savedModels = [];
+window.selectedModelId = null;
+window.editingSegmentId = null;
+window.selectedSegments = new Set();
+window.librarySelectedSegments = new Set();
+window.segmentLibrary = [];
+window.activeToasts = []; // Track active undo toasts
+
+// Enhanced predefined segments data with categories
+const predefinedSegments = {
+    sku: [
+        { name: 'OTP (SMS) - Banking', price: 0.15, cost: 0.10, volume: 4000000000/12, volumeGrowth: 5, market: 'Banking, Payments', category: 'authentication' },
+        { name: 'OTP (SMS) - E-commerce', price: 0.12, cost: 0.08, volume: 2500000000/12, volumeGrowth: 8, market: 'E-commerce, Retail', category: 'authentication' },
+        { name: 'OTP (SMS) - Government', price: 0.10, cost: 0.07, volume: 1500000000/12, volumeGrowth: 3, market: 'Govt Services, DBT', category: 'authentication' },
+        { name: 'Biometric - Pension Auth', price: 3.50, cost: 2.00, volume: 50000000, volumeGrowth: 10, market: 'Pension, EPFO', category: 'biometric' },
+        { name: 'Biometric - Banking', price: 4.00, cost: 2.50, volume: 30000000, volumeGrowth: 15, market: 'Banking KYC', category: 'biometric' },
+        { name: 'eKYC - Banking', price: 20.00, cost: 12.00, volume: 15000000, volumeGrowth: 20, market: 'Account Opening', category: 'kyc' },
+        { name: 'eKYC - Telecom', price: 18.00, cost: 10.00, volume: 10000000, volumeGrowth: 12, market: 'SIM Verification', category: 'kyc' },
+        { name: 'eKYC - Insurance', price: 25.00, cost: 15.00, volume: 5000000, volumeGrowth: 25, market: 'Policy Issuance', category: 'kyc' },
+        { name: 'Tokenization - Cards', price: 1.00, cost: 0.50, volume: 1200000000/12, volumeGrowth: 30, market: 'Card Payments', category: 'tokenization' },
+        { name: 'Tokenization - UPI', price: 0.50, cost: 0.25, volume: 800000000/12, volumeGrowth: 35, market: 'UPI Transactions', category: 'tokenization' }
+    ]
+};
+
+// Core validation functions
+function validateSegmentData(name, price, cost, volume, growth) {
+    const errors = [];
+    
+    if (!name || name.length < 2) {
+        errors.push({ field: 'segmentName', message: 'Name must be at least 2 characters long' });
+    }
+    
+    if (!price || price <= 0) {
+        errors.push({ field: 'pricePerTransaction', message: 'Price must be greater than 0' });
+    }
+    
+    if (isNaN(cost) || cost < 0) {
+        errors.push({ field: 'costPerTransaction', message: 'Cost cannot be negative' });
+    }
+    
+    if (cost >= price) {
+        errors.push({ field: 'costPerTransaction', message: 'Cost should be less than price for profitability' });
+    }
+    
+    if (!volume || volume <= 0) {
+        errors.push({ field: 'monthlyVolume', message: 'Volume must be greater than 0' });
+    }
+    
+    if (volume > 10000000000) {
+        errors.push({ field: 'monthlyVolume', message: 'Volume seems unrealistically high (>10B/month)' });
+    }
+    
+    if (isNaN(growth) || growth < -100 || growth > 1000) {
+        errors.push({ field: 'volumeGrowth', message: 'Growth rate must be between -100% and 1000%' });
+    }
+    
+    // Check for duplicate names (excluding current editing segment)
+    const duplicateName = window.segments.find(seg => 
+        seg.name.toLowerCase() === name.toLowerCase() && 
+        seg.id !== window.editingSegmentId
+    );
+    if (duplicateName) {
+        errors.push({ field: 'segmentName', message: 'A segment with this name already exists' });
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        errors
+    };
+}
+
+function validateSkuEditData(name, price, cost, volume, growth) {
+    const errors = [];
+    
+    if (!name || name.length < 2) {
+        errors.push({ field: 'skuEditName', message: 'Name must be at least 2 characters long' });
+    }
+    
+    if (!price || price <= 0) {
+        errors.push({ field: 'skuEditPrice', message: 'Price must be greater than 0' });
+    }
+    
+    if (isNaN(cost) || cost < 0) {
+        errors.push({ field: 'skuEditCost', message: 'Cost cannot be negative' });
+    }
+    
+    if (cost >= price) {
+        errors.push({ field: 'skuEditCost', message: 'Cost should be less than price for profitability' });
+    }
+    
+    if (!volume || volume <= 0) {
+        errors.push({ field: 'skuEditVolume', message: 'Volume must be greater than 0' });
+    }
+    
+    if (volume > 10000000000) {
+        errors.push({ field: 'skuEditVolume', message: 'Volume seems unrealistically high (>10B/month)' });
+    }
+    
+    if (isNaN(growth) || growth < -100 || growth > 1000) {
+        errors.push({ field: 'skuEditGrowth', message: 'Growth rate must be between -100% and 1000%' });
+    }
+    
+    // Check for duplicate names (excluding current editing SKU)
+    const duplicateName = window.segments.find(seg => 
+        seg.name.toLowerCase() === name.toLowerCase() && 
+        String(seg.id) !== String(window.currentEditingSkuId)
+    );
+    if (duplicateName) {
+        errors.push({ field: 'skuEditName', message: 'SKU name already exists' });
+    }
+    
+    return {
+        isValid: errors.length === 0,
+        errors
+    };
+}
+
+// Utility functions for validation errors and messages
+function showValidationErrors(errors) {
+    // Clear previous errors
+    document.querySelectorAll('.validation-error').forEach(el => {
+        el.classList.remove('validation-error');
+    });
+    document.querySelectorAll('.validation-message').forEach(el => {
+        el.remove();
+    });
+    
+    // Show new errors
+    errors.forEach(error => {
+        const field = document.getElementById(error.field);
+        if (field) {
+            field.classList.add('validation-error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'validation-message';
+            errorDiv.textContent = error.message;
+            field.parentNode.appendChild(errorDiv);
+        }
+    });
+    
+    // Show alert with first error
+    if (errors.length > 0) {
+        alert(`Validation Error: ${errors[0].message}`);
+    }
+}
+
+function showSkuEditValidationErrors(errors) {
+    // Clear previous errors
+    document.querySelectorAll('.sku-validation-error').forEach(el => {
+        el.classList.remove('sku-validation-error');
+    });
+    document.querySelectorAll('.sku-validation-message').forEach(el => {
+        el.remove();
+    });
+    
+    // Show new errors
+    errors.forEach(error => {
+        const field = document.getElementById(error.field);
+        if (field) {
+            field.classList.add('sku-validation-error');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'sku-validation-message';
+            errorDiv.textContent = error.message;
+            field.parentNode.appendChild(errorDiv);
+        }
+    });
+    
+    // Show alert with first error
+    if (errors.length > 0) {
+        alert(`Validation Error: ${errors[0].message}`);
+    }
+}
+
+function showSuccessMessage(message) {
+    // Create a temporary success message
+    const successDiv = document.createElement('div');
+    successDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #22c55e;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1001;
+        font-weight: 500;
+    `;
+    successDiv.textContent = message;
+    document.body.appendChild(successDiv);
+    
+    setTimeout(() => {
+        document.body.removeChild(successDiv);
+    }, 3000);
+}
+
+// Toast notification system
+function showUndoToast(message, undoCallback) {
+    // Generate unique ID for this toast
+    const toastId = `undoToast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Calculate position based on existing toasts
+    const existingToastsCount = window.activeToasts.length;
+    const topPosition = 20 + (existingToastsCount * 80); // 80px spacing between toasts
+    
+    // Create undo toast
+    const toastDiv = document.createElement('div');
+    toastDiv.id = toastId;
+    toastDiv.style.cssText = `
+        position: fixed;
+        top: ${topPosition}px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    `;
+    
+    // Add message and undo button
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+    
+    const undoButton = document.createElement('button');
+    undoButton.textContent = 'Undo';
+    undoButton.style.cssText = `
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+    `;
+    
+    undoButton.onclick = () => {
+        if (undoCallback) undoCallback();
+        removeToast(toastId);
+    };
+    
+    toastDiv.appendChild(messageSpan);
+    toastDiv.appendChild(undoButton);
+    document.body.appendChild(toastDiv);
+    
+    // Add to active toasts tracking
+    window.activeToasts.push({
+        id: toastId,
+        element: toastDiv,
+        position: existingToastsCount
+    });
+    
+    // Auto-remove after 8 seconds
+    setTimeout(() => {
+        removeToast(toastId);
+    }, 8000);
+    
+    // Helper function to remove specific toast
+    function removeToast(id) {
+        const toastIndex = window.activeToasts.findIndex(toast => toast.id === id);
+        if (toastIndex !== -1) {
+            const toast = window.activeToasts[toastIndex];
+            if (toast.element && toast.element.parentNode) {
+                toast.element.remove();
+            }
+            window.activeToasts.splice(toastIndex, 1);
+            repositionToasts();
+        }
+    }
+    
+    // Helper function to reposition remaining toasts
+    function repositionToasts() {
+        window.activeToasts.forEach((toast, index) => {
+            const newTopPosition = 20 + (index * 80);
+            if (toast.element) {
+                toast.element.style.top = `${newTopPosition}px`;
+                toast.position = index;
+            }
+        });
+    }
+}
+
+// Utility functions for number formatting
+function formatCurrency(amount, currency = '₹') {
+    if (amount >= 10000000) {
+        return `${currency}${(amount / 10000000).toFixed(1)} Cr`;
+    } else if (amount >= 100000) {
+        return `${currency}${(amount / 100000).toFixed(1)} L`;
+    } else if (amount >= 1000) {
+        return `${currency}${(amount / 1000).toFixed(1)} K`;
+    } else {
+        return `${currency}${amount.toFixed(2)}`;
+    }
+}
+
+function formatNumber(num) {
+    if (num >= 10000000) {
+        return `${(num / 10000000).toFixed(1)} Cr`;
+    } else if (num >= 100000) {
+        return `${(num / 100000).toFixed(1)} L`;
+    } else if (num >= 1000) {
+        return `${(num / 1000).toFixed(1)} K`;
+    } else {
+        return num.toLocaleString();
+    }
+}
+
+// Date utility functions
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-IN', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Configuration and constants
+const APP_CONFIG = {
+    VERSION: '4.0.0',
+    MAX_SEGMENTS: 100,
+    DEFAULT_PROJECTION_MONTHS: 36,
+    CURRENCY_SYMBOL: '₹',
+    DATE_FORMAT: 'YYYY-MM-DD',
+    TOAST_DURATION: 8000,
+    MAX_VOLUME_THRESHOLD: 10000000000,
+    GROWTH_RATE_LIMITS: {
+        MIN: -100,
+        MAX: 1000
+    }
+};
+
+// Export predefined segments for other modules
+window.predefinedSegments = predefinedSegments;
+window.APP_CONFIG = APP_CONFIG;
+
+// Utility functions for local storage
+function saveToLocalStorage(key, data) {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        return true;
+    } catch (error) {
+        console.error('Failed to save to localStorage:', error);
+        return false;
+    }
+}
+
+function loadFromLocalStorage(key, defaultValue = null) {
+    try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : defaultValue;
+    } catch (error) {
+        console.error('Failed to load from localStorage:', error);
+        return defaultValue;
+    }
+}
+
+function clearLocalStorage(key) {
+    try {
+        localStorage.removeItem(key);
+        return true;
+    } catch (error) {
+        console.error('Failed to clear localStorage:', error);
+        return false;
+    }
+}
+
+/* ================================================
+ * MODULE 2: JS/SEGMENTS.JS
+ * Lines: 542
+ * ================================================ */
+
+
+// Enhanced segment management functions
+window.addOrUpdateSegment = function() {
+    const name = document.getElementById('segmentName').value.trim();
+    const pricePerTransaction = parseFloat(document.getElementById('pricePerTransaction').value);
+    const costPerTransaction = parseFloat(document.getElementById('costPerTransaction').value);
+    const monthlyVolume = parseFloat(document.getElementById('monthlyVolume').value);
+    const volumeGrowth = parseFloat(document.getElementById('volumeGrowth').value) || 5;
+    const category = document.getElementById('segmentCategory').value;
+    const notes = document.getElementById('segmentNotes').value.trim();
+    
+    // Enhanced validation
+    const validation = validateSegmentData(name, pricePerTransaction, costPerTransaction, monthlyVolume, volumeGrowth);
+    if (!validation.isValid) {
+        showValidationErrors(validation.errors);
+        return;
+    }
+    
+    if (window.editingSegmentId) {
+        // Update existing segment
+        const segmentIndex = window.segments.findIndex(seg => seg.id === window.editingSegmentId);
+        if (segmentIndex !== -1) {
+            window.segments[segmentIndex] = {
+                ...window.segments[segmentIndex],
+                name,
+                pricePerTransaction,
+                costPerTransaction,
+                monthlyVolume,
+                volumeGrowth,
+                category,
+                notes,
+                updatedAt: new Date().toISOString()
+            };
+            
+            cancelEditSegment();
+            showSuccessMessage(`Segment "${name}" updated successfully!`);
+        }
+    } else {
+        // Add new segment
+        const newSegment = {
+            id: Date.now() + Math.random(),
+            name,
+            type: window.currentSegmentType,
+            pricePerTransaction,
+            costPerTransaction,
+            monthlyVolume,
+            volumeGrowth,
+            category,
+            notes,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        window.segments.push(newSegment);
+        showSuccessMessage(`Segment "${name}" added successfully!`);
+    }
+    
+    clearSegmentForm();
+    window.renderSegments();
+    updateSegmentCount();
+};
+
+window.clearSegmentForm = function() {
+    document.getElementById('segmentName').value = '';
+    document.getElementById('pricePerTransaction').value = '';
+    document.getElementById('costPerTransaction').value = '';
+    document.getElementById('monthlyVolume').value = '';
+    document.getElementById('volumeGrowth').value = '5';
+    document.getElementById('segmentCategory').value = 'authentication';
+    document.getElementById('segmentNotes').value = '';
+    
+    // Clear validation errors
+    document.querySelectorAll('.validation-error').forEach(el => {
+        el.classList.remove('validation-error');
+    });
+    document.querySelectorAll('.validation-message').forEach(el => {
+        el.remove();
+    });
+};
+
+window.toggleOperatingExpenseInputs = function() {
+    const type = document.getElementById('operatingExpenseType').value;
+    const fixedGroup = document.getElementById('fixedExpenseGroup');
+    const percentageGroup = document.getElementById('percentageExpenseGroup');
+    
+    switch(type) {
+        case 'fixed':
+            fixedGroup.style.display = 'block';
+            percentageGroup.style.display = 'none';
+            break;
+        case 'percentage':
+            fixedGroup.style.display = 'none';
+            percentageGroup.style.display = 'block';
+            break;
+        case 'hybrid':
+            fixedGroup.style.display = 'block';
+            percentageGroup.style.display = 'block';
+            break;
+    }
+};
+
+window.validateProfitability = function() {
+    if (window.segments.length === 0) return '';
+    
+    // Calculate total monthly gross profit
+    const totalGrossProfit = window.segments.reduce((sum, segment) => {
+        const revenue = segment.monthlyVolume * segment.pricePerTransaction;
+        const cost = segment.monthlyVolume * segment.costPerTransaction;
+        return sum + (revenue - cost);
+    }, 0);
+    
+    // Calculate operating expenses
+    const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+    let operatingExpenses = 0;
+    
+    if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+        operatingExpenses += parseFloat(document.getElementById('operatingExpenses').value) || 0;
+    }
+    
+    if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+        const totalRevenue = window.segments.reduce((sum, segment) => 
+            sum + (segment.monthlyVolume * segment.pricePerTransaction), 0);
+        const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+        operatingExpenses += (totalRevenue * percentageExpense / 100);
+    }
+    
+    const netProfit = totalGrossProfit - operatingExpenses;
+    const profitMargin = totalGrossProfit > 0 ? (netProfit / totalGrossProfit) * 100 : 0;
+    
+    if (netProfit < 0) {
+        return `⚠️ Warning: Current configuration will result in negative profit (₹${Math.abs(netProfit).toLocaleString('en-IN')} loss). Consider reducing operating expenses or increasing segment pricing/volume.`;
+    } else if (profitMargin < 10) {
+        return `⚠️ Warning: Low profit margin (${profitMargin.toFixed(1)}%). Consider optimizing costs or pricing.`;
+    } else if (profitMargin > 80) {
+        return `💡 Note: Very high profit margin (${profitMargin.toFixed(1)}%). Verify if pricing and costs are realistic.`;
+    }
+    
+    return `✅ Healthy profit margin: ${profitMargin.toFixed(1)}%`;
+};
+
+// SKU Edit Dialog Functions
+window.editSegment = function(id) {
+    // Handle both string and numeric IDs
+    const segment = window.segments.find(seg => seg.id == id || seg.id === id);
+    if (!segment) {
+        console.error('Segment not found for ID:', id, 'Available segments:', window.segments.map(s => ({id: s.id, name: s.name})));
+        return;
+    }
+    
+    // Store the ID for the edit dialog
+    window.currentEditingSkuId = id;
+    
+    // Populate edit dialog with segment data
+    document.getElementById('editSkuName').value = segment.name;
+    document.getElementById('editSkuPrice').value = segment.pricePerTransaction;
+    document.getElementById('editSkuCost').value = segment.costPerTransaction;
+    document.getElementById('editSkuVolume').value = segment.monthlyVolume;
+    document.getElementById('editSkuGrowth').value = segment.volumeGrowth;
+    document.getElementById('editSkuCategory').value = segment.category || 'authentication';
+    document.getElementById('editSkuNotes').value = segment.notes || '';
+    
+    // Update dialog title
+    document.getElementById('skuEditTitle').textContent = `✏️ Edit SKU: ${segment.name}`;
+    
+    // Show the edit dialog
+    document.getElementById('skuEditDialog').style.display = 'flex';
+    document.getElementById('editSkuName').focus();
+    
+    // Clear any previous validation messages
+    const validationDiv = document.getElementById('skuEditValidation');
+    validationDiv.style.display = 'none';
+};
+
+window.closeSkuEditDialog = function() {
+    document.getElementById('skuEditDialog').style.display = 'none';
+    window.currentEditingSkuId = null;
+    
+    // Clear validation messages
+    const validationDiv = document.getElementById('skuEditValidation');
+    validationDiv.style.display = 'none';
+};
+
+window.updateSku = function() {
+    if (!window.currentEditingSkuId) return;
+    
+    // Get form values
+    const name = document.getElementById('editSkuName').value.trim();
+    const price = parseFloat(document.getElementById('editSkuPrice').value);
+    const cost = parseFloat(document.getElementById('editSkuCost').value);
+    const volume = parseFloat(document.getElementById('editSkuVolume').value);
+    const growth = parseFloat(document.getElementById('editSkuGrowth').value) || 5;
+    const category = document.getElementById('editSkuCategory').value;
+    const notes = document.getElementById('editSkuNotes').value.trim();
+    
+    // Validate data
+    const validation = validateSkuEditData(name, price, cost, volume, growth);
+    if (!validation.isValid) {
+        showSkuEditValidationErrors(validation.errors);
+        return;
+    }
+    
+    // Find and update the segment
+    const segmentIndex = window.segments.findIndex(seg => String(seg.id) === String(window.currentEditingSkuId));
+    if (segmentIndex === -1) return;
+    
+    // Update the segment
+    window.segments[segmentIndex] = {
+        ...window.segments[segmentIndex],
+        name,
+        pricePerTransaction: price,
+        costPerTransaction: cost,
+        monthlyVolume: volume,
+        volumeGrowth: growth,
+        category,
+        notes,
+        updatedAt: new Date().toISOString()
+    };
+    
+    // Close dialog and refresh UI
+    window.closeSkuEditDialog();
+    window.renderSegments();
+    showSuccessMessage(`SKU "${name}" updated successfully!`);
+};
+
+window.duplicateCurrentSku = function() {
+    if (!window.currentEditingSkuId) return;
+    
+    const originalSegment = window.segments.find(seg => seg.id === window.currentEditingSkuId);
+    if (!originalSegment) return;
+    
+    // Get current form values (in case user made changes)
+    const name = document.getElementById('editSkuName').value.trim();
+    const price = parseFloat(document.getElementById('editSkuPrice').value);
+    const cost = parseFloat(document.getElementById('editSkuCost').value);
+    const volume = parseFloat(document.getElementById('editSkuVolume').value);
+    const growth = parseFloat(document.getElementById('editSkuGrowth').value) || 5;
+    const category = document.getElementById('editSkuCategory').value;
+    const notes = document.getElementById('editSkuNotes').value.trim();
+    
+    // Create duplicate with modified name
+    const duplicateName = `${name} (Copy)`;
+    const duplicateSegment = {
+        id: Date.now() + Math.random(),
+        name: duplicateName,
+        type: originalSegment.type,
+        pricePerTransaction: price,
+        costPerTransaction: cost,
+        monthlyVolume: volume,
+        volumeGrowth: growth,
+        category,
+        notes,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    window.segments.push(duplicateSegment);
+    window.closeSkuEditDialog();
+    window.renderSegments();
+    showSuccessMessage(`SKU duplicated as "${duplicateName}"!`);
+};
+
+window.deleteCurrentSku = function() {
+    if (!window.currentEditingSkuId) return;
+    
+    const segment = window.segments.find(seg => seg.id === window.currentEditingSkuId);
+    if (!segment) return;
+    
+    if (confirm(`Are you sure you want to delete the SKU "${segment.name}"?\n\nThis action cannot be undone.`)) {
+        window.segments = window.segments.filter(seg => seg.id !== window.currentEditingSkuId);
+        window.closeSkuEditDialog();
+        window.renderSegments();
+        showSuccessMessage(`SKU "${segment.name}" deleted successfully!`);
+    }
+};
+
+window.cancelEditSegment = function() {
+    window.editingSegmentId = null;
+    
+    // Reset button
+    const addButton = document.querySelector('button[onclick="addOrUpdateSegment()"]');
+    if (addButton) {
+        addButton.textContent = 'Add Segment';
+        addButton.classList.remove('btn-warning');
+        addButton.classList.add('btn-primary');
+    }
+    
+    clearSegmentForm();
+    window.renderSegments();
+};
+
+window.duplicateSegment = function(id) {
+    // Handle both string and numeric IDs
+    const segment = window.segments.find(seg => seg.id == id || seg.id === id);
+    if (!segment) {
+        console.error('Segment not found for duplication, ID:', id);
+        return;
+    }
+    
+    const duplicatedSegment = {
+        ...segment,
+        id: Date.now() + Math.random(),
+        name: segment.name + ' (Copy)',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    window.segments.push(duplicatedSegment);
+    window.renderSegments();
+    updateSegmentCount();
+    showSuccessMessage(`Segment "${segment.name}" duplicated successfully!`);
+};
+
+// Bulk Operations Functions
+window.toggleSegmentSelection = function(id) {
+    if (window.selectedSegments.has(id)) {
+        window.selectedSegments.delete(id);
+    } else {
+        window.selectedSegments.add(id);
+    }
+    updateBulkActionsVisibility();
+    window.renderSegments();
+};
+
+function updateBulkActionsVisibility() {
+    const bulkActions = document.querySelector('.segment-bulk-actions');
+    if (bulkActions) {
+        if (window.selectedSegments.size > 0) {
+            bulkActions.classList.add('show');
+        } else {
+            bulkActions.classList.remove('show');
+        }
+    }
+}
+
+window.duplicateSelectedSegments = function() {
+    if (window.selectedSegments.size === 0) {
+        alert('Please select segments to duplicate.');
+        return;
+    }
+    
+    const segmentsToDuplicate = window.segments.filter(seg => window.selectedSegments.has(seg.id));
+    const timestamp = new Date().toISOString();
+    
+    segmentsToDuplicate.forEach(segment => {
+        const duplicatedSegment = {
+            ...segment,
+            id: Date.now() + Math.random(),
+            name: segment.name + ' (Copy)',
+            createdAt: timestamp,
+            updatedAt: timestamp
+        };
+        window.segments.push(duplicatedSegment);
+    });
+    
+    window.selectedSegments.clear();
+    window.renderSegments();
+    updateSegmentCount();
+    updateBulkActionsVisibility();
+    showSuccessMessage(`${segmentsToDuplicate.length} segment(s) duplicated successfully!`);
+};
+
+window.deleteSelectedSegments = function() {
+    if (window.selectedSegments.size === 0) {
+        alert('Please select segments to delete.');
+        return;
+    }
+    
+    const segmentsToDelete = window.segments.filter(seg => window.selectedSegments.has(seg.id));
+    const segmentNames = segmentsToDelete.map(seg => seg.name).join(', ');
+    
+    if (confirm(`Delete ${segmentsToDelete.length} selected segment(s)?\n\n${segmentNames}\n\nThis action cannot be undone.`)) {
+        window.segments = window.segments.filter(seg => !window.selectedSegments.has(seg.id));
+        window.selectedSegments.clear();
+        window.renderSegments();
+        updateSegmentCount();
+        updateBulkActionsVisibility();
+        showSuccessMessage(`${segmentsToDelete.length} segment(s) deleted successfully!`);
+    }
+};
+
+// Delete with Undo functionality
+window.deleteSegment = function(id) {
+    // Convert ID to string for consistent comparison
+    const targetId = String(id);
+    
+    // Find segment with string comparison
+    const segment = window.segments.find(seg => String(seg.id) === targetId);
+    if (!segment) {
+        console.error('Segment not found for deletion, ID:', id);
+        return;
+    }
+    
+    const deletedSegment = { ...segment };
+    const segmentIndex = window.segments.findIndex(seg => String(seg.id) === targetId);
+    
+    // Remove the segment
+    window.segments.splice(segmentIndex, 1);
+    
+    // Update UI after a brief delay to ensure smooth animation
+    setTimeout(() => {
+        window.renderSegments();
+        updateSegmentCount();
+        updateBulkActionsVisibility();
+    }, 10);
+    
+    // Show undo toast
+    showUndoToast(`Segment "${deletedSegment.name}" deleted`, () => {
+        // Restore the segment at its original position
+        window.segments.splice(segmentIndex, 0, deletedSegment);
+        setTimeout(() => {
+            window.renderSegments();
+            updateSegmentCount();
+            updateBulkActionsVisibility();
+        }, 10);
+        showSuccessMessage(`Segment "${deletedSegment.name}" restored!`);
+    });
+};
+
+// Filter and Search Functions
+window.clearFilters = function() {
+    document.getElementById('segmentSearchFilter').value = '';
+    document.getElementById('categoryFilter').value = '';
+    window.renderSegments();
+};
+
+function updateSegmentCount() {
+    const countElement = document.getElementById('segmentCount');
+    if (countElement) {
+        countElement.textContent = window.segments.length;
+    }
+}
+
+// Predefined Segment Functions
+window.addPredefinedSegment = function(segmentType, index) {
+    if (!window.predefinedSegments[segmentType] || !window.predefinedSegments[segmentType][index]) {
+        console.error('Predefined segment not found');
+        return;
+    }
+    
+    const predefined = window.predefinedSegments[segmentType][index];
+    
+    // Check if segment already exists
+    const existingSegment = window.segments.find(seg => 
+        seg.name.toLowerCase() === predefined.name.toLowerCase()
+    );
+    
+    if (existingSegment) {
+        alert(`Segment "${predefined.name}" already exists!`);
+        return;
+    }
+    
+    const newSegment = {
+        id: Date.now() + Math.random(),
+        name: predefined.name,
+        type: segmentType,
+        pricePerTransaction: predefined.price,
+        costPerTransaction: predefined.cost,
+        monthlyVolume: Math.round(predefined.volume),
+        volumeGrowth: predefined.volumeGrowth,
+        category: predefined.category,
+        notes: `Market: ${predefined.market}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    window.segments.push(newSegment);
+    window.renderSegments();
+    updateSegmentCount();
+    showSuccessMessage(`Added predefined segment: ${predefined.name}`);
+};
+
+// Test Functions for Development
+window.addTestSegment = function() {
+    console.log('Adding enhanced test segment...');
+    
+    const testSegment = {
+        id: Date.now() + Math.random(),
+        name: `Test Segment ${window.segments.length + 1}`,
+        type: 'sku',
+        pricePerTransaction: 2.50,
+        costPerTransaction: 1.20,
+        monthlyVolume: 1000000,
+        volumeGrowth: 8,
+        category: 'authentication',
+        notes: 'This is a test segment with realistic values',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    window.segments.push(testSegment);
+    window.renderSegments();
+    updateSegmentCount();
+    showSuccessMessage('Test segment added successfully!');
+};
+
+// Enhanced predefined segment loading for different business scenarios
+window.loadBankingScenario = function() {
+    const bankingSegments = [
+        { name: 'Account Opening - Premium', price: 25.00, cost: 15.00, volume: 500000, growth: 15, category: 'kyc' },
+        { name: 'Transaction Authentication', price: 0.25, cost: 0.15, volume: 50000000, growth: 12, category: 'authentication' },
+        { name: 'Loan Verification', price: 35.00, cost: 20.00, volume: 200000, growth: 20, category: 'kyc' }
+    ];
+    
+    loadSegmentScenario(bankingSegments, 'Banking');
+};
+
+window.loadTelecomScenario = function() {
+    const telecomSegments = [
+        { name: 'SIM Activation', price: 18.00, cost: 10.00, volume: 2000000, growth: 10, category: 'kyc' },
+        { name: 'Number Portability', price: 15.00, cost: 8.00, volume: 800000, growth: 8, category: 'authentication' },
+        { name: 'Premium Service Auth', price: 5.00, cost: 2.50, volume: 5000000, growth: 15, category: 'authentication' }
+    ];
+    
+    loadSegmentScenario(telecomSegments, 'Telecom');
+};
+
+function loadSegmentScenario(segmentData, scenarioName) {
+    segmentData.forEach(segData => {
+        const newSegment = {
+            id: Date.now() + Math.random(),
+            name: segData.name,
+            type: 'sku',
+            pricePerTransaction: segData.price,
+            costPerTransaction: segData.cost,
+            monthlyVolume: segData.volume,
+            volumeGrowth: segData.growth,
+            category: segData.category,
+            notes: `${scenarioName} scenario segment`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        window.segments.push(newSegment);
+    });
+    
+    window.renderSegments();
+    updateSegmentCount();
+    showSuccessMessage(`${scenarioName} scenario loaded with ${segmentData.length} segments!`);
+}
+
+/* ================================================
+ * MODULE 3: JS/PROJECTIONS.JS
+ * Lines: 782
+ * ================================================ */
+
+
+// Main projection calculation function
+function calculateProjections() {
+    const months = parseInt(document.getElementById('projectionMonths').value);
+    const seasonality = document.getElementById('seasonality').value;
+    
+    // Check if we have segments
+    if (window.segments.length === 0) {
+        alert('Please add at least one SKU before calculating projections.');
+        return;
+    }
+    
+    window.projectionData = [];
+    window.segmentProjections = {};
+    const currentDate = new Date();
+    
+    // Initialize segment projections
+    window.segments.forEach(segment => {
+        window.segmentProjections[segment.name] = [];
+    });
+    
+    // Calculate monthly projections
+    for (let i = 0; i < months; i++) {
+        const projectedDate = new Date(currentDate);
+        projectedDate.setMonth(currentDate.getMonth() + i);
+        const monthLabel = projectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        
+        let totalMonthRevenue = 0;
+        let totalMonthCost = 0;
+        let totalMonthVolume = 0;
+        
+        // Calculate for each segment
+        window.segments.forEach(segment => {
+            const monthlyGrowthRate = segment.volumeGrowth / 100;
+            const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+            
+            // Calculate volume with growth
+            const projectedVolume = segment.monthlyVolume * 
+                                  Math.pow(1 + monthlyGrowthRate, i) * 
+                                  seasonalMultiplier;
+            
+            const segmentRevenue = projectedVolume * segment.pricePerTransaction;
+            const segmentCost = projectedVolume * segment.costPerTransaction;
+            const segmentProfit = segmentRevenue - segmentCost;
+            
+            window.segmentProjections[segment.name].push({
+                month: monthLabel,
+                volume: projectedVolume,
+                revenue: segmentRevenue,
+                cost: segmentCost,
+                profit: segmentProfit,
+                margin: segmentRevenue > 0 ? (segmentProfit / segmentRevenue * 100) : 0
+            });
+            
+            totalMonthRevenue += segmentRevenue;
+            totalMonthCost += segmentCost;
+            totalMonthVolume += projectedVolume;
+        });
+        
+        // Calculate operating expenses based on type
+        const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+        let operatingExpenses = 0;
+        
+        if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+            operatingExpenses += parseFloat(document.getElementById('operatingExpenses').value) || 0;
+        }
+        
+        if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+            const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+            operatingExpenses += (totalMonthRevenue * percentageExpense / 100);
+        }
+        
+        const netProfit = totalMonthRevenue - totalMonthCost - operatingExpenses;
+        const profitMargin = totalMonthRevenue > 0 ? (netProfit / totalMonthRevenue) * 100 : 0;
+        
+        window.projectionData.push({
+            month: monthLabel,
+            revenue: totalMonthRevenue,
+            cogs: totalMonthCost,
+            grossProfit: totalMonthRevenue - totalMonthCost,
+            operatingExpenses: operatingExpenses,
+            netProfit: netProfit,
+            profitMargin: profitMargin,
+            volume: totalMonthVolume,
+            cumulativeRevenue: i === 0 ? totalMonthRevenue : window.projectionData[i-1].cumulativeRevenue + totalMonthRevenue
+        });
+    }
+    
+    // Switch to projections tab and display results
+    switchTab('projections');
+    displayResults();
+}
+
+// Helper function for seasonality multipliers
+function getSeasonalityMultiplier(monthIndex, seasonality) {
+    if (seasonality === 'none') return 1;
+    
+    const month = monthIndex % 12;
+    const peakMonths = seasonality === 'festival' ? [9, 10, 11] : [5, 6, 7]; // Oct-Dec for festival, Jun-Aug for summer
+    
+    if (peakMonths.includes(month)) {
+        return 1.2; // 20% increase during peak
+    } else if (seasonality === 'festival' && [1, 2, 3].includes(month)) {
+        return 0.8; // 20% decrease in lean months
+    } else if (seasonality === 'summer' && [11, 0, 1].includes(month)) {
+        return 0.9; // 10% decrease in winter
+    }
+    
+    return 1; // Normal months
+}
+
+// Display functions
+function displayResults() {
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').classList.add('fade-in');
+    
+    // Generate data for current chart period if chart period selector exists
+    const periodElement = document.getElementById('chartPeriod');
+    const selectedPeriod = periodElement ? periodElement.value : '1Y';
+    window.currentTableData = generateChartData(selectedPeriod);
+    
+    if (window.currentView === 'consolidated') {
+        displayConsolidatedResults();
+    } else {
+        displaySegmentedResults();
+    }
+    
+    updateChart();
+}
+
+function displayConsolidatedResults() {
+    const tableData = window.currentTableData || window.projectionData;
+    const totalRevenue = tableData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalProfit = tableData.reduce((sum, item) => sum + item.netProfit, 0);
+    const avgPeriodRevenue = totalRevenue / tableData.length;
+    const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    // Get period for labeling
+    const periodElement = document.getElementById('chartPeriod');
+    const selectedPeriod = periodElement ? periodElement.value : '1Y';
+    const isDaily = selectedPeriod === '1M';
+    const periodLabel = isDaily ? 'Daily' : 'Monthly';
+    
+    document.getElementById('summaryCards').innerHTML = `
+        <div class="summary-card">
+            <h3>Total Revenue</h3>
+            <div class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+            <div style="font-size: 1em; opacity: 0.9;">${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="summary-card">
+            <h3>Total Net Profit</h3>
+            <div class="value">₹${totalProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+            <div style="font-size: 1em; opacity: 0.9;">${(totalProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="summary-card">
+            <h3>Avg ${periodLabel} Revenue</h3>
+            <div class="value">₹${avgPeriodRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+            <div style="font-size: 1em; opacity: 0.9;">${(avgPeriodRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+        </div>
+        <div class="summary-card">
+            <h3>Avg Profit Margin</h3>
+            <div class="value">${avgProfitMargin.toFixed(1)}%</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">Exchange Rate: ₹${usdRate}/USD</div>
+        </div>
+    `;
+    
+    displayConsolidatedTable();
+    
+    if (window.segments.length > 0) {
+        displaySegmentBreakdown();
+    } else {
+        document.getElementById('segmentBreakdown').style.display = 'none';
+    }
+}
+
+function displaySegmentedResults() {
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    // Display individual segment summary cards
+    let segmentCardsHTML = '';
+    window.segments.forEach(segment => {
+        const segmentData = window.segmentProjections[segment.name];
+        const totalRevenue = segmentData.reduce((sum, item) => sum + item.revenue, 0);
+        const totalProfit = segmentData.reduce((sum, item) => sum + (item.profit || 0), 0);
+        const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+        
+        segmentCardsHTML += `
+            <div class="summary-card">
+                <h3>${segment.name}</h3>
+                <div class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                <div style="font-size: 0.9em; opacity: 0.9;">${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                <div style="font-size: 0.8em; opacity: 0.8; margin-top: 5px;">Margin: ${avgProfitMargin.toFixed(1)}%</div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('summaryCards').innerHTML = segmentCardsHTML;
+    
+    // Display segmented table with individual SKU performance
+    displaySegmentedTable();
+    
+    // Hide the consolidated segment breakdown since we're showing individual segments
+    document.getElementById('segmentBreakdown').style.display = 'none';
+}
+
+// Data aggregation functions
+function aggregateDataByYear(data) {
+    const yearGroups = {};
+    
+    data.forEach(row => {
+        // Extract year from month string (e.g., "2025 Jan" -> 2025)
+        const monthParts = row.month.split(' ');
+        let year;
+        if (monthParts.length === 2 && !isNaN(parseInt(monthParts[0]))) {
+            year = parseInt(monthParts[0]);
+        } else {
+            // Fallback: parse as date and extract year
+            const date = new Date(row.month + ' 1, ' + new Date().getFullYear());
+            year = date.getFullYear();
+        }
+        
+        if (!yearGroups[year]) {
+            yearGroups[year] = {
+                year: year,
+                revenue: 0,
+                cogs: 0,
+                netProfit: 0,
+                operatingExpenses: 0,
+                volume: 0,
+                months: []
+            };
+        }
+        
+        yearGroups[year].revenue += row.revenue;
+        yearGroups[year].cogs += row.cogs;
+        yearGroups[year].netProfit += row.netProfit;
+        yearGroups[year].operatingExpenses += row.operatingExpenses;
+        yearGroups[year].volume += row.volume;
+        yearGroups[year].months.push(row);
+    });
+    
+    // Convert to array and calculate profit margins
+    return Object.values(yearGroups).map(yearData => ({
+        ...yearData,
+        profitMargin: yearData.revenue > 0 ? (yearData.netProfit / yearData.revenue * 100) : 0
+    }));
+}
+
+// Chart data generation for different periods
+function generateChartData(period) {
+    if (!window.projectionData || window.projectionData.length === 0) return [];
+    
+    const currentDate = new Date();
+    let data = [];
+    
+    switch (period) {
+        case '1M':
+            // Generate daily data for 1 month
+            const monthlyData = window.projectionData[0];
+            for (let day = 1; day <= 30; day++) {
+                const dailyRevenue = monthlyData.revenue / 30;
+                const dailyCogs = monthlyData.cogs / 30;
+                const dailyOperatingExpenses = monthlyData.operatingExpenses / 30;
+                const dailyNetProfit = dailyRevenue - dailyCogs - dailyOperatingExpenses;
+                const dailyVolume = monthlyData.volume / 30;
+                
+                data.push({
+                    month: `Day ${day}`,
+                    revenue: dailyRevenue,
+                    cogs: dailyCogs,
+                    operatingExpenses: dailyOperatingExpenses,
+                    netProfit: dailyNetProfit,
+                    profitMargin: dailyRevenue > 0 ? (dailyNetProfit / dailyRevenue * 100) : 0,
+                    volume: dailyVolume
+                });
+            }
+            break;
+            
+        case '1Y':
+            data = window.projectionData.slice(0, 12);
+            break;
+            
+        case '2Y':
+            data = window.projectionData.slice(0, 24);
+            break;
+            
+        case '5Y':
+            data = window.projectionData.slice(0, 60);
+            break;
+            
+        case '10Y':
+            data = window.projectionData.slice(0, 120);
+            break;
+            
+        default:
+            data = window.projectionData.slice(0, 12);
+    }
+    
+    return data;
+}
+
+// Scenario analysis functions
+window.runScenarios = function() {
+    // Auto-load pension model if no segments exist
+    if (window.segments.length === 0) {
+        loadPensionModel(false);
+        setTimeout(() => {
+            if (window.segments.length > 0) {
+                calculateProjections();
+            }
+        }, 1000);
+    } else {
+        calculateProjections();
+    }
+    
+    switchTab('analysis');
+    
+    // Check if we have SKU-based segments for accurate scenario modeling
+    if (window.segments.length === 0) {
+        document.getElementById('scenarioSection').innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <h3>No SKUs Available</h3>
+                <p>No SKUs found for scenario analysis. This might happen if the auto-load failed or segments were cleared.</p>
+                <div style="margin: 20px 0;">
+                    <button class="btn-primary" onclick="loadPensionModel(false); setTimeout(() => { if(window.segments.length > 0) runScenarios(); }, 1000);" style="margin: 5px;">
+                        Load Default Pension Model
+                    </button>
+                    <button class="btn-primary" onclick="switchTab('setup')" style="margin: 5px;">
+                        Go to Setup & Add SKUs
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('scenarioSection').style.display = 'block';
+        return;
+    }
+    
+    // Use external scenario definitions if available, otherwise use defaults
+    const scenarios = window.externalScenarioDefinitions || [
+        { 
+            name: 'Conservative', 
+            volumeGrowthMultiplier: 0.6, 
+            priceMultiplier: 0.95, 
+            costMultiplier: 1.1,
+            operatingExpenseMultiplier: 1.15
+        },
+        { 
+            name: 'Base Case', 
+            volumeGrowthMultiplier: 1, 
+            priceMultiplier: 1, 
+            costMultiplier: 1,
+            operatingExpenseMultiplier: 1
+        },
+        { 
+            name: 'Optimistic', 
+            volumeGrowthMultiplier: 1.5, 
+            priceMultiplier: 1.08, 
+            costMultiplier: 0.92,
+            operatingExpenseMultiplier: 0.95
+        }
+    ];
+    
+    const months = parseInt(document.getElementById('projectionMonths').value);
+    const seasonality = document.getElementById('seasonality').value;
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    // Calculate base operating expenses
+    const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+    let baseOperatingExpenses = 0;
+    
+    if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+        baseOperatingExpenses = parseFloat(document.getElementById('operatingExpenses').value) || 0;
+    }
+    
+    let scenarioHTML = '';
+    
+    scenarios.forEach(scenario => {
+        let totalRevenue = 0;
+        let totalCosts = 0;
+        let totalOperatingExpenses = 0;
+        
+        // Calculate scenario projections
+        for (let i = 0; i < months; i++) {
+            let monthRevenue = 0;
+            let monthCosts = 0;
+            
+            // Calculate for each segment with scenario multipliers
+            window.segments.forEach(segment => {
+                const monthlyVolume = segment.monthlyVolume || 0;
+                const pricePerTransaction = segment.pricePerTransaction || 0;
+                const costPerTransaction = segment.costPerTransaction || 0;
+                const volumeGrowth = segment.volumeGrowth || 0;
+                
+                const adjustedVolumeGrowth = (volumeGrowth / 100) * scenario.volumeGrowthMultiplier;
+                const adjustedPrice = pricePerTransaction * scenario.priceMultiplier;
+                const adjustedCost = costPerTransaction * scenario.costMultiplier;
+                const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+                
+                // Calculate volume with adjusted growth
+                const projectedVolume = monthlyVolume * 
+                                      Math.pow(1 + adjustedVolumeGrowth, i) * 
+                                      seasonalMultiplier;
+                
+                const segmentRevenue = projectedVolume * adjustedPrice;
+                const segmentCost = projectedVolume * adjustedCost;
+                
+                monthRevenue += segmentRevenue;
+                monthCosts += segmentCost;
+            });
+            
+            totalRevenue += monthRevenue;
+            totalCosts += monthCosts;
+            
+            // Add operating expenses for this month
+            let monthOperatingExpenses = 0;
+            if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+                monthOperatingExpenses += baseOperatingExpenses * scenario.operatingExpenseMultiplier;
+            }
+            if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+                const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+                monthOperatingExpenses += (monthRevenue * percentageExpense / 100) * scenario.operatingExpenseMultiplier;
+            }
+            totalOperatingExpenses += monthOperatingExpenses;
+        }
+        
+        const grossProfit = totalRevenue - totalCosts;
+        const netProfit = grossProfit - totalOperatingExpenses;
+        const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
+        
+        const scenarioClass = scenario.name.toLowerCase().replace(' ', '-');
+        scenarioHTML += `
+            <div class="scenario-card scenario-${scenarioClass}">
+                <h3>${scenario.name}</h3>
+                <div class="scenario-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Total Revenue:</span>
+                        <span class="metric-value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                        <span class="metric-usd">(${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Net Profit:</span>
+                        <span class="metric-value" style="color: ${netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                            ₹${netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                        </span>
+                        <span class="metric-usd">(${(netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Profit Margin:</span>
+                        <span class="metric-value">${profitMargin.toFixed(1)}%</span>
+                    </div>
+                </div>
+                <div class="scenario-assumptions">
+                    <small>Assumptions: Volume Growth ${(scenario.volumeGrowthMultiplier * 100).toFixed(0)}%, 
+                    Price ${(scenario.priceMultiplier * 100).toFixed(0)}%, 
+                    Cost ${(scenario.costMultiplier * 100).toFixed(0)}%</small>
+                </div>
+            </div>
+        `;
+    });
+    
+    document.getElementById('scenarioSection').innerHTML = `
+        <h2>📊 Scenario Analysis</h2>
+        <div class="scenario-grid">
+            ${scenarioHTML}
+        </div>
+    `;
+    document.getElementById('scenarioSection').style.display = 'block';
+};
+
+// Table display functions
+function displayConsolidatedTable() {
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    const tableData = window.currentTableData || window.projectionData;
+    
+    // Get period for labeling
+    const periodElement = document.getElementById('chartPeriod');
+    const selectedPeriod = periodElement ? periodElement.value : '1Y';
+    const isDaily = selectedPeriod === '1M';
+    const isLongPeriod = ['5Y', '10Y'].includes(selectedPeriod);
+    const showMonthly = document.getElementById('monthlyBreakdown').checked;
+    
+    // Show/hide table controls for long periods
+    const tableControls = document.getElementById('tableControls');
+    if (isLongPeriod) {
+        tableControls.style.display = 'block';
+    } else {
+        tableControls.style.display = 'none';
+    }
+    
+    // Determine data to display
+    let displayData = tableData;
+    let periodLabel, volumeLabel;
+    
+    if (isLongPeriod && !showMonthly) {
+        // Show yearly aggregated data
+        displayData = aggregateDataByYear(tableData);
+        periodLabel = 'Year';
+        volumeLabel = 'Annual Volume';
+    } else {
+        // Show month/day data
+        periodLabel = isDaily ? 'Day' : 'Month';
+        volumeLabel = isDaily ? 'Daily Volume' : 'Monthly Volume';
+    }
+    
+    let tableHTML = `
+        <thead>
+            <tr>
+                <th>${periodLabel}</th>
+                <th>Revenue (INR)</th>
+                <th>Revenue (USD)</th>
+                <th>COGS (INR)</th>
+                <th>COGS (USD)</th>
+                <th>Net Profit (INR)</th>
+                <th>Net Profit (USD)</th>
+                <th>${volumeLabel}</th>
+                <th>Margin</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    // Calculate totals
+    const totals = {
+        revenue: 0,
+        cogs: 0,
+        netProfit: 0,
+        volume: 0
+    };
+    
+    displayData.forEach((row, index) => {
+        totals.revenue += row.revenue;
+        totals.cogs += row.cogs;
+        totals.netProfit += row.netProfit;
+        totals.volume += row.volume;
+        
+        const periodDisplay = row.year !== undefined ? row.year : row.month;
+        const rowId = `row-${index}`;
+        const hasMonthlyData = row.months && row.months.length > 0;
+        
+        tableHTML += `
+            <tr id="${rowId}" ${hasMonthlyData ? `onclick="toggleYearExpansion('${rowId}')" style="cursor: pointer;"` : ''}>
+                <td>
+                    ${hasMonthlyData ? '<span class="expand-icon">▶</span> ' : ''}${periodDisplay}
+                </td>
+                <td>₹${row.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                <td>${(row.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                <td>₹${row.cogs.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                <td>${(row.cogs/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                <td style="color: ${row.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                    ₹${row.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                </td>
+                <td style="color: ${row.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                    ${(row.netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}
+                </td>
+                <td>${row.volume.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                <td>${row.profitMargin.toFixed(1)}%</td>
+            </tr>
+        `;
+        
+        // Add monthly breakdown rows if in yearly view
+        if (hasMonthlyData && showMonthly) {
+            row.months.forEach(monthRow => {
+                tableHTML += `
+                    <tr class="monthly-detail" style="background: #f9f9f9; display: none;" data-parent="${rowId}">
+                        <td style="padding-left: 30px;">→ ${monthRow.month}</td>
+                        <td>₹${monthRow.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                        <td>${(monthRow.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                        <td>₹${monthRow.cogs.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                        <td>${(monthRow.cogs/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                        <td style="color: ${monthRow.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                            ₹${monthRow.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                        </td>
+                        <td style="color: ${monthRow.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                            ${(monthRow.netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}
+                        </td>
+                        <td>${monthRow.volume.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                        <td>${monthRow.profitMargin.toFixed(1)}%</td>
+                    </tr>
+                `;
+            });
+        }
+    });
+    
+    // Add totals row
+    const totalMargin = totals.revenue > 0 ? ((totals.netProfit / totals.revenue) * 100) : 0;
+    tableHTML += `
+        <tr style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #dee2e6;">
+            <td><strong>TOTAL</strong></td>
+            <td><strong>₹${totals.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+            <td><strong>${(totals.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong></td>
+            <td><strong>₹${totals.cogs.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+            <td><strong>${(totals.cogs/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong></td>
+            <td style="color: ${totals.netProfit >= 0 ? '#22c55e' : '#ef4444'}; font-weight: bold;">
+                <strong>₹${totals.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong>
+            </td>
+            <td style="color: ${totals.netProfit >= 0 ? '#22c55e' : '#ef4444'}; font-weight: bold;">
+                <strong>${(totals.netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong>
+            </td>
+            <td><strong>${totals.volume.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+            <td><strong>${totalMargin.toFixed(1)}%</strong></td>
+        </tr>
+    `;
+    
+    tableHTML += '</tbody>';
+    document.getElementById('projectionTable').innerHTML = tableHTML;
+}
+
+function displaySegmentedTable() {
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    let tableHTML = `
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>SKU</th>
+                <th>Volume</th>
+                <th>Revenue (INR)</th>
+                <th>Revenue (USD)</th>
+                <th>Cost (INR)</th>
+                <th>Cost (USD)</th>
+                <th>Profit (INR)</th>
+                <th>Profit (USD)</th>
+                <th>Margin</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    // Create rows for each month and each segment
+    window.projectionData.forEach((monthData, monthIndex) => {
+        window.segments.forEach((segment, segmentIndex) => {
+            const segmentData = window.segmentProjections[segment.name][monthIndex];
+            
+            tableHTML += `
+                <tr>
+                    <td>${segmentIndex === 0 ? monthData.month : ''}</td>
+                    <td><strong>${segment.name}</strong></td>
+                    <td>${segmentData.volume ? (segmentData.volume / 1000000).toFixed(2) + 'M' : 'N/A'}</td>
+                    <td>₹${segmentData.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                    <td>${(segmentData.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td>₹${(segmentData.cost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                    <td>${((segmentData.cost || 0)/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                    <td style="color: ${(segmentData.profit || 0) >= 0 ? '#22c55e' : '#ef4444'}">
+                        ₹${(segmentData.profit || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                    </td>
+                    <td style="color: ${(segmentData.profit || 0) >= 0 ? '#22c55e' : '#ef4444'}">
+                        ${((segmentData.profit || 0)/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}
+                    </td>
+                    <td>${(segmentData.margin || 0).toFixed(1)}%</td>
+                </tr>
+            `;
+        });
+        
+        // Add separator row between months
+        if (monthIndex < window.projectionData.length - 1) {
+            tableHTML += `
+                <tr style="background: #f8f9fa;">
+                    <td colspan="10" style="height: 1px; padding: 0; border: none;"></td>
+                </tr>
+            `;
+        }
+    });
+    
+    tableHTML += '</tbody>';
+    document.getElementById('projectionTable').innerHTML = tableHTML;
+}
+
+function displaySegmentBreakdown() {
+    if (window.segments.length === 0) return;
+    
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    const breakdownHTML = window.segments.map(segment => {
+        const segmentData = window.segmentProjections[segment.name];
+        const totalRevenue = segmentData.reduce((sum, item) => sum + item.revenue, 0);
+        const totalProfit = segmentData.reduce((sum, item) => sum + (item.profit || 0), 0);
+        const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+        
+        return `
+            <div class="segment-summary">
+                <h4>${segment.name}</h4>
+                <div class="segment-metric">
+                    <span class="label">Total Revenue:</span>
+                    <span class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="segment-metric">
+                    <span class="label">Total Revenue (USD):</span>
+                    <span class="value">${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="segment-metric">
+                    <span class="label">Total Profit:</span>
+                    <span class="value">₹${totalProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="segment-metric">
+                    <span class="label">Total Profit (USD):</span>
+                    <span class="value">${(totalProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="segment-metric">
+                    <span class="label">Profit Margin:</span>
+                    <span class="value">${avgProfitMargin.toFixed(1)}%</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('segmentBreakdown').innerHTML = `
+        <div class="segment-breakdown-header" onclick="toggleSegmentBreakdown()">
+            <h3 class="segment-breakdown-title">SKU Breakdown (${window.segments.length} segments)</h3>
+            <div class="collapse-toggle">
+                <span class="collapse-text">Hide Details</span>
+                <span class="collapse-icon">▼</span>
+            </div>
+        </div>
+        <div class="segment-breakdown-content" style="display: block;">
+            ${breakdownHTML}
+        </div>
+    `;
+    document.getElementById('segmentBreakdown').style.display = 'block';
+}
+
+// Utility functions
+function toggleMonthlyBreakdown() {
+    displayConsolidatedTable();
+}
+
+function toggleYearExpansion(rowId) {
+    const row = document.getElementById(rowId);
+    const monthlyRows = document.querySelectorAll(`tr[data-parent="${rowId}"]`);
+    const expandIcon = row.querySelector('.expand-icon');
+    
+    if (monthlyRows.length === 0) return;
+    
+    const isExpanded = monthlyRows[0].style.display !== 'none';
+    
+    monthlyRows.forEach(monthRow => {
+        monthRow.style.display = isExpanded ? 'none' : 'table-row';
+    });
+    
+    if (expandIcon) {
+        expandIcon.textContent = isExpanded ? '▶' : '▼';
+    }
+}
+
+function toggleSegmentBreakdown() {
+    const content = document.querySelector('.segment-breakdown-content');
+    const text = document.querySelector('.collapse-text');
+    const icon = document.querySelector('.collapse-icon');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        text.textContent = 'Hide Details';
+        icon.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        text.textContent = 'Show Details';
+        icon.textContent = '▶';
+    }
+}
+
+// Model calculation helpers
+function calculateModelTotalRevenue(model) {
+    if (!model || !model.segments) return 0;
+    
+    const months = parseInt(document.getElementById('projectionMonths').value) || 12;
+    let totalRevenue = 0;
+    
+    model.segments.forEach(segment => {
+        for (let i = 0; i < months; i++) {
+            const monthlyGrowthRate = segment.volumeGrowth / 100;
+            const projectedVolume = segment.monthlyVolume * Math.pow(1 + monthlyGrowthRate, i);
+            const segmentRevenue = projectedVolume * segment.pricePerTransaction;
+            totalRevenue += segmentRevenue;
+        }
+    });
+    
+    return totalRevenue;
+}
+
+/* ================================================
+ * MODULE 4: JS/DEMOGRAPHICS.JS
+ * Lines: 787
+ * ================================================ */
+
+
+// Demographics Navigation Functions
+function setActiveDemographicNav(activeSection) {
+    document.querySelectorAll('.demo-nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.section === activeSection) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+window.showDemographicOverview = function() {
+    setActiveDemographicNav('overview');
+    document.getElementById('demographicOverviewSection').style.display = 'block';
+    document.getElementById('countryExplorerSection').style.display = 'none';
+    document.getElementById('countryComparisonSection').style.display = 'none';
+    document.getElementById('segmentAnalysisSection').style.display = 'none';
+    
+    // Load demographic overview data
+    loadDemographicOverview();
+};
+
+window.showCountryExplorer = function() {
+    setActiveDemographicNav('explorer');
+    document.getElementById('demographicOverviewSection').style.display = 'none';
+    document.getElementById('countryExplorerSection').style.display = 'block';
+    document.getElementById('countryComparisonSection').style.display = 'none';
+    document.getElementById('segmentAnalysisSection').style.display = 'none';
+};
+
+window.showCountryComparison = function() {
+    setActiveDemographicNav('comparison');
+    document.getElementById('demographicOverviewSection').style.display = 'none';
+    document.getElementById('countryExplorerSection').style.display = 'none';
+    document.getElementById('countryComparisonSection').style.display = 'block';
+    document.getElementById('segmentAnalysisSection').style.display = 'none';
+};
+
+window.showSegmentAnalysis = function() {
+    setActiveDemographicNav('analysis');
+    document.getElementById('demographicOverviewSection').style.display = 'none';
+    document.getElementById('countryExplorerSection').style.display = 'none';
+    document.getElementById('countryComparisonSection').style.display = 'none';
+    document.getElementById('segmentAnalysisSection').style.display = 'block';
+};
+
+// Load Country Details Function
+window.loadCountryDetails = function(countryKey) {
+    try {
+        const demographicData = window.externalDemographicData || window.regionalData || {};
+        
+        if (!demographicData || !demographicData[countryKey]) {
+            console.error('No demographic data found for country:', countryKey);
+            alert('Country demographic data not available yet. Please wait for data to load.');
+            return;
+        }
+        
+        const countryData = demographicData[countryKey];
+        const country = countryData.country || {};
+        const segments = countryData.demographicSegments || [];
+        const summary = countryData.summary || {};
+        
+        // Update country header
+        document.getElementById('explorerCountryName').textContent = country.name || countryKey;
+        document.getElementById('explorerCountryPopulation').textContent = country.population || 'N/A';
+        document.getElementById('explorerCountryCurrency').textContent = country.currency || 'N/A';
+        
+        // Update summary metrics
+        document.getElementById('explorerTotalSegments').textContent = segments.length;
+        document.getElementById('explorerAvgAuthRate').textContent = summary.averageAuthRate ? summary.averageAuthRate.toFixed(1) + '%' : 'N/A';
+        document.getElementById('explorerAvgPensionRate').textContent = summary.averagePensionRate ? summary.averagePensionRate.toFixed(1) + '%' : 'N/A';
+        document.getElementById('explorerAvgDigitalAdoption').textContent = summary.averageDigitalAdoption ? summary.averageDigitalAdoption.toFixed(1) + '%' : 'N/A';
+        
+        // Build segments table
+        let segmentsTableHTML = `
+            <thead>
+                <tr>
+                    <th>Segment Name</th>
+                    <th>Population (M)</th>
+                    <th>Auth Rate (%)</th>
+                    <th>Pension Rate (%)</th>
+                    <th>Digital Adoption (%)</th>
+                    <th>Economic Tier</th>
+                    <th>Urbanization (%)</th>
+                    <th>Growth Rate (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        segments.forEach(segment => {
+            segmentsTableHTML += `
+                <tr>
+                    <td><strong>${segment.name}</strong></td>
+                    <td>${segment.population}</td>
+                    <td>${segment.authPct || 'N/A'}</td>
+                    <td>${segment.pensionPct || 'N/A'}</td>
+                    <td>${segment.digitalAdoption || 'N/A'}</td>
+                    <td><span class="tier-badge tier-${segment.economicTier}">${segment.economicTier}</span></td>
+                    <td>${segment.urbanization || 'N/A'}</td>
+                    <td>${segment.authGrowthRate || 'N/A'}</td>
+                </tr>
+            `;
+        });
+        
+        segmentsTableHTML += '</tbody>';
+        document.getElementById('explorerSegmentsTable').innerHTML = segmentsTableHTML;
+        
+    } catch (error) {
+        console.error('Error loading country details:', error);
+        alert('Error loading country details. Please try again.');
+    }
+};
+
+// Compare Countries Function
+window.compareCountries = function() {
+    const country1Key = document.getElementById('compareCountry1').value;
+    const country2Key = document.getElementById('compareCountry2').value;
+    
+    if (!country1Key || !country2Key) {
+        alert('Please select both countries to compare');
+        return;
+    }
+    
+    const demographicData = window.externalDemographicData || window.regionalData;
+    const countries = window.countries || {};
+    
+    if (!demographicData || !demographicData[country1Key] || !demographicData[country2Key]) {
+        alert('Demographic data not available for selected countries');
+        return;
+    }
+    
+    const country1Data = demographicData[country1Key];
+    const country2Data = demographicData[country2Key];
+    
+    // Build comparison table
+    let comparisonHTML = `
+        <div class="comparison-header">
+            <h3>Country Comparison: ${country1Data.country?.name || country1Key} vs ${country2Data.country?.name || country2Key}</h3>
+        </div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>${country1Data.country?.name || country1Key}</th>
+                    <th>${country2Data.country?.name || country2Key}</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Basic country metrics
+    const metrics = [
+        {
+            label: 'Total Population (M)',
+            value1: country1Data.country?.population || 'N/A',
+            value2: country2Data.country?.population || 'N/A',
+            type: 'number'
+        },
+        {
+            label: 'Currency',
+            value1: country1Data.country?.currency || 'N/A',
+            value2: country2Data.country?.currency || 'N/A',
+            type: 'text'
+        },
+        {
+            label: 'Total Segments',
+            value1: country1Data.demographicSegments?.length || 0,
+            value2: country2Data.demographicSegments?.length || 0,
+            type: 'number'
+        },
+        {
+            label: 'Avg Auth Rate (%)',
+            value1: country1Data.summary?.averageAuthRate || 'N/A',
+            value2: country2Data.summary?.averageAuthRate || 'N/A',
+            type: 'percentage'
+        },
+        {
+            label: 'Avg Pension Rate (%)',
+            value1: country1Data.summary?.averagePensionRate || 'N/A',
+            value2: country2Data.summary?.averagePensionRate || 'N/A',
+            type: 'percentage'
+        },
+        {
+            label: 'Avg Digital Adoption (%)',
+            value1: country1Data.summary?.averageDigitalAdoption || 'N/A',
+            value2: country2Data.summary?.averageDigitalAdoption || 'N/A',
+            type: 'percentage'
+        },
+        {
+            label: 'Avg Urbanization (%)',
+            value1: country1Data.summary?.averageUrbanization || 'N/A',
+            value2: country2Data.summary?.averageUrbanization || 'N/A',
+            type: 'percentage'
+        },
+        {
+            label: 'Avg Growth Rate (%)',
+            value1: country1Data.summary?.averageGrowthRate || 'N/A',
+            value2: country2Data.summary?.averageGrowthRate || 'N/A',
+            type: 'percentage'
+        }
+    ];
+    
+    metrics.forEach(metric => {
+        let difference = 'N/A';
+        let diffClass = '';
+        
+        if (metric.type === 'number' || metric.type === 'percentage') {
+            const val1 = parseFloat(metric.value1);
+            const val2 = parseFloat(metric.value2);
+            
+            if (!isNaN(val1) && !isNaN(val2)) {
+                const diff = val1 - val2;
+                difference = diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
+                diffClass = diff > 0 ? 'positive' : diff < 0 ? 'negative' : 'neutral';
+                
+                if (metric.type === 'percentage') {
+                    difference += '%';
+                }
+            }
+        }
+        
+        comparisonHTML += `
+            <tr>
+                <td><strong>${metric.label}</strong></td>
+                <td>${metric.value1}</td>
+                <td>${metric.value2}</td>
+                <td class="diff-${diffClass}">${difference}</td>
+            </tr>
+        `;
+    });
+    
+    comparisonHTML += '</tbody></table>';
+    
+    document.getElementById('comparisonResults').innerHTML = comparisonHTML;
+};
+
+// Pension Model Loading Functions
+function loadPensionModelFromExternal(silent = false) {
+    const currentCountry = window.currentCountry || 'india';
+    
+    // Try to load country-specific regional data
+    let demographicData = null;
+    let dataType = null;
+    
+    if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+        window.externalModelConfig.regionalData[currentCountry]) {
+        
+        const countryData = window.externalModelConfig.regionalData[currentCountry];
+        
+        // Use standardized demographicSegments structure
+        if (countryData.demographicSegments) {
+            demographicData = countryData.demographicSegments;
+            dataType = 'demographic';
+        } else if (countryData.pensionStates) {
+            demographicData = countryData.pensionStates;
+            dataType = 'pension';
+        }
+    }
+    
+    if (!demographicData) {
+        if (!silent) {
+            console.log('No external pension/demographic data available for', currentCountry);
+        }
+        return false;
+    }
+    
+    // Clear existing segments
+    window.segments = [];
+    
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    demographicData.forEach(item => {
+        const segment = {
+            id: Date.now() + Math.random(),
+            name: item.name || `${item.stateName || item.segmentName} - ${dataType === 'pension' ? 'Pension Auth' : 'Auth'}`,
+            type: 'sku',
+            pricePerTransaction: dataType === 'pension' ? 3.50 : (item.pricePerTransaction || 2.50),
+            costPerTransaction: dataType === 'pension' ? 2.00 : (item.costPerTransaction || 1.50),
+            monthlyVolume: calculateMonthlyVolume(item, dataType),
+            volumeGrowth: item.authGrowthRate || item.volumeGrowth || 8,
+            category: dataType === 'pension' ? 'biometric' : 'authentication',
+            notes: generateSegmentNotes(item, dataType),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        window.segments.push(segment);
+    });
+    
+    if (!silent) {
+        showSuccessMessage(`Loaded ${window.segments.length} segments from ${currentCountry} ${dataType} data`);
+    }
+    
+    window.renderSegments();
+    updateSegmentCount();
+    return true;
+}
+
+// Calculate Monthly Volume for Demographics
+function calculateMonthlyVolume(item, dataType) {
+    const population = parseFloat(item.population) || 0;
+    const authPct = parseFloat(item.authPct) || 10;
+    const pensionPct = parseFloat(item.pensionPct) || 8;
+    const authFreq = parseFloat(item.authFreq) || 1.0;
+    
+    if (dataType === 'pension') {
+        // Pension-specific calculation
+        const pensionPopulation = population * (pensionPct / 100);
+        return Math.round(pensionPopulation * 1000000 * authFreq);
+    } else {
+        // General authentication calculation
+        const authPopulation = population * (authPct / 100);
+        return Math.round(authPopulation * 1000000 * authFreq);
+    }
+}
+
+// Generate Segment Notes
+function generateSegmentNotes(item, dataType) {
+    const notes = [];
+    
+    if (item.economicTier) notes.push(`Economic Tier: ${item.economicTier}`);
+    if (item.digitalAdoption) notes.push(`Digital Adoption: ${item.digitalAdoption}%`);
+    if (item.urbanization) notes.push(`Urbanization: ${item.urbanization}%`);
+    if (dataType === 'pension' && item.pensionPct) notes.push(`Pension Coverage: ${item.pensionPct}%`);
+    
+    return notes.join(', ');
+}
+
+// Main Pension Model Function
+function loadPensionModel(silent = false) {
+    // Check if external pension states are available
+    if (window.externalPensionStates) {
+        loadPensionModelFromExternal(silent);
+        return;
+    }
+    
+    // Otherwise use the original implementation
+    // Clear existing segments
+    window.segments = [];
+    
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    // State-wise pension data with population and coverage percentages
+    const statesPensionData = [
+        { name: 'UP - Pension Auth', population: 235, pensionPct: 6.4 },
+        { name: 'MH - Pension Auth', population: 129, pensionPct: 8.5 },
+        { name: 'Bihar - Pension Auth', population: 125, pensionPct: 4.2 },
+        { name: 'WB - Pension Auth', population: 105, pensionPct: 10.8 },
+        { name: 'MP - Pension Auth', population: 85, pensionPct: 5.8 },
+        { name: 'TN - Pension Auth', population: 78, pensionPct: 15.2 },
+        { name: 'Rajasthan - Pension Auth', population: 80, pensionPct: 7.1 },
+        { name: 'Karnataka - Pension Auth', population: 68, pensionPct: 9.6 },
+        { name: 'Gujarat - Pension Auth', population: 64, pensionPct: 8.3 },
+        { name: 'AP - Pension Auth', population: 54, pensionPct: 11.4 },
+        { name: 'Odisha - Pension Auth', population: 46, pensionPct: 6.9 },
+        { name: 'Telangana - Pension Auth', population: 37, pensionPct: 12.8 },
+        { name: 'Kerala - Pension Auth', population: 35, pensionPct: 14.8 },
+        { name: 'Jharkhand - Pension Auth', population: 39, pensionPct: 5.1 },
+        { name: 'Assam - Pension Auth', population: 36, pensionPct: 6.2 },
+        { name: 'Punjab - Pension Auth', population: 31, pensionPct: 9.8 },
+        { name: 'Chhattisgarh - Pension Auth', population: 29, pensionPct: 5.5 },
+        { name: 'Haryana - Pension Auth', population: 28, pensionPct: 8.7 },
+        { name: 'Delhi - Pension Auth', population: 19, pensionPct: 7.9 },
+        { name: 'Uttarakhand - Pension Auth', population: 11, pensionPct: 8.1 }
+    ];
+    
+    // Generate SKUs based on state pension data
+    statesPensionData.forEach(state => {
+        // Calculate monthly volume based on pension population
+        const pensionPopulation = state.population * (state.pensionPct / 100);
+        const monthlyVolume = Math.round(pensionPopulation * 1000000 * 0.8); // 0.8 authentications per month per person
+        
+        const segment = {
+            id: Date.now() + Math.random(),
+            name: state.name,
+            type: 'sku',
+            pricePerTransaction: 3.50, // Higher price for biometric pension authentication
+            costPerTransaction: 2.00,
+            monthlyVolume: monthlyVolume,
+            volumeGrowth: 8 + (Math.random() * 4 - 2), // 6-10% growth with some randomness
+            category: 'biometric',
+            notes: `State: ${state.name.split(' - ')[0]}, Population: ${state.population}M, Pension Coverage: ${state.pensionPct}%`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        window.segments.push(segment);
+    });
+    
+    if (!silent) {
+        showSuccessMessage(`Loaded pension authentication model with ${window.segments.length} state-wise segments!`);
+    }
+    
+    window.renderSegments();
+    updateSegmentCount();
+}
+
+// Refresh Demographic Insights Function
+function refreshDemographicInsights() {
+    const currentCountry = window.currentCountry || 'india';
+    
+    // Get demographic data for current country
+    let demographicData = null;
+    if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+        window.externalModelConfig.regionalData[currentCountry]) {
+        const countryData = window.externalModelConfig.regionalData[currentCountry];
+        demographicData = countryData.demographicSegments || countryData.pensionStates;
+    } else if (window.externalDemographicSegments) {
+        demographicData = window.externalDemographicSegments;
+    }
+    
+    if (!demographicData) {
+        // Clear all fields
+        const fields = ['totalPopulation', 'totalSegments', 'avgAuthRate', 'avgDigitalAdoption', 
+                       'avgPensionRate', 'highEconomicSegments', 'mediumEconomicSegments', 
+                       'lowEconomicSegments', 'avgGrowthRate', 'fastGrowingSegments', 
+                       'revenueOpportunity', 'avgUrbanization', 'highDigitalSegments'];
+        
+        fields.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                element.textContent = '-';
+            }
+        });
+        return;
+    }
+    
+    // Calculate insights
+    const insights = calculateDemographicInsights(demographicData);
+    
+    // Update UI elements
+    Object.keys(insights).forEach(key => {
+        const element = document.getElementById(key);
+        if (element && insights[key] !== undefined) {
+            element.textContent = insights[key];
+        }
+    });
+}
+
+// Calculate Demographic Insights
+function calculateDemographicInsights(demographicData) {
+    let totalPopulation = 0;
+    let totalAuthPopulation = 0;
+    let totalPensionPopulation = 0;
+    let totalDigitalPopulation = 0;
+    let weightedAuthRate = 0;
+    let weightedPensionRate = 0;
+    let weightedDigitalAdoption = 0;
+    let weightedUrbanization = 0;
+    let weightedGrowthRate = 0;
+    let highEconomicCount = 0;
+    let mediumEconomicCount = 0;
+    let lowEconomicCount = 0;
+    let highDigitalCount = 0;
+    let fastGrowingCount = 0;
+    let totalRevenuePotential = 0;
+    
+    demographicData.forEach(segment => {
+        const population = parseFloat(segment.population) || 0;
+        const authPct = parseFloat(segment.authPct) || 0;
+        const pensionPct = parseFloat(segment.pensionPct) || 0;
+        const digitalAdoption = parseFloat(segment.digitalAdoption) || 0;
+        const urbanization = parseFloat(segment.urbanization) || 0;
+        const growthRate = parseFloat(segment.authGrowthRate) || 0;
+        const economicTier = segment.economicTier;
+        
+        totalPopulation += population;
+        
+        if (authPct > 0) {
+            totalAuthPopulation += population;
+            weightedAuthRate += (authPct * population);
+        }
+        
+        if (pensionPct > 0) {
+            totalPensionPopulation += population;
+            weightedPensionRate += (pensionPct * population);
+        }
+        
+        if (digitalAdoption > 0) {
+            totalDigitalPopulation += population;
+            weightedDigitalAdoption += (digitalAdoption * population);
+            
+            if (digitalAdoption > 70) {
+                highDigitalCount++;
+            }
+        }
+        
+        if (urbanization > 0) {
+            weightedUrbanization += (urbanization * population);
+        }
+        
+        if (growthRate > 0) {
+            weightedGrowthRate += (growthRate * population);
+            
+            if (growthRate > 10) {
+                fastGrowingCount++;
+            }
+        }
+        
+        // Count economic tiers
+        if (economicTier === 'high') highEconomicCount++;
+        else if (economicTier === 'medium') mediumEconomicCount++;
+        else if (economicTier === 'low') lowEconomicCount++;
+        
+        // Calculate potential revenue (simplified)
+        const authPopulation = population * (authPct / 100);
+        const monthlyTransactions = authPopulation * 1000000 * 1.5; // 1.5 transactions per person per month
+        const monthlyRevenue = monthlyTransactions * 2.50; // ₹2.50 per transaction
+        totalRevenuePotential += monthlyRevenue * 12; // Annual
+    });
+    
+    // Calculate averages
+    const avgAuthRate = totalAuthPopulation > 0 ? (weightedAuthRate / totalAuthPopulation) : 0;
+    const avgPensionRate = totalPensionPopulation > 0 ? (weightedPensionRate / totalPensionPopulation) : 0;
+    const avgDigitalAdoption = totalDigitalPopulation > 0 ? (weightedDigitalAdoption / totalDigitalPopulation) : 0;
+    const avgUrbanization = totalPopulation > 0 ? (weightedUrbanization / totalPopulation) : 0;
+    const avgGrowthRate = totalPopulation > 0 ? (weightedGrowthRate / totalPopulation) : 0;
+    
+    return {
+        totalPopulation: totalPopulation.toFixed(1) + 'M',
+        totalSegments: demographicData.length,
+        avgAuthRate: avgAuthRate.toFixed(1) + '%',
+        avgPensionRate: avgPensionRate.toFixed(1) + '%',
+        avgDigitalAdoption: avgDigitalAdoption.toFixed(1) + '%',
+        avgUrbanization: avgUrbanization.toFixed(1) + '%',
+        avgGrowthRate: avgGrowthRate.toFixed(1) + '%',
+        highEconomicSegments: highEconomicCount,
+        mediumEconomicSegments: mediumEconomicCount,
+        lowEconomicSegments: lowEconomicCount,
+        highDigitalSegments: highDigitalCount,
+        fastGrowingSegments: fastGrowingCount,
+        revenueOpportunity: formatCurrency(totalRevenuePotential)
+    };
+}
+
+// Demographic Overview Loading Function
+function loadDemographicOverview() {
+    try {
+        const demographicData = window.externalDemographicData || window.regionalData || {};
+        const countries = window.countries || {};
+        
+        // Check if demographic data is available
+        if (!demographicData || Object.keys(demographicData).length === 0) {
+            console.log('No demographic data available, showing placeholder...');
+            
+            // Update overview cards with placeholder data
+            const placeholders = [
+                { id: 'totalCountriesOverview', value: '8' },
+                { id: 'totalSegmentsOverview', value: 'Loading...' },
+                { id: 'totalPopulationOverview', value: 'Loading...' },
+                { id: 'avgAuthRateOverview', value: 'Loading...' },
+                { id: 'avgPensionRateOverview', value: 'Loading...' }
+            ];
+            
+            placeholders.forEach(placeholder => {
+                const element = document.getElementById(placeholder.id);
+                if (element) {
+                    element.textContent = placeholder.value;
+                }
+            });
+            return;
+        }
+        
+        // Calculate aggregate statistics
+        let totalSegments = 0;
+        let totalPopulation = 0;
+        let weightedAuthRate = 0;
+        let weightedPensionRate = 0;
+        let weightedDigitalAdoption = 0;
+        let totalAuthPopulation = 0;
+        let totalPensionPopulation = 0;
+        let totalDigitalPopulation = 0;
+        
+        Object.keys(demographicData).forEach(countryKey => {
+            const countryData = demographicData[countryKey];
+            const segments = countryData.demographicSegments || [];
+            
+            totalSegments += segments.length;
+            
+            segments.forEach(segment => {
+                const population = parseFloat(segment.population) || 0;
+                const authRate = parseFloat(segment.authPct) || 0;
+                const pensionRate = parseFloat(segment.pensionPct) || 0;
+                const digitalAdoption = parseFloat(segment.digitalAdoption) || 0;
+                
+                totalPopulation += population;
+                
+                if (authRate > 0) {
+                    weightedAuthRate += (authRate * population);
+                    totalAuthPopulation += population;
+                }
+                
+                if (pensionRate > 0) {
+                    weightedPensionRate += (pensionRate * population);
+                    totalPensionPopulation += population;
+                }
+                
+                if (digitalAdoption > 0) {
+                    weightedDigitalAdoption += (digitalAdoption * population);
+                    totalDigitalPopulation += population;
+                }
+            });
+        });
+        
+        // Calculate averages
+        const avgAuthRate = totalAuthPopulation > 0 ? (weightedAuthRate / totalAuthPopulation) : 0;
+        const avgPensionRate = totalPensionPopulation > 0 ? (weightedPensionRate / totalPensionPopulation) : 0;
+        const avgDigitalAdoption = totalDigitalPopulation > 0 ? (weightedDigitalAdoption / totalDigitalPopulation) : 0;
+        
+        // Update overview cards
+        const overviewData = [
+            { id: 'totalCountriesOverview', value: Object.keys(demographicData).length },
+            { id: 'totalSegmentsOverview', value: totalSegments },
+            { id: 'totalPopulationOverview', value: totalPopulation.toFixed(1) + 'M' },
+            { id: 'avgAuthRateOverview', value: avgAuthRate.toFixed(1) + '%' },
+            { id: 'avgPensionRateOverview', value: avgPensionRate.toFixed(1) + '%' },
+            { id: 'avgDigitalAdoptionOverview', value: avgDigitalAdoption.toFixed(1) + '%' }
+        ];
+        
+        overviewData.forEach(data => {
+            const element = document.getElementById(data.id);
+            if (element) {
+                element.textContent = data.value;
+            }
+        });
+        
+        // Build countries table
+        buildCountriesOverviewTable(demographicData);
+        
+    } catch (error) {
+        console.error('Error loading demographic overview:', error);
+    }
+}
+
+// Build Countries Overview Table
+function buildCountriesOverviewTable(demographicData) {
+    let tableHTML = `
+        <thead>
+            <tr>
+                <th>Country</th>
+                <th>Population (M)</th>
+                <th>Segments</th>
+                <th>Auth Rate (%)</th>
+                <th>Pension Rate (%)</th>
+                <th>Digital Adoption (%)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    Object.keys(demographicData).forEach(countryKey => {
+        const countryData = demographicData[countryKey];
+        const country = countryData.country || {};
+        const summary = countryData.summary || {};
+        const segments = countryData.demographicSegments || [];
+        
+        tableHTML += `
+            <tr>
+                <td>
+                    <strong>${country.name || countryKey}</strong>
+                    <br><small>${country.currency || 'N/A'}</small>
+                </td>
+                <td>${country.population || 'N/A'}</td>
+                <td>${segments.length}</td>
+                <td>${summary.averageAuthRate ? summary.averageAuthRate.toFixed(1) : 'N/A'}</td>
+                <td>${summary.averagePensionRate ? summary.averagePensionRate.toFixed(1) : 'N/A'}</td>
+                <td>${summary.averageDigitalAdoption ? summary.averageDigitalAdoption.toFixed(1) : 'N/A'}</td>
+                <td>
+                    <button class="btn-small btn-info" onclick="loadCountryDetails('${countryKey}'); showCountryExplorer();">
+                        View Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableHTML += '</tbody>';
+    
+    const overviewTable = document.getElementById('countriesOverviewTable');
+    if (overviewTable) {
+        overviewTable.innerHTML = tableHTML;
+    }
+}
+
+// Show Demographic Details Modal
+function showDemographicDetails() {
+    const currentCountry = window.currentCountry || 'india';
+    
+    // Get demographic data for current country
+    let demographicData = null;
+    if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+        window.externalModelConfig.regionalData[currentCountry]) {
+        const countryData = window.externalModelConfig.regionalData[currentCountry];
+        demographicData = countryData.demographicSegments || countryData.pensionStates;
+    } else if (window.externalDemographicSegments) {
+        demographicData = window.externalDemographicSegments;
+    }
+    
+    if (!demographicData) {
+        alert('No demographic data available for the current country.');
+        return;
+    }
+    
+    let detailsHTML = `
+        <div class="demographic-details">
+            <h3>Detailed Demographic Breakdown</h3>
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th>Segment</th>
+                        <th>Population (M)</th>
+                        <th>Auth Rate (%)</th>
+                        <th>Pension Rate (%)</th>
+                        <th>Digital Adoption (%)</th>
+                        <th>Economic Tier</th>
+                        <th>Growth Rate (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    demographicData.forEach(segment => {
+        detailsHTML += `
+            <tr>
+                <td><strong>${segment.name || segment.stateName}</strong></td>
+                <td>${segment.population || 'N/A'}</td>
+                <td>${segment.authPct || 'N/A'}</td>
+                <td>${segment.pensionPct || 'N/A'}</td>
+                <td>${segment.digitalAdoption || 'N/A'}</td>
+                <td><span class="tier-badge tier-${segment.economicTier}">${segment.economicTier || 'N/A'}</span></td>
+                <td>${segment.authGrowthRate || 'N/A'}</td>
+            </tr>
+        `;
+    });
+    
+    detailsHTML += `
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top: 20px; text-align: center;">
+            <button class="btn-warning" onclick="loadPensionModel()">Load as Segments</button>
+        </div>
+    `;
+    
+    showModal('Demographic Details', detailsHTML);
+}
+
+// Initialize demographic data and auto-refresh
+function initializeDemographicData() {
+    // Try to load from model config as fallback
+    if (window.modelConfig && window.modelConfig.regionalData) {
+        window.regionalData = window.modelConfig.regionalData;
+        console.log('Initialized demographic data from model config');
+    }
+    
+    // Auto-refresh insights
+    setTimeout(refreshDemographicInsights, 1000);
+}
+
+// Auto-refresh demographic insights when country changes or data loads
+function updateDemographicInsightsOnCountryChange() {
+    // Add small delay to ensure data is loaded
+    setTimeout(refreshDemographicInsights, 500);
+}
+
+// Hook into existing country change function if it exists
+const originalChangeCountry = window.changeCountry;
+if (originalChangeCountry) {
+    window.changeCountry = function(country) {
+        originalChangeCountry(country);
+        updateDemographicInsightsOnCountryChange();
+    };
+}
+
+// Export functions for external access
+window.loadPensionModel = loadPensionModel;
+window.refreshDemographicInsights = refreshDemographicInsights;
+window.loadDemographicOverview = loadDemographicOverview;
+window.showDemographicDetails = showDemographicDetails;
+window.initializeDemographicData = initializeDemographicData;
+
+/* ================================================
+ * MODULE 5: JS/EXPORT.JS
+ * Lines: 461
+ * ================================================ */
+
+
+// Main export function for table data
+function exportTableData(format) {
+    const tableData = window.currentTableData || window.projectionData;
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    const periodElement = document.getElementById('chartPeriod');
+    const selectedPeriod = periodElement ? periodElement.value : '1Y';
+    const isLongPeriod = ['5Y', '10Y'].includes(selectedPeriod);
+    const showMonthly = document.getElementById('monthlyBreakdown')?.checked || false;
+    
+    let exportData = tableData;
+    let filename = `revenue_projections_${selectedPeriod}`;
+    
+    // If long period and not showing monthly, use yearly aggregation
+    if (isLongPeriod && !showMonthly) {
+        exportData = aggregateDataByYear(tableData);
+        filename += '_yearly';
+    } else {
+        filename += selectedPeriod === '1M' ? '_daily' : '_monthly';
+    }
+    
+    if (format === 'csv') {
+        exportToCSV(exportData, filename, usdRate);
+    } else if (format === 'excel') {
+        exportToExcel(exportData, filename, usdRate);
+    }
+}
+
+// CSV Export Function
+function exportToCSV(data, filename, usdRate) {
+    let csvContent = '';
+    
+    // Headers
+    if (data[0] && data[0].year !== undefined) {
+        // Yearly data
+        csvContent = 'Year,Revenue (INR),Revenue (USD),COGS (INR),COGS (USD),Net Profit (INR),Net Profit (USD),Transaction Volume,Profit Margin (%)\n';
+        data.forEach(row => {
+            csvContent += `${row.year},"₹${row.revenue.toLocaleString('en-IN')}","${(row.revenue/usdRate).toLocaleString('en-US')}","₹${row.cogs.toLocaleString('en-IN')}","${(row.cogs/usdRate).toLocaleString('en-US')}","₹${row.netProfit.toLocaleString('en-IN')}","${(row.netProfit/usdRate).toLocaleString('en-US')}",${row.volume.toLocaleString('en-IN')},${row.profitMargin.toFixed(1)}\n`;
+        });
+    } else {
+        // Monthly/Daily data
+        csvContent = 'Period,Revenue (INR),Revenue (USD),COGS (INR),COGS (USD),Net Profit (INR),Net Profit (USD),Transaction Volume,Profit Margin (%)\n';
+        data.forEach(row => {
+            csvContent += `${row.month},"₹${row.revenue.toLocaleString('en-IN')}","${(row.revenue/usdRate).toLocaleString('en-US')}","₹${row.cogs.toLocaleString('en-IN')}","${(row.cogs/usdRate).toLocaleString('en-US')}","₹${row.netProfit.toLocaleString('en-IN')}","${(row.netProfit/usdRate).toLocaleString('en-US')}",${row.volume.toLocaleString('en-IN')},${row.profitMargin.toFixed(1)}\n`;
+        });
+    }
+    
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.csv`;
+    link.click();
+}
+
+// Excel Export Function with XLSX library
+function exportToExcel(data, filename, usdRate) {
+    // Check if XLSX library is available
+    if (typeof XLSX === 'undefined') {
+        console.warn('XLSX library not available, falling back to CSV export');
+        exportToCSV(data, filename, usdRate);
+        return;
+    }
+    
+    const wb = XLSX.utils.book_new();
+    
+    // Prepare data for Excel
+    const excelData = [];
+    
+    if (data[0] && data[0].year !== undefined) {
+        // Yearly data headers
+        excelData.push(['Year', 'Revenue (INR)', 'Revenue (USD)', 'COGS (INR)', 'COGS (USD)', 'Net Profit (INR)', 'Net Profit (USD)', 'Transaction Volume', 'Profit Margin (%)']);
+        data.forEach(row => {
+            excelData.push([
+                row.year,
+                row.revenue,
+                row.revenue/usdRate,
+                row.cogs,
+                row.cogs/usdRate,
+                row.netProfit,
+                row.netProfit/usdRate,
+                row.volume,
+                row.profitMargin
+            ]);
+        });
+    } else {
+        // Monthly/Daily data headers
+        excelData.push(['Period', 'Revenue (INR)', 'Revenue (USD)', 'COGS (INR)', 'COGS (USD)', 'Net Profit (INR)', 'Net Profit (USD)', 'Transaction Volume', 'Profit Margin (%)']);
+        data.forEach(row => {
+            excelData.push([
+                row.month,
+                row.revenue,
+                row.revenue/usdRate,
+                row.cogs,
+                row.cogs/usdRate,
+                row.netProfit,
+                row.netProfit/usdRate,
+                row.volume,
+                row.profitMargin
+            ]);
+        });
+    }
+    
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    XLSX.utils.book_append_sheet(wb, ws, 'Revenue Projections');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+}
+
+// Comprehensive Excel Export Function (Full Analysis)
+function exportToExcel() {
+    if (window.projectionData.length === 0) {
+        alert('No projection data to export. Please calculate projections first.');
+        return;
+    }
+    
+    // Check if XLSX library is available
+    if (typeof XLSX === 'undefined') {
+        alert('Excel export requires the XLSX library. This feature exports data as CSV instead.');
+        exportToCSV();
+        return;
+    }
+    
+    const wb = XLSX.utils.book_new();
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    // 1. Main Projections Sheet
+    const mainData = window.projectionData.map(row => ({
+        'Month': row.month,
+        'Revenue (INR)': row.revenue,
+        'Revenue (USD)': row.revenue / usdRate,
+        'COGS (INR)': row.cogs,
+        'COGS (USD)': row.cogs / usdRate,
+        'Gross Profit (INR)': row.grossProfit,
+        'Gross Profit (USD)': row.grossProfit / usdRate,
+        'Operating Expenses (INR)': row.operatingExpenses,
+        'Operating Expenses (USD)': row.operatingExpenses / usdRate,
+        'Net Profit (INR)': row.netProfit,
+        'Net Profit (USD)': row.netProfit / usdRate,
+        'Profit Margin (%)': row.profitMargin,
+        'Transaction Volume': row.volume,
+        'Cumulative Revenue (INR)': row.cumulativeRevenue,
+        'Cumulative Revenue (USD)': row.cumulativeRevenue / usdRate
+    }));
+    
+    const mainSheet = XLSX.utils.json_to_sheet(mainData);
+    XLSX.utils.book_append_sheet(wb, mainSheet, 'Main Projections');
+    
+    // 2. Segment Breakdown Sheet (if segments exist)
+    if (window.segments.length > 0) {
+        const segmentData = [];
+        
+        window.projectionData.forEach((monthData, monthIndex) => {
+            window.segments.forEach(segment => {
+                const segmentProjection = window.segmentProjections[segment.name][monthIndex];
+                
+                segmentData.push({
+                    'Month': monthData.month,
+                    'Segment Name': segment.name,
+                    'Category': segment.category || 'N/A',
+                    'Price per Transaction (INR)': segment.pricePerTransaction,
+                    'Price per Transaction (USD)': segment.pricePerTransaction / usdRate,
+                    'Cost per Transaction (INR)': segment.costPerTransaction,
+                    'Cost per Transaction (USD)': segment.costPerTransaction / usdRate,
+                    'Monthly Volume': segmentProjection.volume,
+                    'Revenue (INR)': segmentProjection.revenue,
+                    'Revenue (USD)': segmentProjection.revenue / usdRate,
+                    'Cost (INR)': segmentProjection.cost || 0,
+                    'Cost (USD)': (segmentProjection.cost || 0) / usdRate,
+                    'Profit (INR)': segmentProjection.profit || 0,
+                    'Profit (USD)': (segmentProjection.profit || 0) / usdRate,
+                    'Profit Margin (%)': segmentProjection.margin || 0,
+                    'Volume Growth (%)': segment.volumeGrowth,
+                    'Notes': segment.notes || ''
+                });
+            });
+        });
+        
+        const segmentSheet = XLSX.utils.json_to_sheet(segmentData);
+        XLSX.utils.book_append_sheet(wb, segmentSheet, 'Segment Details');
+    }
+    
+    // 3. Summary Statistics Sheet
+    const totalRevenue = window.projectionData.reduce((sum, row) => sum + row.revenue, 0);
+    const totalProfit = window.projectionData.reduce((sum, row) => sum + row.netProfit, 0);
+    const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+    const totalVolume = window.projectionData.reduce((sum, row) => sum + row.volume, 0);
+    
+    const summaryData = [
+        { 'Metric': 'Total Revenue (INR)', 'Value': totalRevenue, 'Value (USD)': totalRevenue / usdRate },
+        { 'Metric': 'Total Net Profit (INR)', 'Value': totalProfit, 'Value (USD)': totalProfit / usdRate },
+        { 'Metric': 'Average Profit Margin (%)', 'Value': avgProfitMargin, 'Value (USD)': avgProfitMargin },
+        { 'Metric': 'Total Transaction Volume', 'Value': totalVolume, 'Value (USD)': totalVolume },
+        { 'Metric': 'Average Monthly Revenue (INR)', 'Value': totalRevenue / window.projectionData.length, 'Value (USD)': (totalRevenue / window.projectionData.length) / usdRate },
+        { 'Metric': 'Average Monthly Profit (INR)', 'Value': totalProfit / window.projectionData.length, 'Value (USD)': (totalProfit / window.projectionData.length) / usdRate },
+        { 'Metric': 'Exchange Rate (INR/USD)', 'Value': usdRate, 'Value (USD)': 1 },
+        { 'Metric': 'Projection Period (Months)', 'Value': window.projectionData.length, 'Value (USD)': window.projectionData.length },
+        { 'Metric': 'Number of Segments', 'Value': window.segments.length, 'Value (USD)': window.segments.length }
+    ];
+    
+    const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+    
+    // 4. Segment Configuration Sheet
+    if (window.segments.length > 0) {
+        const segmentConfigData = window.segments.map(segment => ({
+            'Segment ID': segment.id,
+            'Name': segment.name,
+            'Type': segment.type,
+            'Category': segment.category || 'N/A',
+            'Price per Transaction (INR)': segment.pricePerTransaction,
+            'Price per Transaction (USD)': segment.pricePerTransaction / usdRate,
+            'Cost per Transaction (INR)': segment.costPerTransaction,
+            'Cost per Transaction (USD)': segment.costPerTransaction / usdRate,
+            'Monthly Volume': segment.monthlyVolume,
+            'Volume Growth (% annually)': segment.volumeGrowth,
+            'Margin (%)': segment.pricePerTransaction > 0 ? ((segment.pricePerTransaction - segment.costPerTransaction) / segment.pricePerTransaction * 100) : 0,
+            'Notes': segment.notes || '',
+            'Created At': segment.createdAt || '',
+            'Updated At': segment.updatedAt || ''
+        }));
+        
+        const segmentConfigSheet = XLSX.utils.json_to_sheet(segmentConfigData);
+        XLSX.utils.book_append_sheet(wb, segmentConfigSheet, 'Segment Config');
+    }
+    
+    // 5. Demographic Data Sheet (if available)
+    if (window.externalDemographicSegments && window.externalDemographicSegments.length > 0) {
+        const demographicExportData = window.externalDemographicSegments.map(segment => ({
+            'Segment Name': segment.name,
+            'Population (Millions)': segment.population || 'N/A',
+            'Authentication Rate (%)': segment.authPct || 'N/A',
+            'Pension Rate (%)': segment.pensionPct || 'N/A',
+            'Authentication Frequency': segment.authFreq || 'N/A',
+            'Digital Adoption (%)': segment.digitalAdoption || 'N/A',
+            'Economic Tier': segment.economicTier || 'N/A',
+            'Urbanization (%)': segment.urbanization || 'N/A',
+            'Auth Growth Rate (%)': segment.authGrowthRate || 'N/A'
+        }));
+        
+        const demographicSheet = XLSX.utils.json_to_sheet(demographicExportData);
+        XLSX.utils.book_append_sheet(wb, demographicSheet, 'Demographics');
+    }
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `APAC_Revenue_Projections_${timestamp}`;
+    
+    // Write file
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+}
+
+// Fallback CSV Export Function
+function exportToCSV() {
+    if (window.projectionData.length === 0) {
+        alert('No projection data to export. Please calculate projections first.');
+        return;
+    }
+    
+    const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+    
+    // Create CSV content
+    let csvContent = "Month,Revenue (INR),Revenue (USD),COGS (INR),COGS (USD),Net Profit (INR),Net Profit (USD),Profit Margin (%)\n";
+    
+    window.projectionData.forEach(row => {
+        csvContent += [
+            row.month,
+            row.revenue.toFixed(2),
+            (row.revenue / usdRate).toFixed(2),
+            row.cogs.toFixed(2),
+            (row.cogs / usdRate).toFixed(2),
+            row.netProfit.toFixed(2),
+            (row.netProfit / usdRate).toFixed(2),
+            row.profitMargin.toFixed(1)
+        ].join(',') + '\n';
+    });
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.download = `APAC_Revenue_Projections_${timestamp}.csv`;
+    link.click();
+}
+
+// Export Demographic Data Function
+function exportDemographicData() {
+    const currentCountry = window.currentCountry || 'india';
+    
+    // Get demographic data for current country
+    let demographicData = null;
+    let countryData = null;
+    
+    if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+        window.externalModelConfig.regionalData[currentCountry]) {
+        countryData = window.externalModelConfig.regionalData[currentCountry];
+        demographicData = countryData.demographicSegments || countryData.pensionStates;
+    } else if (window.externalDemographicSegments) {
+        demographicData = window.externalDemographicSegments;
+    }
+    
+    if (!demographicData || demographicData.length === 0) {
+        alert('No demographic data available for export.');
+        return;
+    }
+    
+    // Check if XLSX library is available
+    if (typeof XLSX === 'undefined') {
+        console.warn('XLSX library not available, exporting as CSV');
+        exportDemographicCSV(demographicData, currentCountry);
+        return;
+    }
+    
+    const wb = XLSX.utils.book_new();
+    
+    // 1. Main demographic data
+    const exportData = demographicData.map(segment => ({
+        'Segment Name': segment.name || segment.stateName,
+        'Population (Millions)': segment.population || 'N/A',
+        'Authentication Rate (%)': segment.authPct || 'N/A',
+        'Pension Rate (%)': segment.pensionPct || 'N/A',
+        'Authentication Frequency': segment.authFreq || 'N/A',
+        'Digital Adoption (%)': segment.digitalAdoption || 'N/A',
+        'Economic Tier': segment.economicTier || 'N/A',
+        'Urbanization (%)': segment.urbanization || 'N/A',
+        'Auth Growth Rate (%)': segment.authGrowthRate || 'N/A',
+        'Notes': segment.notes || ''
+    }));
+    
+    const mainSheet = XLSX.utils.json_to_sheet(exportData);
+    XLSX.utils.book_append_sheet(wb, mainSheet, 'Demographics');
+    
+    // 2. Summary statistics if available
+    if (countryData && countryData.summary) {
+        const summaryData = Object.entries(countryData.summary).map(([key, value]) => ({
+            'Metric': key,
+            'Value': value
+        }));
+        
+        const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+    }
+    
+    // 3. Country information if available
+    if (countryData && countryData.country) {
+        const countryInfo = Object.entries(countryData.country).map(([key, value]) => ({
+            'Property': key,
+            'Value': value
+        }));
+        
+        const countrySheet = XLSX.utils.json_to_sheet(countryInfo);
+        XLSX.utils.book_append_sheet(wb, countrySheet, 'Country Info');
+    }
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${currentCountry}_demographics_${timestamp}`;
+    
+    // Write file
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+}
+
+// Export Demographic Data as CSV (fallback)
+function exportDemographicCSV(demographicData, countryKey) {
+    let csvContent = 'Segment Name,Population (M),Auth Rate (%),Pension Rate (%),Auth Frequency,Digital Adoption (%),Economic Tier,Urbanization (%),Auth Growth Rate (%)\n';
+    
+    demographicData.forEach(segment => {
+        csvContent += [
+            `"${segment.name || segment.stateName}"`,
+            segment.population || 'N/A',
+            segment.authPct || 'N/A',
+            segment.pensionPct || 'N/A',
+            segment.authFreq || 'N/A',
+            segment.digitalAdoption || 'N/A',
+            segment.economicTier || 'N/A',
+            segment.urbanization || 'N/A',
+            segment.authGrowthRate || 'N/A'
+        ].join(',') + '\n';
+    });
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.download = `${countryKey}_demographics_${timestamp}.csv`;
+    link.click();
+}
+
+// Export Model Configuration Function
+function exportModelConfiguration() {
+    if (window.segments.length === 0) {
+        alert('No segments available to export. Please add segments first.');
+        return;
+    }
+    
+    const configuration = {
+        metadata: {
+            exportedAt: new Date().toISOString(),
+            version: '4.0.0',
+            description: 'APAC Revenue Projections Model Configuration',
+            segments: window.segments.length
+        },
+        settings: {
+            projectionMonths: parseInt(document.getElementById('projectionMonths')?.value) || 12,
+            usdRate: parseFloat(document.getElementById('usdRate')?.value) || 83.50,
+            seasonality: document.getElementById('seasonality')?.value || 'none',
+            operatingExpenseType: document.getElementById('operatingExpenseType')?.value || 'fixed',
+            operatingExpenses: parseFloat(document.getElementById('operatingExpenses')?.value) || 0,
+            operatingExpensePercentage: parseFloat(document.getElementById('operatingExpensePercentage')?.value) || 0
+        },
+        segments: window.segments,
+        currentCountry: window.currentCountry || 'india'
+    };
+    
+    // Create JSON string with formatting
+    const jsonContent = JSON.stringify(configuration, null, 2);
+    
+    // Create and download file
+    const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.download = `model_configuration_${timestamp}.json`;
+    link.click();
+}
+
+// Export Scenario Analysis Results
+function exportScenarioResults() {
+    // This function would export scenario analysis results
+    // Implementation depends on how scenario results are stored
+    alert('Scenario export functionality will be implemented based on scenario analysis structure.');
+}
+
+// Utility function to format data for export
+function formatExportValue(value, type = 'number') {
+    if (value === null || value === undefined) return 'N/A';
+    
+    switch (type) {
+        case 'currency':
+            return typeof value === 'number' ? value.toFixed(2) : value;
+        case 'percentage':
+            return typeof value === 'number' ? value.toFixed(1) + '%' : value;
+        case 'number':
+            return typeof value === 'number' ? value.toLocaleString() : value;
+        default:
+            return value.toString();
+    }
+}
+
+// Export functions to window for external access
+window.exportTableData = exportTableData;
+window.exportToExcel = exportToExcel;
+window.exportToCSV = exportToCSV;
+window.exportDemographicData = exportDemographicData;
+window.exportModelConfiguration = exportModelConfiguration;
+window.exportScenarioResults = exportScenarioResults;
+
+/* ================================================
+ * MODULE 6: JS/UI.JS
+ * Lines: 734
+ * ================================================ */
+
+
+// Tab switching functionality
+function switchTab(tabName) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Find the tab that matches the name
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+        if (tab.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
+            (tabName === 'setup' && tab.textContent.includes('Setup')) ||
+            (tabName === 'projections' && tab.textContent.includes('Projections')) ||
+            (tabName === 'analysis' && tab.textContent.includes('Analysis')) ||
+            (tabName === 'demographics' && tab.textContent.includes('Demographics')) ||
+            (tabName === 'models' && tab.textContent.includes('Models'))) {
+            tab.classList.add('active');
+        }
+    });
+    
+    // Show corresponding content
+    const content = document.getElementById(tabName);
+    if (content) {
+        content.classList.add('active');
+    }
+    
+    // Special handling for demographics tab
+    if (tabName === 'demographics') {
+        // Auto-show demographic overview by default
+        setTimeout(() => {
+            if (typeof showDemographicOverview === 'function') {
+                showDemographicOverview();
+            }
+        }, 100);
+    }
+}
+
+// Render segments in the UI
+window.renderSegments = function() {
+    console.log('renderSegments called with', window.segments.length, 'segments');
+    console.log('Segments to render:', window.segments.map(s => ({id: s.id, name: s.name})));
+    
+    const container = document.getElementById('segmentsList');
+    const searchFilter = document.getElementById('segmentSearchFilter').value.toLowerCase();
+    const categoryFilter = document.getElementById('categoryFilter').value;
+    
+    if (!container) {
+        console.error('segmentsList container not found');
+        return;
+    }
+    
+    // Filter segments
+    let filteredSegments = window.segments;
+    
+    if (searchFilter) {
+        filteredSegments = filteredSegments.filter(segment => 
+            segment.name.toLowerCase().includes(searchFilter) ||
+            (segment.notes && segment.notes.toLowerCase().includes(searchFilter))
+        );
+    }
+    
+    if (categoryFilter && categoryFilter !== 'all') {
+        filteredSegments = filteredSegments.filter(segment => 
+            segment.category === categoryFilter
+        );
+    }
+    
+    if (filteredSegments.length === 0) {
+        container.innerHTML = `
+            <div class="no-segments">
+                <div class="no-segments-icon">📊</div>
+                <div class="no-segments-message">
+                    ${window.segments.length === 0 ? 'No SKUs added yet' : 'No SKUs match your filters'}
+                </div>
+                <div class="no-segments-action">
+                    ${window.segments.length === 0 ? 
+                        '<button class="btn-primary" onclick="loadPensionModel()">📊 Load Pension Model</button>' :
+                        '<button class="btn-secondary" onclick="document.getElementById(\'segmentSearchFilter\').value=\'\'; document.getElementById(\'categoryFilter\').value=\'all\'; renderSegments();">Clear Filters</button>'
+                    }
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show bulk actions if any segments are selected
+    const bulkActionsHTML = window.selectedSegments.size > 0 ? `
+        <div class="segment-bulk-actions show">
+            <div class="bulk-actions-header">
+                <span>${window.selectedSegments.size} segment(s) selected</span>
+                <div class="bulk-actions-buttons">
+                    <button class="btn-secondary btn-small" onclick="window.selectedSegments.clear(); updateBulkActionsVisibility(); window.renderSegments();">Clear Selection</button>
+                    <button class="btn-warning btn-small" onclick="duplicateSelectedSegments()">📋 Duplicate</button>
+                    <button class="btn-warning btn-small" onclick="deleteSelectedSegments()">🗑️ Delete</button>
+                </div>
+            </div>
+        </div>
+    ` : '';
+    
+    let segmentsHTML = bulkActionsHTML;
+    
+    // Group segments by category for better organization
+    const groupedSegments = {};
+    filteredSegments.forEach(segment => {
+        const category = segment.category || 'Other';
+        if (!groupedSegments[category]) {
+            groupedSegments[category] = [];
+        }
+        groupedSegments[category].push(segment);
+    });
+    
+    // Render each category
+    Object.keys(groupedSegments).sort().forEach(category => {
+        const categorySegments = groupedSegments[category];
+        
+        segmentsHTML += `
+            <div class="segment-category-group">
+                <div class="segment-category-header">
+                    <h4>${category} (${categorySegments.length})</h4>
+                </div>
+        `;
+        
+        categorySegments.forEach(segment => {
+            const isSelected = window.selectedSegments.has(segment.id);
+            const profitMargin = segment.pricePerTransaction > 0 ? 
+                ((segment.pricePerTransaction - segment.costPerTransaction) / segment.pricePerTransaction * 100) : 0;
+            const monthlyRevenue = segment.monthlyVolume * segment.pricePerTransaction;
+            
+            segmentsHTML += `
+                <div class="segment-card ${isSelected ? 'selected' : ''}" data-segment-id="${segment.id}">
+                    <div class="segment-card-header">
+                        <div class="segment-select">
+                            <input type="checkbox" 
+                                   id="select-${segment.id}" 
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="window.toggleSegmentSelection('${segment.id}')">
+                            <label for="select-${segment.id}"></label>
+                        </div>
+                        <div class="segment-info">
+                            <h3 class="segment-name">${segment.name}</h3>
+                            <div class="segment-category-badge category-${segment.category || 'other'}">
+                                ${segment.category || 'Other'}
+                            </div>
+                        </div>
+                        <div class="segment-actions">
+                            <button class="segment-action-btn edit" onclick="window.editSegment('${segment.id}')" title="Edit Segment">
+                                ✏️ Edit
+                            </button>
+                            <button class="segment-action-btn duplicate" onclick="window.duplicateSegment('${segment.id}')" title="Duplicate Segment">
+                                📋 Duplicate
+                            </button>
+                            <button class="segment-action-btn delete" onclick="window.deleteSegment('${segment.id}')" title="Delete Segment">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="segment-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Price:</span>
+                            <span class="metric-value">₹${segment.pricePerTransaction.toFixed(2)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Cost:</span>
+                            <span class="metric-value">₹${segment.costPerTransaction.toFixed(2)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Volume:</span>
+                            <span class="metric-value">${formatNumber(segment.monthlyVolume)}/month</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Growth:</span>
+                            <span class="metric-value">${segment.volumeGrowth}%</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Margin:</span>
+                            <span class="metric-value profit-${profitMargin >= 50 ? 'high' : profitMargin >= 20 ? 'medium' : 'low'}">
+                                ${profitMargin.toFixed(1)}%
+                            </span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Monthly Revenue:</span>
+                            <span class="metric-value">${formatCurrency(monthlyRevenue)}</span>
+                        </div>
+                    </div>
+                    
+                    ${segment.notes ? `
+                        <div class="segment-notes">
+                            <span class="notes-label">Notes:</span>
+                            <span class="notes-text">${segment.notes}</span>
+                        </div>
+                    ` : ''}
+                    
+                    ${segment.createdAt ? `
+                        <div class="segment-metadata">
+                            <small>Created: ${formatDate(segment.createdAt)} | Updated: ${formatDate(segment.updatedAt || segment.createdAt)}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        });
+        
+        segmentsHTML += '</div>';
+    });
+    
+    container.innerHTML = segmentsHTML;
+    
+    // Update profitability warning
+    const profitabilityElement = document.getElementById('profitabilityCheck');
+    if (profitabilityElement && typeof window.validateProfitability === 'function') {
+        profitabilityElement.innerHTML = window.validateProfitability();
+    }
+};
+
+// Chart update function
+function updateChart() {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    const metric = document.getElementById('chartMetric').value;
+    const view = document.getElementById('chartView').value;
+    const period = document.getElementById('chartPeriod').value;
+    
+    if (window.chart) {
+        window.chart.destroy();
+    }
+    
+    // Generate data based on selected period
+    const chartData = generateChartData(period);
+    window.currentTableData = chartData;
+    
+    let datasets = [];
+    let labels = chartData.map(item => item.month);
+    
+    if (view === 'total') {
+        // Single dataset for total view
+        let data;
+        let label;
+        let color;
+        
+        switch (metric) {
+            case 'revenue':
+                data = chartData.map(item => item.revenue / 1000000); // Convert to millions
+                label = 'Revenue (₹ Millions)';
+                color = '#3b82f6';
+                break;
+            case 'profit':
+                data = chartData.map(item => item.netProfit / 1000000); // Convert to millions
+                label = 'Net Profit (₹ Millions)';
+                color = '#22c55e';
+                break;
+            case 'margin':
+                data = chartData.map(item => item.profitMargin);
+                label = 'Profit Margin (%)';
+                color = '#f59e0b';
+                break;
+            case 'volume':
+                data = chartData.map(item => item.volume / 1000000); // Convert to millions
+                label = 'Transaction Volume (Millions)';
+                color = '#8b5cf6';
+                break;
+        }
+        
+        datasets.push({
+            label: label,
+            data: data,
+            borderColor: color,
+            backgroundColor: color + '20',
+            fill: true,
+            tension: 0.4
+        });
+    } else {
+        // Multiple datasets for segments view
+        const colors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#f97316', '#84cc16'];
+        
+        window.segments.forEach((segment, index) => {
+            const segmentData = window.segmentProjections[segment.name];
+            if (!segmentData) return;
+            
+            // Only show data that matches the chart period
+            const relevantData = segmentData.slice(0, chartData.length);
+            
+            let data;
+            switch (metric) {
+                case 'revenue':
+                    data = relevantData.map(item => item.revenue / 1000000);
+                    break;
+                case 'profit':
+                    data = relevantData.map(item => (item.profit || 0) / 1000000);
+                    break;
+                case 'margin':
+                    data = relevantData.map(item => item.margin || 0);
+                    break;
+                case 'volume':
+                    data = relevantData.map(item => item.volume / 1000000);
+                    break;
+            }
+            
+            datasets.push({
+                label: segment.name,
+                data: data,
+                borderColor: colors[index % colors.length],
+                backgroundColor: colors[index % colors.length] + '20',
+                fill: false,
+                tension: 0.4
+            });
+        });
+    }
+    
+    window.chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: datasets[0]?.label || 'Value'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Period'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: view === 'segments',
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: `${metric.charAt(0).toUpperCase() + metric.slice(1)} Projection - ${period}`
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+    
+    // Update table display
+    displayResults();
+}
+
+// Modal functionality
+function showModal(title, content, showCloseButton = true) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('dynamicModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'dynamicModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle"></h2>
+                    ${showCloseButton ? '<button class="modal-close" onclick="closeModal()">&times;</button>' : ''}
+                </div>
+                <div class="modal-body" id="modalBody"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    // Update modal content
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = content;
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Close modal on background click
+    modal.onclick = function(e) {
+        if (e.target === modal && showCloseButton) {
+            closeModal();
+        }
+    };
+}
+
+function closeModal() {
+    const modal = document.getElementById('dynamicModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Initialize segment types and predefined data
+function initializeSegmentTypes() {
+    // This function is called on page load to set up initial UI state
+    updatePredefinedSegments();
+    
+    // Set up event listeners
+    setupEventListeners();
+    
+    // Initialize demographic insights
+    if (typeof initializeDemographicData === 'function') {
+        initializeDemographicData();
+    }
+}
+
+function setupEventListeners() {
+    // Search and filter listeners
+    const searchFilter = document.getElementById('segmentSearchFilter');
+    if (searchFilter) {
+        searchFilter.addEventListener('input', debounce(() => {
+            window.renderSegments();
+        }, 300));
+    }
+    
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', () => {
+            window.renderSegments();
+        });
+    }
+    
+    // Chart control listeners
+    const chartMetric = document.getElementById('chartMetric');
+    const chartView = document.getElementById('chartView');
+    const chartPeriod = document.getElementById('chartPeriod');
+    
+    if (chartMetric) chartMetric.addEventListener('change', updateChart);
+    if (chartView) chartView.addEventListener('change', updateChart);
+    if (chartPeriod) chartPeriod.addEventListener('change', updateChart);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleKeyboardShortcuts);
+}
+
+function handleKeyboardShortcuts(event) {
+    // Ctrl/Cmd + S to save current model
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        if (typeof showSaveModelDialog === 'function') {
+            showSaveModelDialog();
+        }
+    }
+    
+    // Ctrl/Cmd + Enter to calculate projections
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+        event.preventDefault();
+        if (typeof calculateProjections === 'function') {
+            calculateProjections();
+        }
+    }
+    
+    // Escape to close modals
+    if (event.key === 'Escape') {
+        closeModal();
+        // Close other dialogs
+        const dialogs = document.querySelectorAll('.modal-overlay[style*="flex"], .dialog[style*="flex"]');
+        dialogs.forEach(dialog => {
+            dialog.style.display = 'none';
+        });
+    }
+}
+
+// Debounce utility function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Update predefined segments dropdown
+function updatePredefinedSegments() {
+    const segmentType = window.currentSegmentType || 'sku';
+    const container = document.getElementById('predefinedSegmentsContainer');
+    
+    if (!container || !window.predefinedSegments || !window.predefinedSegments[segmentType]) {
+        return;
+    }
+    
+    const segments = window.predefinedSegments[segmentType];
+    let html = '<div class="predefined-segments-grid">';
+    
+    segments.forEach((segment, index) => {
+        html += `
+            <div class="predefined-segment-card">
+                <div class="predefined-segment-header">
+                    <h4>${segment.name}</h4>
+                    <span class="category-badge category-${segment.category}">${segment.category}</span>
+                </div>
+                <div class="predefined-segment-metrics">
+                    <div>Price: ₹${segment.price}</div>
+                    <div>Cost: ₹${segment.cost}</div>
+                    <div>Volume: ${formatNumber(segment.volume)}</div>
+                    <div>Growth: ${segment.volumeGrowth}%</div>
+                </div>
+                <div class="predefined-segment-market">
+                    <small>${segment.market}</small>
+                </div>
+                <button class="btn-primary btn-small" onclick="window.addPredefinedSegment('${segmentType}', ${index})">
+                    Add Segment
+                </button>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// View management functions
+function setCurrentView(viewType) {
+    window.currentView = viewType;
+    
+    // Update view toggle buttons
+    document.querySelectorAll('.view-toggle button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[onclick="setCurrentView('${viewType}')"]`)?.classList.add('active');
+    
+    // Update display
+    if (window.projectionData && window.projectionData.length > 0) {
+        displayResults();
+    }
+}
+
+// Loading states
+function showLoading(elementId, message = 'Loading...') {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <div class="loading-message">${message}</div>
+            </div>
+        `;
+    }
+}
+
+function hideLoading(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const loading = element.querySelector('.loading-state');
+        if (loading) {
+            loading.remove();
+        }
+    }
+}
+
+// Error handling
+function showError(elementId, message, canRetry = false, retryCallback = null) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `
+            <div class="error-state">
+                <div class="error-icon">⚠️</div>
+                <div class="error-message">${message}</div>
+                ${canRetry && retryCallback ? `
+                    <button class="btn-primary" onclick="${retryCallback}()">Try Again</button>
+                ` : ''}
+            </div>
+        `;
+    }
+}
+
+// Animation helpers
+function fadeIn(element, duration = 300) {
+    element.style.opacity = '0';
+    element.style.display = 'block';
+    
+    let start = null;
+    function animate(timestamp) {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        
+        element.style.opacity = Math.min(progress / duration, 1);
+        
+        if (progress < duration) {
+            requestAnimationFrame(animate);
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+function fadeOut(element, duration = 300, callback = null) {
+    let start = null;
+    const initialOpacity = parseFloat(window.getComputedStyle(element).opacity);
+    
+    function animate(timestamp) {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        
+        element.style.opacity = initialOpacity * (1 - progress / duration);
+        
+        if (progress < duration) {
+            requestAnimationFrame(animate);
+        } else {
+            element.style.display = 'none';
+            if (callback) callback();
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+// Tooltip functionality
+function showTooltip(element, text) {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = text;
+    
+    document.body.appendChild(tooltip);
+    
+    const rect = element.getBoundingClientRect();
+    tooltip.style.left = rect.left + rect.width / 2 - tooltip.offsetWidth / 2 + 'px';
+    tooltip.style.top = rect.top - tooltip.offsetHeight - 5 + 'px';
+    
+    setTimeout(() => {
+        if (tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip);
+        }
+    }, 3000);
+}
+
+// Context menu functionality
+function showContextMenu(event, menuItems) {
+    event.preventDefault();
+    
+    // Remove existing context menu
+    const existingMenu = document.querySelector('.context-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+    
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    
+    menuItems.forEach(item => {
+        const menuItem = document.createElement('div');
+        menuItem.className = 'context-menu-item';
+        menuItem.textContent = item.label;
+        menuItem.onclick = () => {
+            item.action();
+            menu.remove();
+        };
+        menu.appendChild(menuItem);
+    });
+    
+    document.body.appendChild(menu);
+    
+    menu.style.left = event.clientX + 'px';
+    menu.style.top = event.clientY + 'px';
+    
+    // Close menu on click outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeContextMenu() {
+            menu.remove();
+            document.removeEventListener('click', closeContextMenu);
+        });
+    }, 0);
+}
+
+// Progress bar functionality
+function updateProgressBar(elementId, progress, text = '') {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
+                <div class="progress-text">${text}</div>
+            </div>
+        `;
+    }
+}
+
+// Notification system enhancement
+function showNotification(message, type = 'info', duration = 5000) {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentNode.parentNode.remove()">&times;</button>
+        </div>
+    `;
+    
+    // Add to notification container or create one
+    let container = document.getElementById('notificationContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notificationContainer';
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+    }
+    
+    container.appendChild(notification);
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        if (notification.parentNode) {
+            fadeOut(notification, 300, () => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            });
+        }
+    }, duration);
+}
+
+// Export UI functions to window for external access
+window.switchTab = switchTab;
+window.updateChart = updateChart;
+window.showModal = showModal;
+window.closeModal = closeModal;
+window.initializeSegmentTypes = initializeSegmentTypes;
+window.updatePredefinedSegments = updatePredefinedSegments;
+window.setCurrentView = setCurrentView;
+window.showLoading = showLoading;
+window.hideLoading = hideLoading;
+window.showError = showError;
+window.showNotification = showNotification;
+window.updateProgressBar = updateProgressBar;
+    </script>
+    <!-- Initialize the application -->
+    <script>
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSegmentTypes();
+            updatePredefinedSegments();
+            
+            // Auto-refresh demographic insights
+            if (typeof refreshDemographicInsights === 'function') {
+                setTimeout(refreshDemographicInsights, 1000);
+            }
+            
+            // Initialize demographic data if not already loaded
+            if (!window.externalDemographicData && !window.regionalData) {
+                if (typeof initializeDemographicData === 'function') {
+                    initializeDemographicData();
+                }
+            }
+        });
+        
+        // Additional initialization functions that need to be preserved
+        function changeCountry(country) {
+            window.currentCountry = country;
+            
+            // Update title
+            const countryNames = {
+                'india': '🇮🇳 India',
+                'singapore': '🇸🇬 Singapore', 
+                'australia': '🇦🇺 Australia',
+                'japan': '🇯🇵 Japan',
+                'south_korea': '🇰🇷 South Korea',
+                'thailand': '🇹🇭 Thailand',
+                'indonesia': '🇮🇩 Indonesia',
+                'philippines': '🇵🇭 Philippines'
+            };
+            
+            const mainTitle = document.getElementById('mainTitle');
+            if (mainTitle) {
+                mainTitle.textContent = `🌏 APAC Revenue Projection Tool - ${countryNames[country] || country}`;
+            }
+            
+            // Trigger demographic insights update
+            if (typeof updateDemographicInsightsOnCountryChange === 'function') {
+                updateDemographicInsightsOnCountryChange();
+            }
+        }
+        
+        // Model management functions (preserved from original)
+        function showSaveModelDialog() {
+            // Implementation needed - create modal for saving models
+            const modelName = prompt('Enter a name for this model:');
+            if (modelName && modelName.trim()) {
+                saveCurrentModel(modelName.trim());
+            }
+        }
+        
+        function saveCurrentModel(name) {
+            // Implementation needed - save current segments and settings as a model
+            console.log('Saving model:', name);
+        }
+        
+        function loadExternalModelConfig() {
+            document.getElementById('modelConfigFile').click();
+        }
+        
+        function handleModelConfigFile(event) {
+            // Implementation needed - handle external model config loading
+            console.log('Loading model config file:', event.target.files[0]);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+{
+  "country": {
+    "key": "japan",
+    "name": "Japan",
+    "currency": "JPY",
+    "currencySymbol": "¥",
+    "exchangeRate": 149.0,
+    "population": 125.0
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-20",
+    "description": "Comprehensive demographic data for Japan including population, authentication rates, digital adoption, economic tiers, and growth projections.",
+    "dataSource": "Enhanced APAC Revenue Projections System",
+    "totalSegments": 15
+  },
+  "demographicSegments": [
+    {
+      "name": "Tokyo Metropolitan",
+      "population": 14.0,
+      "authPct": 85,
+      "authFreq": 2.8,
+      "digitalAdoption": 91,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Osaka Prefecture",
+      "population": 8.8,
+      "authPct": 82,
+      "authFreq": 2.5,
+      "digitalAdoption": 87,
+      "economicTier": "high",
+      "urbanization": 90,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Kanagawa Prefecture",
+      "population": 9.2,
+      "authPct": 83,
+      "authFreq": 2.6,
+      "digitalAdoption": 89,
+      "economicTier": "high",
+      "urbanization": 92,
+      "authGrowthRate": 5
+    },
+    {
+      "name": "Aichi Prefecture",
+      "population": 7.5,
+      "authPct": 80,
+      "authFreq": 2.4,
+      "digitalAdoption": 85,
+      "economicTier": "high",
+      "urbanization": 78,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Saitama Prefecture",
+      "population": 7.3,
+      "authPct": 78,
+      "authFreq": 2.2,
+      "digitalAdoption": 83,
+      "economicTier": "high",
+      "urbanization": 85,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Chiba Prefecture",
+      "population": 6.3,
+      "authPct": 79,
+      "authFreq": 2.3,
+      "digitalAdoption": 84,
+      "economicTier": "high",
+      "urbanization": 82,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Hyogo Prefecture",
+      "population": 5.5,
+      "authPct": 77,
+      "authFreq": 2.1,
+      "digitalAdoption": 81,
+      "economicTier": "medium",
+      "urbanization": 79,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Hokkaido Prefecture",
+      "population": 5.2,
+      "authPct": 70,
+      "authFreq": 1.8,
+      "digitalAdoption": 75,
+      "economicTier": "medium",
+      "urbanization": 68,
+      "authGrowthRate": 2
+    },
+    {
+      "name": "Fukuoka Prefecture",
+      "population": 5.1,
+      "authPct": 75,
+      "authFreq": 2.0,
+      "digitalAdoption": 79,
+      "economicTier": "medium",
+      "urbanization": 76,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Kyoto Prefecture",
+      "population": 2.6,
+      "authPct": 81,
+      "authFreq": 2.3,
+      "digitalAdoption": 86,
+      "economicTier": "high",
+      "urbanization": 89,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "Hiroshima Prefecture",
+      "population": 2.8,
+      "authPct": 74,
+      "authFreq": 1.9,
+      "digitalAdoption": 78,
+      "economicTier": "medium",
+      "urbanization": 73,
+      "authGrowthRate": 3
+    },
+    {
+      "name": "Other Major Prefectures",
+      "population": 25.2,
+      "authPct": 68,
+      "authFreq": 1.6,
+      "digitalAdoption": 72,
+      "economicTier": "medium",
+      "urbanization": 65,
+      "authGrowthRate": 2
+    },
+    {
+      "name": "Rural Prefectures",
+      "population": 30.9,
+      "authPct": 58,
+      "authFreq": 1.2,
+      "digitalAdoption": 62,
+      "economicTier": "low",
+      "urbanization": 45,
+      "authGrowthRate": 1
+    },
+    {
+      "name": "Corporate Employees",
+      "population": 35.0,
+      "authPct": 88,
+      "authFreq": 2.6,
+      "digitalAdoption": 92,
+      "economicTier": "high",
+      "urbanization": 85,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Senior Citizens (65+)",
+      "population": 36.0,
+      "authPct": 45,
+      "authFreq": 0.8,
+      "digitalAdoption": 48,
+      "economicTier": "medium",
+      "urbanization": 70,
+      "authGrowthRate": 8
+    }
+  ],
+  "summary": {
+    "totalPopulation": 201.4,
+    "averageAuthRate": 74.9,
+    "averageDigitalAdoption": 79.5,
+    "highEconomicTierSegments": 8,
+    "mediumEconomicTierSegments": 6,
+    "lowEconomicTierSegments": 1,
+    "averageUrbanization": 78.5,
+    "averageGrowthRate": 3.8
+  }
+}
