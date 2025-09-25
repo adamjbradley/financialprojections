@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APAC Revenue Projections - Development</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .version-list {
+            list-style: none;
+            padding: 0;
+        }
+        .version-item {
+            margin: 15px 0;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .version-item:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.1);
+        }
+        .version-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+        .version-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .version-description {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-stable {
+            background: #10b981;
+            color: white;
+        }
+        .status-experimental {
+            background: #f59e0b;
+            color: white;
+        }
+        .info-box {
+            background: #f0f9ff;
+            border-left: 4px solid #0284c7;
+            padding: 15px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        .info-box h3 {
+            margin: 0 0 10px 0;
+            color: #0284c7;
+            font-size: 16px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            color: #475569;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌏 APAC Revenue Projections Tool</h1>
+        <p class="subtitle">Development Environment - Version Selection</p>
+        
+        <div class="info-box">
+            <h3>📋 Development Status</h3>
+            <p><strong>Current Task:</strong> Externalizing JavaScript and CSS for better maintainability</p>
+            <p><strong>Testing:</strong> Both versions should have identical functionality</p>
+        </div>
+
+        <ul class="version-list">
+            <li class="version-item">
+                <a href="/index.html" class="version-link">
+                    <div class="version-title">
+                        New Externalized Version
+                        <span class="status status-experimental">Experimental</span>
+                    </div>
+                    <div class="version-description">
+                        Latest version with JavaScript and CSS in external files (app.js, styles.css).
+                        This version enables better code organization and easier maintenance.
+                        All functionality should be identical to the working version.
+                    </div>
+                </a>
+            </li>
+            
+            <li class="version-item">
+                <a href="/index-working.html" class="version-link">
+                    <div class="version-title">
+                        Working Monolithic Version
+                        <span class="status status-stable">Stable</span>
+                    </div>
+                    <div class="version-description">
+                        Original working version with all JavaScript inline.
+                        This is the proven stable version with all features functional.
+                        Use this as the reference for expected behavior.
+                    </div>
+                </a>
+            </li>
+        </ul>
+
+        <div class="info-box">
+            <h3>🧪 Testing Guidelines</h3>
+            <p>1. Open both versions in separate tabs for comparison</p>
+            <p>2. Test all major functions: Add segments, Calculate projections, Export data</p>
+            <p>3. Verify that both versions produce identical results</p>
+            <p>4. Check browser console for any errors in the new version</p>
+        </div>
+    </div>
+</body>
+</html>

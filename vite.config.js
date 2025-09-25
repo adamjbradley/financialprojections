@@ -8,7 +8,8 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index-working.html')
+        main: resolve(__dirname, 'index.html'),
+        working: resolve(__dirname, 'index-working.html')
       },
       output: {
         entryFileNames: 'assets/[name]-[hash].js',

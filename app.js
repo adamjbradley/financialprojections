@@ -1,0 +1,6539 @@
+        // Global variables
+        window.segments = [];
+        window.projectionData = [];
+        window.segmentProjections = {};
+        window.chart = null;
+        window.currentSegmentType = 'sku';
+        window.currentView = 'consolidated';
+        window.savedModels = [];
+        window.selectedModelId = null;
+        window.editingSegmentId = null;
+        window.selectedSegments = new Set();
+        window.librarySelectedSegments = new Set();
+        window.segmentLibrary = [];
+        window.activeToasts = []; // Track active undo toasts
+
+        // Enhanced predefined segments data with categories
+        const predefinedSegments = {
+            sku: [
+                { name: 'OTP (SMS) - Banking', price: 0.15, cost: 0.10, volume: 4000000000/12, volumeGrowth: 5, market: 'Banking, Payments', category: 'authentication' },
+                { name: 'OTP (SMS) - E-commerce', price: 0.12, cost: 0.08, volume: 2500000000/12, volumeGrowth: 8, market: 'E-commerce, Retail', category: 'authentication' },
+                { name: 'OTP (SMS) - Government', price: 0.10, cost: 0.07, volume: 1500000000/12, volumeGrowth: 3, market: 'Govt Services, DBT', category: 'authentication' },
+                { name: 'Biometric - Pension Auth', price: 3.50, cost: 2.00, volume: 50000000, volumeGrowth: 10, market: 'Pension, EPFO', category: 'biometric' },
+                { name: 'Biometric - Banking', price: 4.00, cost: 2.50, volume: 30000000, volumeGrowth: 15, market: 'Banking KYC', category: 'biometric' },
+                { name: 'eKYC - Banking', price: 20.00, cost: 12.00, volume: 15000000, volumeGrowth: 20, market: 'Account Opening', category: 'kyc' },
+                { name: 'eKYC - Telecom', price: 18.00, cost: 10.00, volume: 10000000, volumeGrowth: 12, market: 'SIM Verification', category: 'kyc' },
+                { name: 'eKYC - Insurance', price: 25.00, cost: 15.00, volume: 5000000, volumeGrowth: 25, market: 'Policy Issuance', category: 'kyc' },
+                { name: 'Tokenization - Cards', price: 1.00, cost: 0.50, volume: 1200000000/12, volumeGrowth: 30, market: 'Card Payments', category: 'tokenization' },
+                { name: 'Tokenization - UPI', price: 0.50, cost: 0.25, volume: 800000000/12, volumeGrowth: 35, market: 'UPI Transactions', category: 'tokenization' }
+            ]
+        };
+
+        // Enhanced segment management functions
+        window.addOrUpdateSegment = function() {
+            const name = document.getElementById('segmentName').value.trim();
+            const pricePerTransaction = parseFloat(document.getElementById('pricePerTransaction').value);
+            const costPerTransaction = parseFloat(document.getElementById('costPerTransaction').value);
+            const monthlyVolume = parseFloat(document.getElementById('monthlyVolume').value);
+            const volumeGrowth = parseFloat(document.getElementById('volumeGrowth').value) || 5;
+            const category = document.getElementById('segmentCategory').value;
+            const notes = document.getElementById('segmentNotes').value.trim();
+            
+            // Enhanced validation
+            const validation = validateSegmentData(name, pricePerTransaction, costPerTransaction, monthlyVolume, volumeGrowth);
+            if (!validation.isValid) {
+                showValidationErrors(validation.errors);
+                return;
+            }
+            
+            if (window.editingSegmentId) {
+                // Update existing segment
+                const segmentIndex = window.segments.findIndex(seg => seg.id === window.editingSegmentId);
+                if (segmentIndex !== -1) {
+                    window.segments[segmentIndex] = {
+                        ...window.segments[segmentIndex],
+                        name,
+                        pricePerTransaction,
+                        costPerTransaction,
+                        monthlyVolume,
+                        volumeGrowth,
+                        category,
+                        notes,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    cancelEditSegment();
+                    showSuccessMessage(`Segment "${name}" updated successfully!`);
+                }
+            } else {
+                // Add new segment
+                const newSegment = {
+                    id: Date.now() + Math.random(),
+                    name,
+                    type: window.currentSegmentType,
+                    pricePerTransaction,
+                    costPerTransaction,
+                    monthlyVolume,
+                    volumeGrowth,
+                    category,
+                    notes,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                window.segments.push(newSegment);
+                showSuccessMessage(`Segment "${name}" added successfully!`);
+            }
+            
+            clearSegmentForm();
+            window.renderSegments();
+            updateSegmentCount();
+        };
+
+        function validateSegmentData(name, price, cost, volume, growth) {
+            const errors = [];
+            
+            if (!name || name.length < 2) {
+                errors.push({ field: 'segmentName', message: 'Name must be at least 2 characters long' });
+            }
+            
+            if (!price || price <= 0) {
+                errors.push({ field: 'pricePerTransaction', message: 'Price must be greater than 0' });
+            }
+            
+            if (isNaN(cost) || cost < 0) {
+                errors.push({ field: 'costPerTransaction', message: 'Cost cannot be negative' });
+            }
+            
+            if (cost >= price) {
+                errors.push({ field: 'costPerTransaction', message: 'Cost should be less than price for profitability' });
+            }
+            
+            if (!volume || volume <= 0) {
+                errors.push({ field: 'monthlyVolume', message: 'Volume must be greater than 0' });
+            }
+            
+            if (volume > 10000000000) {
+                errors.push({ field: 'monthlyVolume', message: 'Volume seems unrealistically high (>10B/month)' });
+            }
+            
+            if (isNaN(growth) || growth < -100 || growth > 1000) {
+                errors.push({ field: 'volumeGrowth', message: 'Growth rate must be between -100% and 1000%' });
+            }
+            
+            // Check for duplicate names (excluding current editing segment)
+            const duplicateName = window.segments.find(seg => 
+                seg.name.toLowerCase() === name.toLowerCase() && 
+                seg.id !== window.editingSegmentId
+            );
+            if (duplicateName) {
+                errors.push({ field: 'segmentName', message: 'A segment with this name already exists' });
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors
+            };
+        }
+
+        function showValidationErrors(errors) {
+            // Clear previous errors
+            document.querySelectorAll('.validation-error').forEach(el => {
+                el.classList.remove('validation-error');
+            });
+            document.querySelectorAll('.validation-message').forEach(el => {
+                el.remove();
+            });
+            
+            // Show new errors
+            errors.forEach(error => {
+                const field = document.getElementById(error.field);
+                if (field) {
+                    field.classList.add('validation-error');
+                    
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'validation-message';
+                    errorDiv.textContent = error.message;
+                    field.parentNode.appendChild(errorDiv);
+                }
+            });
+            
+            // Show alert with first error
+            if (errors.length > 0) {
+                alert(`Validation Error: ${errors[0].message}`);
+            }
+        }
+
+        function showSuccessMessage(message) {
+            // Create a temporary success message
+            const successDiv = document.createElement('div');
+            successDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #22c55e;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1001;
+                font-weight: 500;
+            `;
+            successDiv.textContent = message;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(successDiv);
+            }, 3000);
+        }
+
+        function showUndoToast(message, undoCallback) {
+            // Generate unique ID for this toast
+            const toastId = `undoToast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Calculate position based on existing toasts
+            const existingToastsCount = window.activeToasts.length;
+            const topPosition = 20 + (existingToastsCount * 80); // 80px spacing between toasts
+            
+            // Create undo toast
+            const toastDiv = document.createElement('div');
+            toastDiv.id = toastId;
+            toastDiv.setAttribute('data-toast-index', existingToastsCount);
+            toastDiv.style.cssText = `
+                position: fixed;
+                top: ${topPosition}px;
+                right: 20px;
+                background: #374151;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                z-index: ${1002 + existingToastsCount};
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                min-width: 300px;
+                animation: slideInFromRight 0.3s ease-out;
+                transition: top 0.3s ease-out;
+            `;
+
+            // Add animation keyframes to document if not already present
+            if (!document.getElementById('undoToastStyles')) {
+                const style = document.createElement('style');
+                style.id = 'undoToastStyles';
+                style.textContent = `
+                    @keyframes slideInFromRight {
+                        from {
+                            opacity: 0;
+                            transform: translateX(100%);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateX(0);
+                        }
+                    }
+                    @keyframes slideOutToRight {
+                        from {
+                            opacity: 1;
+                            transform: translateX(0);
+                        }
+                        to {
+                            opacity: 0;
+                            transform: translateX(100%);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            // Message text
+            const messageSpan = document.createElement('span');
+            messageSpan.textContent = message;
+            messageSpan.style.flexGrow = '1';
+
+            // Undo button
+            const undoButton = document.createElement('button');
+            undoButton.textContent = 'UNDO';
+            undoButton.style.cssText = `
+                background: #f59e0b;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.85em;
+                transition: background 0.2s;
+            `;
+            undoButton.onmouseover = () => undoButton.style.background = '#d97706';
+            undoButton.onmouseout = () => undoButton.style.background = '#f59e0b';
+            undoButton.onclick = () => {
+                undoCallback();
+                removeToast(toastId);
+            };
+
+            // Close button
+            const closeButton = document.createElement('button');
+            closeButton.textContent = '×';
+            closeButton.style.cssText = `
+                background: none;
+                color: #9ca3af;
+                border: none;
+                font-size: 1.2em;
+                cursor: pointer;
+                padding: 0 4px;
+                transition: color 0.2s;
+            `;
+            closeButton.onmouseover = () => closeButton.style.color = '#ffffff';
+            closeButton.onmouseout = () => closeButton.style.color = '#9ca3af';
+            closeButton.onclick = () => removeToast(toastId);
+
+            toastDiv.appendChild(messageSpan);
+            toastDiv.appendChild(undoButton);
+            toastDiv.appendChild(closeButton);
+            document.body.appendChild(toastDiv);
+
+            // Track this toast
+            const toastData = {
+                id: toastId,
+                element: toastDiv,
+                timeout: null
+            };
+            
+            function removeToast(id) {
+                const toastIndex = window.activeToasts.findIndex(t => t.id === id);
+                if (toastIndex === -1) return;
+                
+                const toast = window.activeToasts[toastIndex];
+                if (toast.timeout) {
+                    clearTimeout(toast.timeout);
+                }
+                
+                if (toast.element.parentNode) {
+                    toast.element.style.animation = 'slideOutToRight 0.3s ease-in';
+                    setTimeout(() => {
+                        if (toast.element.parentNode) {
+                            document.body.removeChild(toast.element);
+                        }
+                        
+                        // Remove from tracking array
+                        window.activeToasts.splice(toastIndex, 1);
+                        
+                        // Reposition remaining toasts
+                        repositionToasts();
+                    }, 300);
+                }
+            }
+            
+            function repositionToasts() {
+                window.activeToasts.forEach((toast, index) => {
+                    const newTop = 20 + (index * 80);
+                    toast.element.style.top = `${newTop}px`;
+                    toast.element.setAttribute('data-toast-index', index);
+                    toast.element.style.zIndex = 1002 + index;
+                });
+            }
+
+            // Auto-remove after 8 seconds (increased from 5)
+            toastData.timeout = setTimeout(() => removeToast(toastId), 8000);
+            window.activeToasts.push(toastData);
+        }
+
+        window.clearSegmentForm = function() {
+            document.getElementById('segmentName').value = '';
+            document.getElementById('pricePerTransaction').value = '';
+            document.getElementById('costPerTransaction').value = '';
+            document.getElementById('monthlyVolume').value = '';
+            document.getElementById('volumeGrowth').value = '5';
+            document.getElementById('segmentCategory').value = 'authentication';
+            document.getElementById('segmentNotes').value = '';
+            
+            // Clear validation errors
+            document.querySelectorAll('.validation-error').forEach(el => {
+                el.classList.remove('validation-error');
+            });
+            document.querySelectorAll('.validation-message').forEach(el => {
+                el.remove();
+            });
+        };
+
+        window.toggleOperatingExpenseInputs = function() {
+            const type = document.getElementById('operatingExpenseType').value;
+            const fixedGroup = document.getElementById('fixedExpenseGroup');
+            const percentageGroup = document.getElementById('percentageExpenseGroup');
+            
+            switch(type) {
+                case 'fixed':
+                    fixedGroup.style.display = 'block';
+                    percentageGroup.style.display = 'none';
+                    break;
+                case 'percentage':
+                    fixedGroup.style.display = 'none';
+                    percentageGroup.style.display = 'block';
+                    break;
+                case 'hybrid':
+                    fixedGroup.style.display = 'block';
+                    percentageGroup.style.display = 'block';
+                    break;
+            }
+        };
+
+        window.validateProfitability = function() {
+            if (window.segments.length === 0) return '';
+            
+            // Calculate total monthly gross profit
+            const totalGrossProfit = window.segments.reduce((sum, segment) => {
+                const revenue = segment.monthlyVolume * segment.pricePerTransaction;
+                const cost = segment.monthlyVolume * segment.costPerTransaction;
+                return sum + (revenue - cost);
+            }, 0);
+            
+            // Calculate operating expenses
+            const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+            let operatingExpenses = 0;
+            
+            if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+                operatingExpenses += parseFloat(document.getElementById('operatingExpenses').value) || 0;
+            }
+            
+            if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+                const totalRevenue = window.segments.reduce((sum, segment) => 
+                    sum + (segment.monthlyVolume * segment.pricePerTransaction), 0);
+                const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+                operatingExpenses += (totalRevenue * percentageExpense / 100);
+            }
+            
+            const netProfit = totalGrossProfit - operatingExpenses;
+            const profitMargin = totalGrossProfit > 0 ? (netProfit / totalGrossProfit) * 100 : 0;
+            
+            if (netProfit < 0) {
+                return `⚠️ Warning: Current configuration will result in negative profit (₹${Math.abs(netProfit).toLocaleString('en-IN')} loss). Consider reducing operating expenses or increasing segment pricing/volume.`;
+            } else if (profitMargin < 10) {
+                return `⚠️ Warning: Low profit margin (${profitMargin.toFixed(1)}%). Consider optimizing costs or pricing.`;
+            } else if (profitMargin > 80) {
+                return `💡 Note: Very high profit margin (${profitMargin.toFixed(1)}%). Verify if pricing and costs are realistic.`;
+            }
+            
+            return `✅ Healthy profit margin: ${profitMargin.toFixed(1)}%`;
+        };
+
+        window.editSegment = function(id) {
+            // Handle both string and numeric IDs
+            const segment = window.segments.find(seg => seg.id == id || seg.id === id);
+            if (!segment) {
+                console.error('Segment not found for ID:', id, 'Available segments:', window.segments.map(s => ({id: s.id, name: s.name})));
+                return;
+            }
+            
+            // Store the ID for the edit dialog
+            window.currentEditingSkuId = id;
+            
+            // Populate edit dialog with segment data
+            document.getElementById('editSkuName').value = segment.name;
+            document.getElementById('editSkuPrice').value = segment.pricePerTransaction;
+            document.getElementById('editSkuCost').value = segment.costPerTransaction;
+            document.getElementById('editSkuVolume').value = segment.monthlyVolume;
+            document.getElementById('editSkuGrowth').value = segment.volumeGrowth;
+            document.getElementById('editSkuCategory').value = segment.category || 'authentication';
+            document.getElementById('editSkuNotes').value = segment.notes || '';
+            
+            // Update dialog title
+            document.getElementById('skuEditTitle').textContent = `✏️ Edit SKU: ${segment.name}`;
+            
+            // Show the edit dialog
+            document.getElementById('skuEditDialog').style.display = 'flex';
+            document.getElementById('editSkuName').focus();
+            
+            // Clear any previous validation messages
+            const validationDiv = document.getElementById('skuEditValidation');
+            validationDiv.style.display = 'none';
+        };
+
+        window.closeSkuEditDialog = function() {
+            document.getElementById('skuEditDialog').style.display = 'none';
+            window.currentEditingSkuId = null;
+            
+            // Clear validation messages
+            const validationDiv = document.getElementById('skuEditValidation');
+            validationDiv.style.display = 'none';
+        };
+
+        window.updateSku = function() {
+            if (!window.currentEditingSkuId) return;
+            
+            // Get form values
+            const name = document.getElementById('editSkuName').value.trim();
+            const price = parseFloat(document.getElementById('editSkuPrice').value);
+            const cost = parseFloat(document.getElementById('editSkuCost').value);
+            const volume = parseFloat(document.getElementById('editSkuVolume').value);
+            const growth = parseFloat(document.getElementById('editSkuGrowth').value) || 5;
+            const category = document.getElementById('editSkuCategory').value;
+            const notes = document.getElementById('editSkuNotes').value.trim();
+            
+            // Validate data
+            const validation = validateSkuEditData(name, price, cost, volume, growth);
+            if (!validation.isValid) {
+                showSkuEditValidationErrors(validation.errors);
+                return;
+            }
+            
+            // Find and update the segment
+            const segmentIndex = window.segments.findIndex(seg => String(seg.id) === String(window.currentEditingSkuId));
+            if (segmentIndex === -1) return;
+            
+            // Update the segment
+            window.segments[segmentIndex] = {
+                ...window.segments[segmentIndex],
+                name,
+                pricePerTransaction: price,
+                costPerTransaction: cost,
+                monthlyVolume: volume,
+                volumeGrowth: growth,
+                category,
+                notes,
+                updatedAt: new Date().toISOString()
+            };
+            
+            // Close dialog and refresh UI
+            window.closeSkuEditDialog();
+            window.renderSegments();
+            showSuccessMessage(`SKU "${name}" updated successfully!`);
+        };
+
+        window.duplicateCurrentSku = function() {
+            if (!window.currentEditingSkuId) return;
+            
+            const originalSegment = window.segments.find(seg => seg.id === window.currentEditingSkuId);
+            if (!originalSegment) return;
+            
+            // Get current form values (in case user made changes)
+            const name = document.getElementById('editSkuName').value.trim();
+            const price = parseFloat(document.getElementById('editSkuPrice').value);
+            const cost = parseFloat(document.getElementById('editSkuCost').value);
+            const volume = parseFloat(document.getElementById('editSkuVolume').value);
+            const growth = parseFloat(document.getElementById('editSkuGrowth').value) || 5;
+            const category = document.getElementById('editSkuCategory').value;
+            const notes = document.getElementById('editSkuNotes').value.trim();
+            
+            // Create duplicate with modified name
+            const duplicateName = `${name} (Copy)`;
+            const duplicateSegment = {
+                id: Date.now() + Math.random(),
+                name: duplicateName,
+                type: originalSegment.type,
+                pricePerTransaction: price,
+                costPerTransaction: cost,
+                monthlyVolume: volume,
+                volumeGrowth: growth,
+                category,
+                notes,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            window.segments.push(duplicateSegment);
+            window.closeSkuEditDialog();
+            window.renderSegments();
+            showSuccessMessage(`SKU duplicated as "${duplicateName}"!`);
+        };
+
+        window.deleteCurrentSku = function() {
+            if (!window.currentEditingSkuId) return;
+            
+            const segment = window.segments.find(seg => seg.id === window.currentEditingSkuId);
+            if (!segment) return;
+            
+            if (confirm(`Are you sure you want to delete the SKU "${segment.name}"?\n\nThis action cannot be undone.`)) {
+                window.segments = window.segments.filter(seg => seg.id !== window.currentEditingSkuId);
+                window.closeSkuEditDialog();
+                window.renderSegments();
+                showSuccessMessage(`SKU "${segment.name}" deleted successfully!`);
+            }
+        };
+
+        function validateSkuEditData(name, price, cost, volume, growth) {
+            const errors = [];
+            
+            if (!name || name.length < 2) {
+                errors.push({ field: 'editSkuName', message: 'SKU name must be at least 2 characters' });
+            }
+            
+            // Check for duplicate names (excluding current SKU)
+            const existingSegment = window.segments.find(seg => 
+                seg.name.toLowerCase() === name.toLowerCase() && 
+                String(seg.id) !== String(window.currentEditingSkuId)
+            );
+            if (existingSegment) {
+                errors.push({ field: 'editSkuName', message: 'SKU name already exists' });
+            }
+            
+            if (!price || price <= 0) {
+                errors.push({ field: 'editSkuPrice', message: 'Price must be greater than 0' });
+            }
+            
+            if (isNaN(cost) || cost < 0) {
+                errors.push({ field: 'editSkuCost', message: 'Cost cannot be negative' });
+            }
+            
+            if (cost >= price) {
+                errors.push({ field: 'editSkuCost', message: 'Cost should be less than price for profitability' });
+            }
+            
+            if (!volume || volume <= 0) {
+                errors.push({ field: 'editSkuVolume', message: 'Volume must be greater than 0' });
+            }
+            
+            if (isNaN(growth)) {
+                errors.push({ field: 'editSkuGrowth', message: 'Growth rate must be a valid number' });
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        function showSkuEditValidationErrors(errors) {
+            const validationDiv = document.getElementById('skuEditValidation');
+            
+            // Clear previous error styling
+            document.querySelectorAll('#skuEditForm .validation-error').forEach(el => {
+                el.classList.remove('validation-error');
+            });
+            
+            // Add error styling and messages
+            let errorHtml = '<div style="color: #dc3545; font-size: 0.9em;"><strong>Please fix the following errors:</strong><ul>';
+            
+            errors.forEach(error => {
+                const field = document.getElementById(error.field);
+                if (field) {
+                    field.classList.add('validation-error');
+                }
+                errorHtml += `<li>${error.message}</li>`;
+            });
+            
+            errorHtml += '</ul></div>';
+            validationDiv.innerHTML = errorHtml;
+            validationDiv.style.display = 'block';
+        }
+
+        window.cancelEditSegment = function() {
+            window.editingSegmentId = null;
+            
+            // Reset button
+            const addButton = document.querySelector('button[onclick="addOrUpdateSegment()"]');
+            if (addButton) {
+                addButton.textContent = 'Add Segment';
+                addButton.classList.remove('btn-warning');
+                addButton.classList.add('btn-primary');
+            }
+            
+            clearSegmentForm();
+            window.renderSegments();
+        };
+
+        window.duplicateSegment = function(id) {
+            // Handle both string and numeric IDs
+            const segment = window.segments.find(seg => seg.id == id || seg.id === id);
+            if (!segment) {
+                console.error('Segment not found for duplication, ID:', id);
+                return;
+            }
+            
+            const duplicatedSegment = {
+                ...segment,
+                id: Date.now() + Math.random(),
+                name: segment.name + ' (Copy)',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            window.segments.push(duplicatedSegment);
+            window.renderSegments();
+            updateSegmentCount();
+            showSuccessMessage(`Segment "${segment.name}" duplicated successfully!`);
+        };
+
+        window.toggleSegmentSelection = function(id) {
+            if (window.selectedSegments.has(id)) {
+                window.selectedSegments.delete(id);
+            } else {
+                window.selectedSegments.add(id);
+            }
+            updateBulkActionsVisibility();
+            window.renderSegments();
+        };
+
+        function updateBulkActionsVisibility() {
+            const bulkActions = document.querySelector('.segment-bulk-actions');
+            if (bulkActions) {
+                if (window.selectedSegments.size > 0) {
+                    bulkActions.classList.add('show');
+                } else {
+                    bulkActions.classList.remove('show');
+                }
+            }
+        }
+
+        window.duplicateSelectedSegments = function() {
+            if (window.selectedSegments.size === 0) {
+                alert('Please select segments to duplicate.');
+                return;
+            }
+            
+            const segmentsToDuplicate = window.segments.filter(seg => window.selectedSegments.has(seg.id));
+            const timestamp = new Date().toISOString();
+            
+            segmentsToDuplicate.forEach(segment => {
+                const duplicatedSegment = {
+                    ...segment,
+                    id: Date.now() + Math.random(),
+                    name: segment.name + ' (Copy)',
+                    createdAt: timestamp,
+                    updatedAt: timestamp
+                };
+                window.segments.push(duplicatedSegment);
+            });
+            
+            window.selectedSegments.clear();
+            window.renderSegments();
+            updateSegmentCount();
+            updateBulkActionsVisibility();
+            showSuccessMessage(`${segmentsToDuplicate.length} segment(s) duplicated successfully!`);
+        };
+
+        window.deleteSelectedSegments = function() {
+            if (window.selectedSegments.size === 0) {
+                alert('Please select segments to delete.');
+                return;
+            }
+            
+            const segmentsToDelete = window.segments.filter(seg => window.selectedSegments.has(seg.id));
+            const segmentNames = segmentsToDelete.map(seg => seg.name).join(', ');
+            
+            if (confirm(`Delete ${segmentsToDelete.length} selected segment(s)?\n\n${segmentNames}\n\nThis action cannot be undone.`)) {
+                window.segments = window.segments.filter(seg => !window.selectedSegments.has(seg.id));
+                window.selectedSegments.clear();
+                window.renderSegments();
+                updateSegmentCount();
+                updateBulkActionsVisibility();
+                showSuccessMessage(`${segmentsToDelete.length} segment(s) deleted successfully!`);
+            }
+        };
+
+        // Demographics Functions
+        function setActiveDemographicNav(activeSection) {
+            document.querySelectorAll('.demo-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.section === activeSection) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        window.showDemographicOverview = function() {
+            setActiveDemographicNav('overview');
+            document.getElementById('demographicOverviewSection').style.display = 'block';
+            document.getElementById('countryExplorerSection').style.display = 'none';
+            document.getElementById('countryComparisonSection').style.display = 'none';
+            document.getElementById('segmentAnalysisSection').style.display = 'none';
+            
+            // Load demographic overview data
+            loadDemographicOverview();
+        };
+
+        window.showCountryExplorer = function() {
+            setActiveDemographicNav('explorer');
+            document.getElementById('demographicOverviewSection').style.display = 'none';
+            document.getElementById('countryExplorerSection').style.display = 'block';
+            document.getElementById('countryComparisonSection').style.display = 'none';
+            document.getElementById('segmentAnalysisSection').style.display = 'none';
+        };
+
+        window.showCountryComparison = function() {
+            setActiveDemographicNav('comparison');
+            document.getElementById('demographicOverviewSection').style.display = 'none';
+            document.getElementById('countryExplorerSection').style.display = 'none';
+            document.getElementById('countryComparisonSection').style.display = 'block';
+            document.getElementById('segmentAnalysisSection').style.display = 'none';
+            
+            // Initialize comparison dropdowns
+            initializeCountryComparisonDropdowns();
+        };
+
+        window.showSegmentAnalysis = function() {
+            setActiveDemographicNav('analysis');
+            document.getElementById('demographicOverviewSection').style.display = 'none';
+            document.getElementById('countryExplorerSection').style.display = 'none';
+            document.getElementById('countryComparisonSection').style.display = 'none';
+            document.getElementById('segmentAnalysisSection').style.display = 'block';
+            
+            // Load segment analysis
+            loadSegmentAnalysis();
+        };
+
+        window.loadCountryDetails = function(countryKey) {
+            try {
+                const demographicData = window.externalDemographicData || window.regionalData || {};
+                
+                if (!demographicData || !demographicData[countryKey]) {
+                    console.error('No demographic data found for country:', countryKey);
+                    alert('Country demographic data not available yet. Please wait for data to load.');
+                    return;
+                }
+                
+                const countryData = demographicData[countryKey];
+                if (!countryData || !countryData.demographicSegments) {
+                    console.error('Invalid country data structure for:', countryKey);
+                    alert('Invalid demographic data structure for this country.');
+                    return;
+                }
+                
+                const segments = countryData.demographicSegments || [];
+                const countries = window.countries || {};
+                const countryName = countries[countryKey]?.name || countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+            
+            // Calculate summary statistics
+            const totalPopulation = segments.reduce((sum, seg) => sum + (seg.population || 0), 0);
+            const avgAuthRate = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / segments.length : 0;
+            const avgDigitalAdoption = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / segments.length : 0;
+            const highEconomicSegments = segments.filter(seg => seg.economicTier === 'high').length;
+            const avgUrbanization = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / segments.length : 0;
+            
+            // Generate country details content dynamically
+            const countryDetailsContent = document.getElementById('countryDetailsContent');
+            if (countryDetailsContent) {
+                countryDetailsContent.innerHTML = `
+                    <div class="country-explorer-header">
+                        <h2>${countryName}</h2>
+                    </div>
+                    
+                    <div class="country-stats-grid">
+                        <div class="country-stat-card">
+                            <h4>${totalPopulation.toFixed(1)}M</h4>
+                            <p>Total Population</p>
+                        </div>
+                        <div class="country-stat-card">
+                            <h4>${segments.length}</h4>
+                            <p>Demographic Segments</p>
+                        </div>
+                        <div class="country-stat-card">
+                            <h4>${avgAuthRate.toFixed(1)}%</h4>
+                            <p>Avg Auth Rate</p>
+                        </div>
+                        <div class="country-stat-card">
+                            <h4>${avgDigitalAdoption.toFixed(1)}%</h4>
+                            <p>Avg Digital Adoption</p>
+                        </div>
+                        <div class="country-stat-card">
+                            <h4>${highEconomicSegments}</h4>
+                            <p>High Economic Segments</p>
+                        </div>
+                        <div class="country-stat-card">
+                            <h4>${avgUrbanization.toFixed(1)}%</h4>
+                            <p>Avg Urbanization</p>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <h4>Demographic Segments</h4>
+                        <div style="overflow-x: auto;">
+                            <table class="country-segments-table">
+                                <thead>
+                                    <tr>
+                                        <th>Segment Name</th>
+                                        <th>Population (M)</th>
+                                        <th>Auth Rate (%)</th>
+                                        <th>Auth Frequency</th>
+                                        <th>Digital Adoption (%)</th>
+                                        <th>Economic Tier</th>
+                                        <th>Urbanization (%)</th>
+                                        <th>Growth Rate (%)</th>
+                                        <th>Monthly Volume</th>
+                                        <th>Revenue Potential</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="countrySegmentsTableBody">
+                                    ${generateSegmentsTableRows(segments)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            } catch (error) {
+                console.error('Error loading country details:', error);
+                alert('Error loading country demographic data. Please try again.');
+            }
+        };
+
+        window.compareCountries = function() {
+            const country1Key = document.getElementById('compareCountry1').value;
+            const country2Key = document.getElementById('compareCountry2').value;
+            
+            if (!country1Key || !country2Key) {
+                alert('Please select both countries to compare');
+                return;
+            }
+            
+            const demographicData = window.externalDemographicData || window.regionalData;
+            const countries = window.countries || {};
+            
+            const country1Data = demographicData[country1Key];
+            const country2Data = demographicData[country2Key];
+            
+            if (!country1Data || !country2Data) {
+                alert('Country data not available');
+                return;
+            }
+            
+            renderCountryComparison(country1Key, country1Data, country2Key, country2Data, countries);
+        };
+
+        function loadDemographicOverview() {
+            try {
+                const demographicData = window.externalDemographicData || window.regionalData || {};
+                const countries = window.countries || {};
+                
+                // Check if demographic data is available
+                if (!demographicData || Object.keys(demographicData).length === 0) {
+                    console.log('No demographic data available, showing placeholder...');
+                    
+                    // Update overview cards with placeholder data
+                    const placeholders = [
+                        { id: 'totalCountriesOverview', value: '8' },
+                        { id: 'totalSegmentsOverview', value: 'Loading...' },
+                        { id: 'totalPopulationOverview', value: 'Loading...' },
+                        { id: 'avgAuthRateOverview', value: 'Loading...' },
+                        { id: 'avgPensionRateOverview', value: 'Loading...' },
+                        { id: 'avgDigitalAdoptionOverview', value: 'Loading...' }
+                    ];
+                    
+                    placeholders.forEach(placeholder => {
+                        const el = document.getElementById(placeholder.id);
+                        if (el) el.textContent = placeholder.value;
+                    });
+                    
+                    // Show loading message in table
+                    const tbody = document.getElementById('countrySummaryTableBody');
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #666;">Loading demographic data...</td></tr>';
+                    }
+                    
+                    return;
+                }
+                
+                const currentDemographicData = window.externalDemographicData || window.regionalData || {};
+            
+            let totalPopulation = 0;
+            let totalSegments = 0;
+            let weightedAuthRate = 0;
+            let weightedPensionRate = 0;
+            let weightedDigitalAdoption = 0;
+            let countryCount = 0;
+            
+            const regionData = [];
+            
+            for (const [countryKey, countryData] of Object.entries(currentDemographicData)) {
+                if (!countryData.demographicSegments) continue;
+                
+                const segments = countryData.demographicSegments;
+                const countryName = countries[countryKey]?.name || countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+                
+                const countryPopulation = segments.reduce((sum, seg) => sum + (seg.population || 0), 0);
+                const countrySegmentCount = segments.length;
+                const countryAvgAuthRate = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / segments.length : 0;
+                const countryAvgPensionRate = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.pensionPct || 0), 0) / segments.length : 0;
+                const countryAvgDigitalAdoption = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / segments.length : 0;
+                const highEconomicSegments = segments.filter(seg => seg.economicTier === 'high').length;
+                const avgUrbanization = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / segments.length : 0;
+                
+                totalPopulation += countryPopulation;
+                totalSegments += countrySegmentCount;
+                weightedAuthRate += countryAvgAuthRate * countryPopulation;
+                weightedPensionRate += countryAvgPensionRate * countryPopulation;
+                weightedDigitalAdoption += countryAvgDigitalAdoption * countryPopulation;
+                countryCount++;
+                
+                regionData.push({
+                    countryKey,
+                    countryName,
+                    population: countryPopulation,
+                    segments: countrySegmentCount,
+                    authRate: countryAvgAuthRate,
+                    digitalAdoption: countryAvgDigitalAdoption,
+                    highEconomicSegments,
+                    urbanization: avgUrbanization
+                });
+            }
+            
+            // Update regional summary
+            const finalWeightedAuthRate = totalPopulation > 0 ? weightedAuthRate / totalPopulation : 0;
+            const finalWeightedPensionRate = totalPopulation > 0 ? weightedPensionRate / totalPopulation : 0;
+            const finalWeightedDigitalAdoption = totalPopulation > 0 ? weightedDigitalAdoption / totalPopulation : 0;
+            
+            // Update overview cards with correct element IDs
+            const totalCountriesEl = document.getElementById('totalCountriesOverview');
+            const totalSegmentsEl = document.getElementById('totalSegmentsOverview');
+            const totalPopulationEl = document.getElementById('totalPopulationOverview');
+            const avgAuthRateEl = document.getElementById('avgAuthRateOverview');
+            const avgPensionRateEl = document.getElementById('avgPensionRateOverview');
+            const avgDigitalAdoptionEl = document.getElementById('avgDigitalAdoptionOverview');
+            
+            if (totalCountriesEl) totalCountriesEl.textContent = countryCount;
+            if (totalSegmentsEl) totalSegmentsEl.textContent = totalSegments;
+            if (totalPopulationEl) totalPopulationEl.textContent = `${totalPopulation.toFixed(1)}`;
+            if (avgAuthRateEl) avgAuthRateEl.textContent = `${finalWeightedAuthRate.toFixed(1)}`;
+            if (avgPensionRateEl) avgPensionRateEl.textContent = `${finalWeightedPensionRate.toFixed(1)}`;
+            if (avgDigitalAdoptionEl) avgDigitalAdoptionEl.textContent = `${finalWeightedDigitalAdoption.toFixed(1)}`;
+            
+            // Render country summary table
+            renderCountrySummaryTable(regionData);
+            
+            } catch (error) {
+                console.error('Error loading demographic overview:', error);
+                
+                // Show error message in the content area
+                const overviewContent = document.getElementById('demographicOverviewContent');
+                if (overviewContent) {
+                    overviewContent.innerHTML = 
+                        '<div style="text-align: center; padding: 40px; color: #dc3545;"><h3>Error Loading Data</h3><p>There was an issue loading the demographic data. Please try again.</p></div>';
+                }
+            }
+        }
+
+        function renderCountrySummaryTable(regionData) {
+            const tbody = document.getElementById('countrySummaryTableBody');
+            if (!tbody) {
+                console.error('countrySummaryTableBody element not found');
+                return;
+            }
+            
+            const rows = regionData.map(country => `
+                <tr onclick="loadCountryDetails('${country.countryKey}'); showCountryExplorer();" style="cursor: pointer;">
+                    <td>${country.countryName}</td>
+                    <td>${country.population.toFixed(1)}M</td>
+                    <td>${country.segments}</td>
+                    <td>${country.authRate.toFixed(1)}%</td>
+                    <td>${country.digitalAdoption.toFixed(1)}%</td>
+                    <td>${country.highEconomicSegments}</td>
+                    <td>${country.urbanization.toFixed(1)}%</td>
+                </tr>
+            `).join('');
+            
+            tbody.innerHTML = rows;
+        }
+
+        function renderCountrySegmentsTable(segments) {
+            const tbody = document.getElementById('countrySegmentsTableBody');
+            
+            const rows = segments.map(segment => {
+                const populationMillion = segment.population || 0;
+                const monthlyVolume = populationMillion * 1000000 * (segment.authPct || 0) / 100 * (segment.authFreq || 1.0);
+                
+                // Revenue potential calculation
+                let pricePerTransaction = 0.12;
+                if (segment.economicTier === 'high') pricePerTransaction = 0.18;
+                else if (segment.economicTier === 'low') pricePerTransaction = 0.08;
+                
+                if ((segment.digitalAdoption || 0) >= 80) pricePerTransaction *= 1.2;
+                else if ((segment.digitalAdoption || 0) <= 50) pricePerTransaction *= 0.9;
+                
+                const monthlyRevenue = monthlyVolume * pricePerTransaction;
+                
+                return `
+                    <tr>
+                        <td>${segment.name || ''}</td>
+                        <td>${populationMillion.toFixed(1)}M</td>
+                        <td>${(segment.authPct || 0).toFixed(1)}%</td>
+                        <td>${(segment.authFreq || 1.0).toFixed(1)}</td>
+                        <td>${(segment.digitalAdoption || 0).toFixed(1)}%</td>
+                        <td><span class="economic-tier-badge ${(segment.economicTier || 'medium').toLowerCase()}">${segment.economicTier || 'medium'}</span></td>
+                        <td>${(segment.urbanization || 0).toFixed(1)}%</td>
+                        <td>${(segment.authGrowthRate || 0).toFixed(1)}%</td>
+                        <td>${Math.round(monthlyVolume).toLocaleString()}</td>
+                        <td>₹${Math.round(monthlyRevenue).toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tbody.innerHTML = rows;
+        }
+
+        function initializeCountryComparisonDropdowns() {
+            const demographicData = window.externalDemographicData || window.regionalData;
+            const countries = window.countries || {};
+            
+            const select1 = document.getElementById('compareCountry1');
+            const select2 = document.getElementById('compareCountry2');
+            
+            const options = Object.keys(demographicData)
+                .filter(key => demographicData[key].demographicSegments)
+                .map(key => {
+                    const countryName = countries[key]?.name || key.charAt(0).toUpperCase() + key.slice(1);
+                    return `<option value="${key}">${countryName}</option>`;
+                }).join('');
+            
+            select1.innerHTML = '<option value="">Select first country...</option>' + options;
+            select2.innerHTML = '<option value="">Select second country...</option>' + options;
+        }
+
+        function renderCountryComparison(country1Key, country1Data, country2Key, country2Data, countries) {
+            const country1Name = countries[country1Key]?.name || country1Key.charAt(0).toUpperCase() + country1Key.slice(1);
+            const country2Name = countries[country2Key]?.name || country2Key.charAt(0).toUpperCase() + country2Key.slice(1);
+            
+            const segments1 = country1Data.demographicSegments || [];
+            const segments2 = country2Data.demographicSegments || [];
+            
+            // Calculate comparison metrics
+            const metrics = [
+                {
+                    label: 'Total Population',
+                    country1: `${segments1.reduce((sum, seg) => sum + (seg.population || 0), 0).toFixed(1)}M`,
+                    country2: `${segments2.reduce((sum, seg) => sum + (seg.population || 0), 0).toFixed(1)}M`
+                },
+                {
+                    label: 'Total Segments',
+                    country1: segments1.length,
+                    country2: segments2.length
+                },
+                {
+                    label: 'Avg Auth Rate',
+                    country1: `${(segments1.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / Math.max(segments1.length, 1)).toFixed(1)}%`,
+                    country2: `${(segments2.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / Math.max(segments2.length, 1)).toFixed(1)}%`
+                },
+                {
+                    label: 'Avg Digital Adoption',
+                    country1: `${(segments1.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / Math.max(segments1.length, 1)).toFixed(1)}%`,
+                    country2: `${(segments2.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / Math.max(segments2.length, 1)).toFixed(1)}%`
+                },
+                {
+                    label: 'High Economic Tier Segments',
+                    country1: segments1.filter(seg => seg.economicTier === 'high').length,
+                    country2: segments2.filter(seg => seg.economicTier === 'high').length
+                },
+                {
+                    label: 'Avg Urbanization',
+                    country1: `${(segments1.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / Math.max(segments1.length, 1)).toFixed(1)}%`,
+                    country2: `${(segments2.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / Math.max(segments2.length, 1)).toFixed(1)}%`
+                }
+            ];
+            
+            // Generate key differences
+            const differences = generateKeyDifferences(country1Name, segments1, country2Name, segments2);
+            
+            // Generate comparison content dynamically
+            const comparisonContent = document.getElementById('comparisonContent');
+            if (comparisonContent) {
+                comparisonContent.innerHTML = `
+                    <div class="comparison-header">
+                        <h3>${country1Name}</h3>
+                        <div class="comparison-vs">VS</div>
+                        <h3>${country2Name}</h3>
+                    </div>
+                    
+                    <div style="margin-bottom: 30px;">
+                        <h4>Demographic Comparison</h4>
+                        <div style="overflow-x: auto;">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Metric</th>
+                                        <th>${country1Name}</th>
+                                        <th>${country2Name}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${metrics.map(metric => `
+                                        <tr>
+                                            <td style="font-weight: 500;">${metric.label}</td>
+                                            <td>${metric.country1}</td>
+                                            <td>${metric.country2}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="key-differences">
+                        <h4>🔍 Key Differences</h4>
+                        <ul>
+                            ${differences.map(diff => `<li>${diff}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        function generateKeyDifferences(country1Name, segments1, country2Name, segments2) {
+            const differences = [];
+            
+            const pop1 = segments1.reduce((sum, seg) => sum + (seg.population || 0), 0);
+            const pop2 = segments2.reduce((sum, seg) => sum + (seg.population || 0), 0);
+            const popDiff = Math.abs(pop1 - pop2);
+            if (popDiff > Math.min(pop1, pop2) * 0.1) {
+                differences.push(`${pop1 > pop2 ? country1Name : country2Name} has significantly larger population (${popDiff.toFixed(1)}M difference)`);
+            }
+            
+            const auth1 = segments1.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / Math.max(segments1.length, 1);
+            const auth2 = segments2.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / Math.max(segments2.length, 1);
+            const authDiff = Math.abs(auth1 - auth2);
+            if (authDiff > 10) {
+                differences.push(`${auth1 > auth2 ? country1Name : country2Name} has higher authentication rates (${authDiff.toFixed(1)}% difference)`);
+            }
+            
+            const digital1 = segments1.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / Math.max(segments1.length, 1);
+            const digital2 = segments2.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / Math.max(segments2.length, 1);
+            const digitalDiff = Math.abs(digital1 - digital2);
+            if (digitalDiff > 15) {
+                differences.push(`${digital1 > digital2 ? country1Name : country2Name} has higher digital adoption (${digitalDiff.toFixed(1)}% difference)`);
+            }
+            
+            const high1 = segments1.filter(seg => seg.economicTier === 'high').length;
+            const high2 = segments2.filter(seg => seg.economicTier === 'high').length;
+            if (Math.abs(high1 - high2) > 1) {
+                differences.push(`${high1 > high2 ? country1Name : country2Name} has more high economic tier segments (${Math.abs(high1 - high2)} more)`);
+            }
+            
+            const urban1 = segments1.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / Math.max(segments1.length, 1);
+            const urban2 = segments2.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / Math.max(segments2.length, 1);
+            const urbanDiff = Math.abs(urban1 - urban2);
+            if (urbanDiff > 20) {
+                differences.push(`${urban1 > urban2 ? country1Name : country2Name} has higher urbanization levels (${urbanDiff.toFixed(1)}% difference)`);
+            }
+            
+            if (differences.length === 0) {
+                differences.push('Countries have similar demographic profiles');
+            }
+            
+            return differences;
+        }
+
+        function loadSegmentAnalysis() {
+            const demographicData = window.externalDemographicData || window.regionalData;
+            const countries = window.countries || {};
+            
+            // Collect all segments across countries
+            const allSegments = [];
+            for (const [countryKey, countryData] of Object.entries(demographicData)) {
+                if (!countryData.demographicSegments) continue;
+                
+                const countryName = countries[countryKey]?.name || countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+                countryData.demographicSegments.forEach(segment => {
+                    allSegments.push({
+                        ...segment,
+                        countryKey,
+                        countryName
+                    });
+                });
+            }
+            
+            // Apply filters and render
+            renderFilteredSegments(allSegments);
+        }
+
+        window.filterSegments = function() {
+            const demographicData = window.externalDemographicData || window.regionalData;
+            const countries = window.countries || {};
+            
+            // Collect all segments
+            const allSegments = [];
+            for (const [countryKey, countryData] of Object.entries(demographicData)) {
+                if (!countryData.demographicSegments) continue;
+                
+                const countryName = countries[countryKey]?.name || countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+                countryData.demographicSegments.forEach(segment => {
+                    allSegments.push({
+                        ...segment,
+                        countryKey,
+                        countryName
+                    });
+                });
+            }
+            
+            renderFilteredSegments(allSegments);
+        };
+
+        function renderFilteredSegments(allSegments) {
+            const minAuth = parseFloat(document.getElementById('minAuthRate').value) || 0;
+            const minDigital = parseFloat(document.getElementById('minDigitalAdoption').value) || 0;
+            const economicFilter = document.getElementById('economicTierFilter').value;
+            const minUrban = parseFloat(document.getElementById('minUrbanization').value) || 0;
+            
+            const filteredSegments = allSegments.filter(segment => {
+                const authRate = segment.authPct || 0;
+                const digitalAdoption = segment.digitalAdoption || 0;
+                const economicTier = segment.economicTier || 'medium';
+                const urbanization = segment.urbanization || 0;
+                
+                return authRate >= minAuth &&
+                       digitalAdoption >= minDigital &&
+                       (economicFilter === '' || economicTier === economicFilter) &&
+                       urbanization >= minUrban;
+            });
+            
+            // Update results count
+            document.getElementById('filteredSegmentCount').textContent = filteredSegments.length;
+            
+            // Render segments table
+            const tbody = document.getElementById('segmentAnalysisTableBody');
+            
+            const rows = filteredSegments.map(segment => {
+                const populationMillion = segment.population || 0;
+                const monthlyVolume = populationMillion * 1000000 * (segment.authPct || 0) / 100 * (segment.authFreq || 1.0);
+                
+                return `
+                    <tr>
+                        <td>${segment.countryName}</td>
+                        <td>${segment.name || ''}</td>
+                        <td>${populationMillion.toFixed(1)}M</td>
+                        <td>${(segment.authPct || 0).toFixed(1)}%</td>
+                        <td>${(segment.digitalAdoption || 0).toFixed(1)}%</td>
+                        <td><span class="economic-tier-badge ${(segment.economicTier || 'medium').toLowerCase()}">${segment.economicTier || 'medium'}</span></td>
+                        <td>${(segment.urbanization || 0).toFixed(1)}%</td>
+                        <td>${Math.round(monthlyVolume).toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            tbody.innerHTML = rows || '<tr><td colspan="8" style="text-align: center; color: #666;">No segments match the current filters</td></tr>';
+        }
+
+        window.clearSegmentFilters = function() {
+            document.getElementById('minAuthRate').value = '';
+            document.getElementById('minDigitalAdoption').value = '';
+            document.getElementById('economicTierFilter').value = '';
+            document.getElementById('minUrbanization').value = '';
+            window.filterSegments();
+        };
+
+        window.clearComparison = function() {
+            document.getElementById('compareCountry1').value = '';
+            document.getElementById('compareCountry2').value = '';
+            const comparisonContent = document.getElementById('comparisonContent');
+            if (comparisonContent) {
+                comparisonContent.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Select two countries above to see a detailed side-by-side comparison.</p>';
+            }
+        };
+
+        window.exportDemographicData = function() {
+            setActiveDemographicNav('export');
+            
+            const demographicData = window.externalDemographicData || window.regionalData;
+            const countries = window.countries || {};
+            
+            // Prepare export data
+            const exportData = {
+                metadata: {
+                    title: 'APAC Demographic Data Export',
+                    exportDate: new Date().toISOString(),
+                    totalCountries: Object.keys(demographicData).length,
+                    totalSegments: Object.values(demographicData).reduce((sum, country) => {
+                        return sum + (country.demographicSegments ? country.demographicSegments.length : 0);
+                    }, 0)
+                },
+                countries: {}
+            };
+            
+            // Add each country's data
+            for (const [countryKey, countryData] of Object.entries(demographicData)) {
+                if (!countryData.demographicSegments) continue;
+                
+                const countryName = countries[countryKey]?.name || countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
+                exportData.countries[countryKey] = {
+                    name: countryName,
+                    ...countryData
+                };
+            }
+            
+            // Create and download JSON file
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `apac_demographic_data_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showSuccessMessage('Demographic data exported successfully!');
+        };
+
+        // Function to create Telangana-only model
+        window.createTelanganaModel = function() {
+            // Clear existing segments
+            window.segments = [];
+            
+            // Create Telangana segment based on demographic data
+            const telanganaData = {
+                name: "Telangana",
+                population: 37.2,
+                authPct: 8,
+                pensionPct: 12.8,
+                authFreq: 1.0,
+                digitalAdoption: 74,
+                economicTier: "high",
+                urbanization: 39,
+                authGrowthRate: 18
+            };
+            
+            // Calculate monthly volume for pension authentication
+            const populationInMillions = telanganaData.population;
+            const pensionRate = telanganaData.pensionPct / 100;
+            const authFrequency = telanganaData.authFreq;
+            const monthlyVolume = Math.round(populationInMillions * 1000000 * pensionRate * authFrequency);
+            
+            // Set pricing based on economic tier
+            let pricePerTransaction = 0.18; // High economic tier
+            let costPerTransaction = 0.05;
+            
+            // Digital adoption bonus
+            if (telanganaData.digitalAdoption >= 80) {
+                pricePerTransaction *= 1.2;
+            }
+            
+            const telanganaSegment = {
+                id: Date.now() + Math.random(),
+                name: "Telangana - Pension Auth",
+                type: 'sku',
+                pricePerTransaction: Math.round(pricePerTransaction * 100) / 100,
+                costPerTransaction: Math.round(costPerTransaction * 100) / 100,
+                monthlyVolume: monthlyVolume,
+                volumeGrowth: telanganaData.authGrowthRate,
+                category: 'biometric',
+                notes: `State: Telangana, Population: ${telanganaData.population}M, Pension Coverage: ${telanganaData.pensionPct}%, Digital Adoption: ${telanganaData.digitalAdoption}%, Economic Tier: ${telanganaData.economicTier}, Growth: ${telanganaData.authGrowthRate}%`,
+                pensionPct: telanganaData.pensionPct,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            window.segments.push(telanganaSegment);
+            
+            // Update the display
+            window.renderSegments();
+            updateSegmentCount();
+            
+            // Auto-save this as a model
+            const modelName = "Telangana Pension Authentication Model";
+            const modelDescription = "Specialized pension authentication model for Telangana state with realistic coverage and volume projections.";
+            const modelTags = ['telangana', 'pension', 'authentication', 'biometric', 'single-state'];
+            
+            // Create the model using the same approach as the save model dialog
+            createNewModel(modelName, modelDescription, modelTags);
+            
+            showSuccessMessage(`Created Telangana-only model with ${monthlyVolume.toLocaleString('en-IN')} monthly authentications!`);
+        };
+
+        window.filterSegments = function() {
+            window.renderSegments();
+        };
+
+        window.clearFilters = function() {
+            document.getElementById('segmentSearchFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
+            window.renderSegments();
+        };
+
+        function updateSegmentCount() {
+            const countElement = document.getElementById('segmentCount');
+            if (countElement) {
+                countElement.textContent = window.segments.length;
+            }
+        }
+
+        window.renderSegments = function() {
+            console.log('renderSegments called with', window.segments.length, 'segments');
+            console.log('Segments to render:', window.segments.map(s => ({id: s.id, name: s.name})));
+            
+            const container = document.getElementById('segmentsList');
+            const searchFilter = document.getElementById('segmentSearchFilter').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            
+            // Filter segments
+            let filteredSegments = window.segments.filter(segment => {
+                const matchesSearch = !searchFilter || 
+                    segment.name.toLowerCase().includes(searchFilter) ||
+                    (segment.notes && segment.notes.toLowerCase().includes(searchFilter));
+                const matchesCategory = !categoryFilter || segment.category === categoryFilter;
+                return matchesSearch && matchesCategory;
+            });
+            
+            if (filteredSegments.length === 0) {
+                if (window.segments.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No segments added yet. Add segments above to break down your revenue projections.</p>';
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No segments match your current filters.</p>';
+                }
+                return;
+            }
+            
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            let totalMonthlyRevenue = 0;
+            
+            // Add bulk actions bar if segments are selected
+            let bulkActionsHTML = '';
+            if (window.selectedSegments.size > 0) {
+                bulkActionsHTML = `
+                    <div class="segment-bulk-actions show">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div><strong>${window.selectedSegments.size}</strong> segments selected</div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-secondary btn-small" onclick="window.selectedSegments.clear(); updateBulkActionsVisibility(); window.renderSegments();">Clear Selection</button>
+                                <button class="btn-warning btn-small" onclick="duplicateSelectedSegments()">📋 Duplicate</button>
+                                <button class="btn-warning btn-small" onclick="deleteSelectedSegments()">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const segmentCards = filteredSegments.map(segment => {
+                const isSelected = window.selectedSegments.has(segment.id);
+                const isEditing = window.editingSegmentId === segment.id;
+                
+                const monthlyRevenue = segment.pricePerTransaction * segment.monthlyVolume;
+                const monthlyCost = segment.costPerTransaction * segment.monthlyVolume;
+                const monthlyProfit = monthlyRevenue - monthlyCost;
+                const margin = monthlyRevenue > 0 ? (monthlyProfit / monthlyRevenue * 100) : 0;
+                totalMonthlyRevenue += monthlyRevenue;
+                
+                const categoryBadgeClass = segment.category || 'custom';
+                
+                return `
+                    <div class="segment-card ${isSelected ? 'selected' : ''} ${isEditing ? 'editing' : ''}" style="padding-left: 40px;">
+                        <input type="checkbox" class="segment-checkbox" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleSegmentSelection('${segment.id}')" />
+                        
+                        <div class="segment-card-header">
+                            <div>
+                                <div class="segment-title">${segment.name}</div>
+                                <div style="display: flex; gap: 8px; align-items: center; margin-top: 5px;">
+                                    <span class="segment-type-badge">${segment.type}</span>
+                                    <span class="segment-category-badge ${categoryBadgeClass}">${segment.category || 'custom'}</span>
+                                    ${isEditing ? '<span style="color: #f59e0b; font-size: 0.8em; font-weight: 600;">✏️ EDITING</span>' : ''}
+                                </div>
+                            </div>
+                            <button class="delete-segment" onclick="deleteSegment('${segment.id}')">×</button>
+                        </div>
+                        
+                        <div class="segment-inputs" style="grid-template-columns: 1fr;">
+                            <div class="segment-stats">
+                                <div class="segment-stat">
+                                    <span class="label">Price/Transaction:</span>
+                                    <span class="value">₹${segment.pricePerTransaction.toFixed(2)} ($${(segment.pricePerTransaction/usdRate).toFixed(4)})</span>
+                                </div>
+                                <div class="segment-stat">
+                                    <span class="label">Cost/Transaction:</span>
+                                    <span class="value">₹${segment.costPerTransaction.toFixed(2)} ($${(segment.costPerTransaction/usdRate).toFixed(4)})</span>
+                                </div>
+                                <div class="segment-stat">
+                                    <span class="label">Monthly Volume:</span>
+                                    <span class="value">${(segment.monthlyVolume / 1000000).toFixed(2)}M transactions</span>
+                                </div>
+                                <div class="segment-stat">
+                                    <span class="label">Volume Growth:</span>
+                                    <span class="value">${segment.volumeGrowth}% monthly</span>
+                                </div>
+                            </div>
+                            
+                            ${segment.notes ? `
+                                <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 4px; font-size: 0.85em; color: #666;">
+                                    <strong>Notes:</strong> ${segment.notes}
+                                </div>
+                            ` : ''}
+                            
+                            <div style="border-top: 1px solid #e0e0e0; padding-top: 10px; margin-top: 10px;">
+                                <div class="segment-stats">
+                                    <div class="segment-stat">
+                                        <span class="label">Monthly Revenue:</span>
+                                        <span class="value">₹${monthlyRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})} ($${(monthlyRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                                    </div>
+                                    <div class="segment-stat">
+                                        <span class="label">Monthly Cost:</span>
+                                        <span class="value">₹${monthlyCost.toLocaleString('en-IN', {maximumFractionDigits: 0})} ($${(monthlyCost/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                                    </div>
+                                    <div class="segment-stat">
+                                        <span class="label">Monthly Profit:</span>
+                                        <span class="value">₹${monthlyProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})} ($${(monthlyProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                                    </div>
+                                    <div class="segment-stat">
+                                        <span class="label">Margin:</span>
+                                        <span class="value">${margin.toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="segment-actions">
+                                <button class="segment-action-btn edit" onclick="window.editSegment('${segment.id}')" title="Edit Segment">
+                                    ✏️ Edit
+                                </button>
+                                <button class="segment-action-btn duplicate" onclick="window.duplicateSegment('${segment.id}')" title="Duplicate Segment">
+                                    📋 Duplicate
+                                </button>
+                                <button class="segment-action-btn delete" onclick="window.deleteSegment('${segment.id}')" title="Delete Segment">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                            
+                            ${segment.createdAt ? `
+                                <div style="margin-top: 8px; font-size: 0.75em; color: #999;">
+                                    Created: ${new Date(segment.createdAt).toLocaleDateString()}
+                                    ${segment.updatedAt && segment.updatedAt !== segment.createdAt ? 
+                                        ` | Updated: ${new Date(segment.updatedAt).toLocaleDateString()}` : ''
+                                    }
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = bulkActionsHTML + segmentCards + `
+                <div class="segment-card" style="border-left-color: #22c55e;">
+                    <div class="segment-title">Total Monthly Revenue</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #22c55e;">
+                        ₹${totalMonthlyRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                    </div>
+                    <div style="font-size: 1.2em; font-weight: bold; color: #0284c7;">
+                        $${(totalMonthlyRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})} USD
+                    </div>
+                    <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                        @ ₹${usdRate}/USD | ${filteredSegments.length} segments
+                    </div>
+                    ${searchFilter || categoryFilter ? `
+                        <div style="font-size: 0.8em; color: #f59e0b; margin-top: 5px;">
+                            📊 Filtered view (${filteredSegments.length} of ${window.segments.length} segments)
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            updateSegmentCount();
+            updateProfitabilityWarning();
+        };
+
+        function updateProfitabilityWarning() {
+            const warningDiv = document.getElementById('profitabilityWarning');
+            if (!warningDiv) return;
+            
+            const message = window.validateProfitability();
+            if (message) {
+                warningDiv.innerHTML = message;
+                warningDiv.style.display = 'block';
+                
+                // Style based on message type
+                if (message.includes('Warning:')) {
+                    warningDiv.style.backgroundColor = '#fef3cd';
+                    warningDiv.style.borderLeft = '4px solid #ffc107';
+                    warningDiv.style.color = '#856404';
+                } else if (message.includes('✅')) {
+                    warningDiv.style.backgroundColor = '#d1e7dd';
+                    warningDiv.style.borderLeft = '4px solid #198754';
+                    warningDiv.style.color = '#0f5132';
+                } else {
+                    warningDiv.style.backgroundColor = '#cff4fc';
+                    warningDiv.style.borderLeft = '4px solid #0dcaf0';
+                    warningDiv.style.color = '#055160';
+                }
+            } else {
+                warningDiv.style.display = 'none';
+            }
+        }
+
+        // Segment Library Functions
+        window.showSegmentLibraryDialog = function() {
+            initializeSegmentLibrary();
+            renderSegmentLibrary();
+            document.getElementById('segmentLibraryDialog').style.display = 'flex';
+        };
+
+        window.closeSegmentLibraryDialog = function() {
+            document.getElementById('segmentLibraryDialog').style.display = 'none';
+            window.librarySelectedSegments.clear();
+        };
+
+        function initializeSegmentLibrary() {
+            // Combine predefined segments with any custom library segments
+            window.segmentLibrary = [
+                ...predefinedSegments.sku.map(seg => ({
+                    ...seg,
+                    id: `predefined_${seg.name.replace(/\s+/g, '_')}`,
+                    source: 'predefined'
+                }))
+            ];
+        }
+
+        function renderSegmentLibrary(filterCategory = 'all') {
+            const grid = document.getElementById('segmentLibraryGrid');
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            let filteredLibrary = window.segmentLibrary;
+            if (filterCategory !== 'all') {
+                filteredLibrary = window.segmentLibrary.filter(seg => seg.category === filterCategory);
+            }
+            
+            grid.innerHTML = filteredLibrary.map(segment => {
+                const isSelected = window.librarySelectedSegments.has(segment.id);
+                const monthlyRevenue = segment.price * segment.volume / 1000000; // In millions
+                const monthlyProfit = (segment.price - segment.cost) * segment.volume / 1000000;
+                
+                return `
+                    <div class="library-segment-card ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleLibrarySegmentSelection('${segment.id}')">
+                        <div class="library-segment-title">${segment.name}</div>
+                        <div class="library-segment-details">
+                            <div><strong>Price:</strong> ₹${segment.price} ($${(segment.price/usdRate).toFixed(4)})</div>
+                            <div><strong>Cost:</strong> ₹${segment.cost} ($${(segment.cost/usdRate).toFixed(4)})</div>
+                            <div><strong>Volume:</strong> ${(segment.volume/1000000).toFixed(1)}M/month</div>
+                            <div><strong>Growth:</strong> ${segment.volumeGrowth}% monthly</div>
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                                <strong>Revenue:</strong> ₹${monthlyRevenue.toFixed(1)}M/month<br>
+                                <strong>Market:</strong> ${segment.market}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateLibrarySelectionCount();
+        }
+
+        window.setLibraryFilter = function(category) {
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderSegmentLibrary(category);
+        };
+
+        window.toggleLibrarySegmentSelection = function(id) {
+            if (window.librarySelectedSegments.has(id)) {
+                window.librarySelectedSegments.delete(id);
+            } else {
+                window.librarySelectedSegments.add(id);
+            }
+            renderSegmentLibrary(getCurrentLibraryFilter());
+        };
+
+        function getCurrentLibraryFilter() {
+            const activeBtn = document.querySelector('.modal .view-btn.active');
+            return activeBtn ? activeBtn.textContent.toLowerCase().replace(' categories', '').replace('all', 'all') : 'all';
+        }
+
+        window.clearLibrarySelection = function() {
+            window.librarySelectedSegments.clear();
+            renderSegmentLibrary(getCurrentLibraryFilter());
+        };
+
+        window.addSelectedLibrarySegments = function() {
+            if (window.librarySelectedSegments.size === 0) {
+                alert('Please select segments to add.');
+                return;
+            }
+            
+            const selectedSegments = window.segmentLibrary.filter(seg => 
+                window.librarySelectedSegments.has(seg.id)
+            );
+            
+            let addedCount = 0;
+            const duplicateNames = [];
+            
+            selectedSegments.forEach(libSegment => {
+                // Check for duplicates
+                const existingSegment = window.segments.find(seg => 
+                    seg.name.toLowerCase() === libSegment.name.toLowerCase()
+                );
+                
+                if (existingSegment) {
+                    duplicateNames.push(libSegment.name);
+                } else {
+                    const newSegment = {
+                        id: Date.now() + Math.random(),
+                        name: libSegment.name,
+                        type: 'sku',
+                        pricePerTransaction: libSegment.price,
+                        costPerTransaction: libSegment.cost,
+                        monthlyVolume: libSegment.volume,
+                        volumeGrowth: libSegment.volumeGrowth,
+                        category: libSegment.category || 'authentication',
+                        notes: `Market: ${libSegment.market}`,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    window.segments.push(newSegment);
+                    addedCount++;
+                }
+            });
+            
+            window.renderSegments();
+            updateSegmentCount();
+            closeSegmentLibraryDialog();
+            
+            let message = `${addedCount} segment(s) added successfully!`;
+            if (duplicateNames.length > 0) {
+                message += `\n\nSkipped ${duplicateNames.length} duplicate(s): ${duplicateNames.join(', ')}`;
+            }
+            
+            showSuccessMessage(message);
+        };
+
+        function updateLibrarySelectionCount() {
+            const countElement = document.getElementById('selectedLibraryCount');
+            if (countElement) {
+                countElement.textContent = window.librarySelectedSegments.size;
+            }
+        }
+
+        // Import/Export Functions
+        window.exportSegments = function() {
+            if (window.segments.length === 0) {
+                alert('No segments to export.');
+                return;
+            }
+            
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                exportedBy: 'India Revenue Projection Tool',
+                totalSegments: window.segments.length,
+                segments: window.segments.map(seg => ({
+                    name: seg.name,
+                    pricePerTransaction: seg.pricePerTransaction,
+                    costPerTransaction: seg.costPerTransaction,
+                    monthlyVolume: seg.monthlyVolume,
+                    volumeGrowth: seg.volumeGrowth,
+                    category: seg.category,
+                    notes: seg.notes,
+                    type: seg.type
+                }))
+            };
+            
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `revenue_segments_${new Date().toISOString().split('T')[0]}.json`;
+            a.style.display = 'none';
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showSuccessMessage(`Successfully exported ${window.segments.length} segment(s)!`);
+        };
+
+        window.importSegments = function() {
+            document.getElementById('segmentImportFile').click();
+        };
+
+        window.handleSegmentImportFile = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    if (!importData.segments || !Array.isArray(importData.segments)) {
+                        alert('Invalid file format. Expected segments array.');
+                        return;
+                    }
+                    
+                    const validSegments = importData.segments.filter(seg => 
+                        seg.name && seg.pricePerTransaction && seg.monthlyVolume
+                    );
+                    
+                    if (validSegments.length === 0) {
+                        alert('No valid segments found in file.');
+                        return;
+                    }
+                    
+                    let importedCount = 0;
+                    const duplicateNames = [];
+                    
+                    validSegments.forEach(importSeg => {
+                        const existingSegment = window.segments.find(seg => 
+                            seg.name.toLowerCase() === importSeg.name.toLowerCase()
+                        );
+                        
+                        if (existingSegment) {
+                            duplicateNames.push(importSeg.name);
+                        } else {
+                            const newSegment = {
+                                id: Date.now() + Math.random(),
+                                name: importSeg.name,
+                                type: importSeg.type || 'sku',
+                                pricePerTransaction: importSeg.pricePerTransaction,
+                                costPerTransaction: importSeg.costPerTransaction || 0,
+                                monthlyVolume: importSeg.monthlyVolume,
+                                volumeGrowth: importSeg.volumeGrowth || 5,
+                                category: importSeg.category || 'custom',
+                                notes: importSeg.notes || '',
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString()
+                            };
+                            
+                            window.segments.push(newSegment);
+                            importedCount++;
+                        }
+                    });
+                    
+                    window.renderSegments();
+                    updateSegmentCount();
+                    
+                    let message = `${importedCount} segment(s) imported successfully!`;
+                    if (duplicateNames.length > 0) {
+                        message += `\n\nSkipped ${duplicateNames.length} duplicate(s): ${duplicateNames.join(', ')}`;
+                    }
+                    
+                    showSuccessMessage(message);
+                    
+                } catch (error) {
+                    console.error('Import error:', error);
+                    alert('Error reading file. Please ensure it\'s a valid JSON file.');
+                }
+            };
+            
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input
+        };
+
+        window.deleteSegment = function(id) {
+            // Convert ID to string for consistent comparison
+            const targetId = String(id);
+            
+            // Find segment with string comparison
+            const segment = window.segments.find(seg => String(seg.id) === targetId);
+            if (!segment) {
+                console.error('Segment not found for deletion, ID:', id);
+                return;
+            }
+            
+            // Store backup for undo
+            const deletedSegment = JSON.parse(JSON.stringify(segment));
+            const segmentIndex = window.segments.findIndex(seg => String(seg.id) === targetId);
+            
+            // Remove from segments array using string comparison
+            const originalLength = window.segments.length;
+            window.segments = window.segments.filter(seg => String(seg.id) !== targetId);
+            
+            // Verify deletion worked
+            if (window.segments.length === originalLength) {
+                console.error('Failed to delete segment - length unchanged');
+                return;
+            }
+            
+            // Remove from selected segments
+            window.selectedSegments.delete(id);
+            window.selectedSegments.delete(targetId);
+            
+            // Cancel editing if this segment was being edited
+            if (window.editingSegmentId === id || window.editingSegmentId === targetId) {
+                window.editingSegmentId = null;
+            }
+            
+            // Save to localStorage immediately
+            localStorage.setItem('segments', JSON.stringify(window.segments));
+            
+            // Force UI update
+            setTimeout(() => {
+                window.renderSegments();
+                updateSegmentCount();
+                updateBulkActionsVisibility();
+            }, 10);
+            
+            // Show undo toast
+            showUndoToast(`Segment "${segment.name}" deleted`, () => {
+                // Undo function - restore the segment
+                window.segments.splice(segmentIndex, 0, deletedSegment);
+                localStorage.setItem('segments', JSON.stringify(window.segments));
+                setTimeout(() => {
+                    window.renderSegments();
+                    updateSegmentCount();
+                    updateBulkActionsVisibility();
+                }, 10);
+                showSuccessMessage(`Segment "${deletedSegment.name}" restored!`);
+            });
+        };
+
+        // Legacy function for backward compatibility
+        window.addSegment = function() {
+            window.addOrUpdateSegment();
+        };
+
+        // Enhanced addTestSegment function
+        window.addTestSegment = function() {
+            console.log('Adding enhanced test segment...');
+            const testSegment = {
+                id: Date.now() + Math.random(),
+                name: 'Test Authentication Service',
+                type: 'sku',
+                pricePerTransaction: 0.25,
+                costPerTransaction: 0.08,
+                monthlyVolume: 5000000,
+                volumeGrowth: 8,
+                category: 'authentication',
+                notes: 'Test segment for demonstration purposes',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            window.segments.push(testSegment);
+            console.log('Current segments:', window.segments);
+            window.renderSegments();
+            updateSegmentCount();
+            showSuccessMessage('Test segment added successfully!');
+        };
+
+        // Enhanced predefined segment functions
+        function updatePredefinedSegments() {
+            const container = document.getElementById('predefinedSegments');
+            
+            if (window.currentSegmentType === 'custom') {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'grid';
+            const segments = predefinedSegments[window.currentSegmentType] || [];
+            
+            if (window.currentSegmentType === 'sku') {
+                container.innerHTML = segments.map((segment, index) => {
+                    const monthlyRevenue = segment.price * segment.volume / 1000000; // In millions
+                    const monthlyProfit = (segment.price - segment.cost) * segment.volume / 1000000;
+                    const categoryClass = segment.category || 'custom';
+                    
+                    return `
+                        <button class="predefined-btn sku-btn" 
+                                data-name="${segment.name}"
+                                data-price="${segment.price}"
+                                data-cost="${segment.cost}"
+                                data-volume="${segment.volume}"
+                                data-growth="${segment.volumeGrowth}"
+                                data-category="${segment.category}"
+                                data-market="${segment.market}"
+                                title="Price: ₹${segment.price}, Cost: ₹${segment.cost}, Volume: ${(segment.volume/1000000).toFixed(0)}M/month">
+                            <strong>${segment.name}</strong>
+                            <div class="sku-info">
+                                <div style="color: #059669; font-size: 9px; font-weight: 600;">₹${segment.price}/txn | Cost: ₹${segment.cost}</div>
+                                <div style="color: #7c3aed; font-size: 9px;">📊 ${(segment.volume/1000000).toFixed(0)}M txns/month</div>
+                                <div style="color: #0284c7; font-size: 9px;">💰 Revenue: ₹${monthlyRevenue.toFixed(1)}M</div>
+                                <div style="color: #dc2626; font-size: 9px;">🎯 ${segment.market}</div>
+                                <div style="color: #8b5cf6; font-size: 8px; margin-top: 2px;">📂 ${segment.category}</div>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+            }
+            
+            // Add event listeners to SKU buttons
+            container.querySelectorAll('.sku-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const name = this.dataset.name;
+                    const price = parseFloat(this.dataset.price);
+                    const cost = parseFloat(this.dataset.cost);
+                    const volume = parseFloat(this.dataset.volume);
+                    const growth = parseFloat(this.dataset.growth);
+                    const category = this.dataset.category;
+                    const market = this.dataset.market;
+                    addPredefinedSegmentSKU(name, price, cost, volume, growth, category, market);
+                };
+            });
+        }
+
+        function addPredefinedSegmentSKU(name, price, cost, volume, volumeGrowth, category, market) {
+            document.getElementById('segmentName').value = name;
+            document.getElementById('pricePerTransaction').value = price;
+            document.getElementById('costPerTransaction').value = cost;
+            document.getElementById('monthlyVolume').value = volume;
+            document.getElementById('volumeGrowth').value = volumeGrowth;
+            document.getElementById('segmentCategory').value = category || 'authentication';
+            document.getElementById('segmentNotes').value = `Market: ${market}`;
+            window.addOrUpdateSegment();
+        }
+
+        // Enhanced testAddSegment for debugging
+        function testAddSegment() {
+            console.log('Testing enhanced addSegment function...');
+            const formValues = {
+                name: document.getElementById('segmentName').value,
+                price: document.getElementById('pricePerTransaction').value,
+                cost: document.getElementById('costPerTransaction').value,
+                volume: document.getElementById('monthlyVolume').value,
+                growth: document.getElementById('volumeGrowth').value,
+                category: document.getElementById('segmentCategory').value,
+                notes: document.getElementById('segmentNotes').value
+            };
+            console.log('Form values:', JSON.stringify(formValues, null, 2));
+            
+            if (!formValues.name) {
+                console.log('⚠️ Name field is empty');
+            }
+            if (!formValues.price || formValues.price <= 0) {
+                console.log('⚠️ Price field is empty or invalid');
+            }
+            if (!formValues.volume || formValues.volume <= 0) {
+                console.log('⚠️ Volume field is empty or invalid');
+            }
+            
+            window.addOrUpdateSegment();
+        }
+
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Find the tab that matches the name
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
+                    (tabName === 'setup' && tab.textContent.includes('Setup')) ||
+                    (tabName === 'projections' && tab.textContent.includes('Projections')) ||
+                    (tabName === 'analysis' && tab.textContent.includes('Analysis')) ||
+                    (tabName === 'demographics' && tab.textContent.includes('Demographics')) ||
+                    (tabName === 'models' && tab.textContent.includes('Saved'))) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Activate the content
+            const contentElement = document.getElementById(tabName);
+            if (contentElement) {
+                contentElement.classList.add('active');
+                
+                // Special handling for demographics tab
+                if (tabName === 'demographics') {
+                    // Show demographic overview by default
+                    window.showDemographicOverview();
+                }
+            }
+        }
+
+        function setView(view) {
+            window.currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (window.projectionData.length > 0) {
+                displayResults();
+            }
+        }
+
+        function initializeSegmentTypes() {
+            document.querySelectorAll('.segment-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.segment-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    window.currentSegmentType = this.dataset.type;
+                    updatePredefinedSegments();
+                });
+            });
+        }
+
+        function getSeasonalityMultiplier(month, type) {
+            if (type === 'none') return 1;
+            
+            const monthIndex = month % 12;
+            
+            if (type === 'retail') {
+                const multipliers = [0.9, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.05, 1.0, 1.1, 1.2, 1.3];
+                return multipliers[monthIndex];
+            } else if (type === 'summer') {
+                const multipliers = [0.8, 0.85, 0.9, 1.0, 1.1, 1.2, 1.3, 1.2, 1.0, 0.9, 0.85, 0.8];
+                return multipliers[monthIndex];
+            }
+            return 1;
+        }
+
+        function calculateProjections() {
+            const months = parseInt(document.getElementById('projectionMonths').value);
+            const seasonality = document.getElementById('seasonality').value;
+            
+            // Check if we have segments
+            if (window.segments.length === 0) {
+                alert('Please add at least one SKU before calculating projections.');
+                return;
+            }
+            
+            window.projectionData = [];
+            window.segmentProjections = {};
+            const currentDate = new Date();
+            
+            // Initialize segment projections
+            window.segments.forEach(segment => {
+                window.segmentProjections[segment.name] = [];
+            });
+            
+            // Calculate monthly projections
+            for (let i = 0; i < months; i++) {
+                const projectedDate = new Date(currentDate);
+                projectedDate.setMonth(currentDate.getMonth() + i);
+                const monthLabel = projectedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                
+                let totalMonthRevenue = 0;
+                let totalMonthCost = 0;
+                let totalMonthVolume = 0;
+                
+                // Calculate for each segment
+                window.segments.forEach(segment => {
+                    const monthlyGrowthRate = segment.volumeGrowth / 100;
+                    const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+                    
+                    // Calculate volume with growth
+                    const projectedVolume = segment.monthlyVolume * 
+                                          Math.pow(1 + monthlyGrowthRate, i) * 
+                                          seasonalMultiplier;
+                    
+                    const segmentRevenue = projectedVolume * segment.pricePerTransaction;
+                    const segmentCost = projectedVolume * segment.costPerTransaction;
+                    const segmentProfit = segmentRevenue - segmentCost;
+                    
+                    window.segmentProjections[segment.name].push({
+                        month: monthLabel,
+                        volume: projectedVolume,
+                        revenue: segmentRevenue,
+                        cost: segmentCost,
+                        profit: segmentProfit,
+                        margin: segmentRevenue > 0 ? (segmentProfit / segmentRevenue * 100) : 0
+                    });
+                    
+                    totalMonthRevenue += segmentRevenue;
+                    totalMonthCost += segmentCost;
+                    totalMonthVolume += projectedVolume;
+                });
+                
+                // Calculate operating expenses based on type
+                const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+                let operatingExpenses = 0;
+                
+                if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+                    operatingExpenses += parseFloat(document.getElementById('operatingExpenses').value) || 0;
+                }
+                
+                if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+                    const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+                    operatingExpenses += (totalMonthRevenue * percentageExpense / 100);
+                }
+                
+                const netProfit = totalMonthRevenue - totalMonthCost - operatingExpenses;
+                const profitMargin = totalMonthRevenue > 0 ? (netProfit / totalMonthRevenue) * 100 : 0;
+                
+                window.projectionData.push({
+                    month: monthLabel,
+                    revenue: totalMonthRevenue,
+                    cogs: totalMonthCost,
+                    grossProfit: totalMonthRevenue - totalMonthCost,
+                    operatingExpenses: operatingExpenses,
+                    netProfit: netProfit,
+                    profitMargin: profitMargin,
+                    volume: totalMonthVolume,
+                    cumulativeRevenue: i === 0 ? totalMonthRevenue : window.projectionData[i-1].cumulativeRevenue + totalMonthRevenue
+                });
+            }
+            
+            // Switch to projections tab and display results
+            switchTab('projections');
+            displayResults();
+        }
+
+        function displayResults() {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').classList.add('fade-in');
+            
+            // Generate data for current chart period if chart period selector exists
+            const periodElement = document.getElementById('chartPeriod');
+            const selectedPeriod = periodElement ? periodElement.value : '1Y';
+            window.currentTableData = generateChartData(selectedPeriod);
+            
+            if (window.currentView === 'consolidated') {
+                displayConsolidatedResults();
+            } else {
+                displaySegmentedResults();
+            }
+            
+            updateChart();
+        }
+
+        function displayConsolidatedResults() {
+            const tableData = window.currentTableData || window.projectionData;
+            const totalRevenue = tableData.reduce((sum, item) => sum + item.revenue, 0);
+            const totalProfit = tableData.reduce((sum, item) => sum + item.netProfit, 0);
+            const avgPeriodRevenue = totalRevenue / tableData.length;
+            const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // Get period for labeling
+            const periodElement = document.getElementById('chartPeriod');
+            const selectedPeriod = periodElement ? periodElement.value : '1Y';
+            const isDaily = selectedPeriod === '1M';
+            const periodLabel = isDaily ? 'Daily' : 'Monthly';
+            
+            document.getElementById('summaryCards').innerHTML = `
+                <div class="summary-card">
+                    <h3>Total Revenue</h3>
+                    <div class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div style="font-size: 1em; opacity: 0.9;">$${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Net Profit</h3>
+                    <div class="value">₹${totalProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div style="font-size: 1em; opacity: 0.9;">$${(totalProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Avg ${periodLabel} Revenue</h3>
+                    <div class="value">₹${avgPeriodRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div style="font-size: 1em; opacity: 0.9;">$${(avgPeriodRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Avg Profit Margin</h3>
+                    <div class="value">${avgProfitMargin.toFixed(1)}%</div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">Exchange Rate: ₹${usdRate}/USD</div>
+                </div>
+            `;
+            
+            displayConsolidatedTable();
+            
+            if (window.segments.length > 0) {
+                displaySegmentBreakdown();
+            } else {
+                document.getElementById('segmentBreakdown').style.display = 'none';
+            }
+        }
+
+        function aggregateDataByYear(data) {
+            const yearGroups = {};
+            
+            data.forEach(row => {
+                // Extract year from month string (e.g., "2025 Jan" -> 2025)
+                const monthParts = row.month.split(' ');
+                let year;
+                if (monthParts.length === 2 && !isNaN(parseInt(monthParts[0]))) {
+                    year = parseInt(monthParts[0]);
+                } else {
+                    // Fallback: parse as date and extract year
+                    const date = new Date(row.month + ' 1, ' + new Date().getFullYear());
+                    year = date.getFullYear();
+                }
+                
+                if (!yearGroups[year]) {
+                    yearGroups[year] = {
+                        year: year,
+                        revenue: 0,
+                        cogs: 0,
+                        netProfit: 0,
+                        operatingExpenses: 0,
+                        volume: 0,
+                        months: []
+                    };
+                }
+                
+                yearGroups[year].revenue += row.revenue;
+                yearGroups[year].cogs += row.cogs;
+                yearGroups[year].netProfit += row.netProfit;
+                yearGroups[year].operatingExpenses += row.operatingExpenses;
+                yearGroups[year].volume += row.volume;
+                yearGroups[year].months.push(row);
+            });
+            
+            // Convert to array and calculate profit margins
+            return Object.values(yearGroups).map(yearData => ({
+                ...yearData,
+                profitMargin: yearData.revenue > 0 ? (yearData.netProfit / yearData.revenue * 100) : 0
+            }));
+        }
+
+        function toggleMonthlyBreakdown() {
+            displayConsolidatedTable();
+        }
+
+        function exportTableData(format) {
+            const tableData = window.currentTableData || window.projectionData;
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            const periodElement = document.getElementById('chartPeriod');
+            const selectedPeriod = periodElement ? periodElement.value : '1Y';
+            const isLongPeriod = ['5Y', '10Y'].includes(selectedPeriod);
+            const showMonthly = document.getElementById('monthlyBreakdown').checked;
+            
+            let exportData = tableData;
+            let filename = `revenue_projections_${selectedPeriod}`;
+            
+            // If long period and not showing monthly, use yearly aggregation
+            if (isLongPeriod && !showMonthly) {
+                exportData = aggregateDataByYear(tableData);
+                filename += '_yearly';
+            } else {
+                filename += selectedPeriod === '1M' ? '_daily' : '_monthly';
+            }
+            
+            if (format === 'csv') {
+                exportToCSV(exportData, filename, usdRate);
+            } else if (format === 'excel') {
+                exportToExcel(exportData, filename, usdRate);
+            }
+        }
+
+        function exportToCSV(data, filename, usdRate) {
+            let csvContent = '';
+            
+            // Headers
+            if (data[0] && data[0].year !== undefined) {
+                // Yearly data
+                csvContent = 'Year,Revenue (INR),Revenue (USD),COGS (INR),COGS (USD),Net Profit (INR),Net Profit (USD),Transaction Volume,Profit Margin (%)\n';
+                data.forEach(row => {
+                    csvContent += `${row.year},"₹${row.revenue.toLocaleString('en-IN')}","$${(row.revenue/usdRate).toLocaleString('en-US')}","₹${row.cogs.toLocaleString('en-IN')}","$${(row.cogs/usdRate).toLocaleString('en-US')}","₹${row.netProfit.toLocaleString('en-IN')}","$${(row.netProfit/usdRate).toLocaleString('en-US')}",${row.volume.toLocaleString('en-IN')},${row.profitMargin.toFixed(1)}\n`;
+                });
+            } else {
+                // Monthly/Daily data
+                csvContent = 'Period,Revenue (INR),Revenue (USD),COGS (INR),COGS (USD),Net Profit (INR),Net Profit (USD),Transaction Volume,Profit Margin (%)\n';
+                data.forEach(row => {
+                    csvContent += `${row.month},"₹${row.revenue.toLocaleString('en-IN')}","$${(row.revenue/usdRate).toLocaleString('en-US')}","₹${row.cogs.toLocaleString('en-IN')}","$${(row.cogs/usdRate).toLocaleString('en-US')}","₹${row.netProfit.toLocaleString('en-IN')}","$${(row.netProfit/usdRate).toLocaleString('en-US')}",${row.volume.toLocaleString('en-IN')},${row.profitMargin.toFixed(1)}\n`;
+                });
+            }
+            
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${filename}.csv`;
+            link.click();
+        }
+
+        function exportToExcel(data, filename, usdRate) {
+            // Use existing XLSX library
+            const wb = XLSX.utils.book_new();
+            
+            // Prepare data for Excel
+            const excelData = [];
+            
+            if (data[0] && data[0].year !== undefined) {
+                // Yearly data headers
+                excelData.push(['Year', 'Revenue (INR)', 'Revenue (USD)', 'COGS (INR)', 'COGS (USD)', 'Net Profit (INR)', 'Net Profit (USD)', 'Transaction Volume', 'Profit Margin (%)']);
+                data.forEach(row => {
+                    excelData.push([
+                        row.year,
+                        row.revenue,
+                        row.revenue/usdRate,
+                        row.cogs,
+                        row.cogs/usdRate,
+                        row.netProfit,
+                        row.netProfit/usdRate,
+                        row.volume,
+                        row.profitMargin
+                    ]);
+                });
+            } else {
+                // Monthly/Daily data headers
+                excelData.push(['Period', 'Revenue (INR)', 'Revenue (USD)', 'COGS (INR)', 'COGS (USD)', 'Net Profit (INR)', 'Net Profit (USD)', 'Transaction Volume', 'Profit Margin (%)']);
+                data.forEach(row => {
+                    excelData.push([
+                        row.month,
+                        row.revenue,
+                        row.revenue/usdRate,
+                        row.cogs,
+                        row.cogs/usdRate,
+                        row.netProfit,
+                        row.netProfit/usdRate,
+                        row.volume,
+                        row.profitMargin
+                    ]);
+                });
+            }
+            
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Revenue Projections');
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+        }
+
+        function displayConsolidatedTable() {
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            const tableData = window.currentTableData || window.projectionData;
+            
+            // Get period for labeling
+            const periodElement = document.getElementById('chartPeriod');
+            const selectedPeriod = periodElement ? periodElement.value : '1Y';
+            const isDaily = selectedPeriod === '1M';
+            const isLongPeriod = ['5Y', '10Y'].includes(selectedPeriod);
+            const showMonthly = document.getElementById('monthlyBreakdown').checked;
+            
+            // Show/hide table controls for long periods
+            const tableControls = document.getElementById('tableControls');
+            if (isLongPeriod) {
+                tableControls.style.display = 'block';
+            } else {
+                tableControls.style.display = 'none';
+            }
+            
+            // Determine data to display
+            let displayData = tableData;
+            let periodLabel, volumeLabel;
+            
+            if (isLongPeriod && !showMonthly) {
+                // Show yearly aggregated data
+                displayData = aggregateDataByYear(tableData);
+                periodLabel = 'Year';
+                volumeLabel = 'Annual Volume';
+            } else {
+                // Show month/day data
+                periodLabel = isDaily ? 'Day' : 'Month';
+                volumeLabel = isDaily ? 'Daily Volume' : 'Monthly Volume';
+            }
+            
+            let tableHTML = `
+                <thead>
+                    <tr>
+                        <th>${periodLabel}</th>
+                        <th>Revenue (INR)</th>
+                        <th>Revenue (USD)</th>
+                        <th>COGS (INR)</th>
+                        <th>COGS (USD)</th>
+                        <th>Net Profit (INR)</th>
+                        <th>Net Profit (USD)</th>
+                        <th>${volumeLabel}</th>
+                        <th>Margin</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            // Calculate totals
+            const totals = {
+                revenue: 0,
+                cogs: 0,
+                netProfit: 0,
+                volume: 0
+            };
+            
+            displayData.forEach((row, index) => {
+                totals.revenue += row.revenue;
+                totals.cogs += row.cogs;
+                totals.netProfit += row.netProfit;
+                totals.volume += row.volume;
+                
+                const periodDisplay = row.year !== undefined ? row.year : row.month;
+                const rowId = `row-${index}`;
+                const hasMonthlyData = row.months && row.months.length > 0;
+                
+                tableHTML += `
+                    <tr id="${rowId}" ${hasMonthlyData ? `onclick="toggleYearExpansion('${rowId}')" style="cursor: pointer;"` : ''}>
+                        <td>
+                            ${hasMonthlyData ? '<span class="expand-icon">▶</span> ' : ''}${periodDisplay}
+                        </td>
+                        <td>₹${row.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                        <td>$${(row.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                        <td>₹${row.cogs.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                        <td>$${(row.cogs/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                        <td style="color: ${row.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                            ₹${row.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                        </td>
+                        <td style="color: ${row.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                            $${(row.netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}
+                        </td>
+                        <td>${row.volume.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                        <td>${row.profitMargin.toFixed(1)}%</td>
+                    </tr>
+                `;
+                
+                // Add monthly breakdown rows if in yearly view and showing monthly details
+                if (hasMonthlyData && showMonthly) {
+                    row.months.forEach(monthRow => {
+                        tableHTML += `
+                            <tr class="monthly-detail" style="background: #f9f9f9; display: none;" data-parent="${rowId}">
+                                <td style="padding-left: 30px;">→ ${monthRow.month}</td>
+                                <td>₹${monthRow.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                                <td>$${(monthRow.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                                <td>₹${monthRow.cogs.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                                <td>$${(monthRow.cogs/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                                <td style="color: ${monthRow.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                                    ₹${monthRow.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                                </td>
+                                <td style="color: ${monthRow.netProfit >= 0 ? '#22c55e' : '#ef4444'}">
+                                    $${(monthRow.netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}
+                                </td>
+                                <td>${monthRow.volume.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                                <td>${monthRow.profitMargin.toFixed(1)}%</td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+            
+            // Add totals row
+            const totalMargin = totals.revenue > 0 ? ((totals.netProfit / totals.revenue) * 100) : 0;
+            tableHTML += `
+                <tr style="background: #f8f9fa; font-weight: bold; border-top: 2px solid #dee2e6;">
+                    <td><strong>TOTAL</strong></td>
+                    <td><strong>₹${totals.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+                    <td><strong>$${(totals.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong></td>
+                    <td><strong>₹${totals.cogs.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+                    <td><strong>$${(totals.cogs/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong></td>
+                    <td style="color: ${totals.netProfit >= 0 ? '#22c55e' : '#ef4444'}; font-weight: bold;">
+                        <strong>₹${totals.netProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong>
+                    </td>
+                    <td style="color: ${totals.netProfit >= 0 ? '#22c55e' : '#ef4444'}; font-weight: bold;">
+                        <strong>$${(totals.netProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong>
+                    </td>
+                    <td><strong>${totals.volume.toLocaleString('en-IN', {maximumFractionDigits: 0})}</strong></td>
+                    <td><strong>${totalMargin.toFixed(1)}%</strong></td>
+                </tr>
+            `;
+            
+            tableHTML += '</tbody>';
+            document.getElementById('projectionTable').innerHTML = tableHTML;
+        }
+
+        function toggleYearExpansion(rowId) {
+            const row = document.getElementById(rowId);
+            const monthlyRows = document.querySelectorAll(`tr[data-parent="${rowId}"]`);
+            const expandIcon = row.querySelector('.expand-icon');
+            
+            if (monthlyRows.length === 0) return;
+            
+            const isExpanded = monthlyRows[0].style.display !== 'none';
+            
+            monthlyRows.forEach(monthRow => {
+                monthRow.style.display = isExpanded ? 'none' : 'table-row';
+            });
+            
+            if (expandIcon) {
+                expandIcon.textContent = isExpanded ? '▶' : '▼';
+            }
+        }
+
+        function displaySegmentedResults() {
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // Display individual segment summary cards
+            let segmentCardsHTML = '';
+            window.segments.forEach(segment => {
+                const segmentData = window.segmentProjections[segment.name];
+                const totalRevenue = segmentData.reduce((sum, item) => sum + item.revenue, 0);
+                const totalProfit = segmentData.reduce((sum, item) => sum + (item.profit || 0), 0);
+                const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+                
+                segmentCardsHTML += `
+                    <div class="summary-card">
+                        <h3>${segment.name}</h3>
+                        <div class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                        <div style="font-size: 0.9em; opacity: 0.9;">${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                        <div style="font-size: 0.8em; opacity: 0.8; margin-top: 5px;">Margin: ${avgProfitMargin.toFixed(1)}%</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('summaryCards').innerHTML = segmentCardsHTML;
+            
+            // Display segmented table with individual SKU performance
+            displaySegmentedTable();
+            
+            // Hide the consolidated segment breakdown since we're showing individual segments
+            document.getElementById('segmentBreakdown').style.display = 'none';
+        }
+
+        function displaySegmentedTable() {
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            let tableHTML = `
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>SKU</th>
+                        <th>Volume</th>
+                        <th>Revenue (INR)</th>
+                        <th>Revenue (USD)</th>
+                        <th>Cost (INR)</th>
+                        <th>Cost (USD)</th>
+                        <th>Profit (INR)</th>
+                        <th>Profit (USD)</th>
+                        <th>Margin</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            // Create rows for each month and each segment
+            window.projectionData.forEach((monthData, monthIndex) => {
+                window.segments.forEach((segment, segmentIndex) => {
+                    const segmentData = window.segmentProjections[segment.name][monthIndex];
+                    
+                    tableHTML += `
+                        <tr>
+                            <td>${segmentIndex === 0 ? monthData.month : ''}</td>
+                            <td><strong>${segment.name}</strong></td>
+                            <td>${segmentData.volume ? (segmentData.volume / 1000000).toFixed(2) + 'M' : 'N/A'}</td>
+                            <td>₹${segmentData.revenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                            <td>${(segmentData.revenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                            <td>₹${(segmentData.cost || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+                            <td>${((segmentData.cost || 0)/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</td>
+                            <td style="color: ${(segmentData.profit || 0) >= 0 ? '#22c55e' : '#ef4444'}">
+                                ₹${(segmentData.profit || 0).toLocaleString('en-IN', {maximumFractionDigits: 0})}
+                            </td>
+                            <td style="color: ${(segmentData.profit || 0) >= 0 ? '#22c55e' : '#ef4444'}">
+                                ${((segmentData.profit || 0)/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}
+                            </td>
+                            <td>${(segmentData.margin || 0).toFixed(1)}%</td>
+                        </tr>
+                    `;
+                });
+                
+                // Add a separator row between months (except for the last month)
+                if (monthIndex < window.projectionData.length - 1) {
+                    tableHTML += `
+                        <tr style="background: #f8f9fa;">
+                            <td colspan="10" style="height: 1px; padding: 0; border: none;"></td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            tableHTML += '</tbody>';
+            document.getElementById('projectionTable').innerHTML = tableHTML;
+        }
+
+        function displaySegmentBreakdown() {
+            if (window.segments.length === 0) return;
+            
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            const breakdownHTML = window.segments.map(segment => {
+                const segmentData = window.segmentProjections[segment.name];
+                const totalRevenue = segmentData.reduce((sum, item) => sum + item.revenue, 0);
+                const totalProfit = segmentData.reduce((sum, item) => sum + (item.profit || 0), 0);
+                const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+                
+                return `
+                    <div class="segment-summary">
+                        <h4>${segment.name}</h4>
+                        <div class="segment-metric">
+                            <span class="label">Total Revenue:</span>
+                            <span class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="segment-metric">
+                            <span class="label">Total Revenue (USD):</span>
+                            <span class="value">${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="segment-metric">
+                            <span class="label">Total Profit:</span>
+                            <span class="value">₹${totalProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="segment-metric">
+                            <span class="label">Total Profit (USD):</span>
+                            <span class="value">${(totalProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="segment-metric">
+                            <span class="label">Profit Margin:</span>
+                            <span class="value">${avgProfitMargin.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('segmentBreakdown').innerHTML = `
+                <div class="segment-breakdown-header" onclick="toggleSegmentBreakdown()">
+                    <h3 class="segment-breakdown-title">SKU Breakdown (${window.segments.length} segments)</h3>
+                    <div class="collapse-toggle">
+                        <span class="collapse-text">Hide Details</span>
+                        <span class="collapse-icon">▼</span>
+                    </div>
+                </div>
+                <div class="segment-breakdown-content" id="segmentBreakdownContent">
+                    <div class="segment-grid">
+                        ${breakdownHTML}
+                    </div>
+                </div>
+            `;
+            document.getElementById('segmentBreakdown').style.display = 'block';
+        }
+
+        function generateChartData(period) {
+            if (!window.segments || window.segments.length === 0) {
+                return [];
+            }
+            
+            const currentDate = new Date();
+            let dataPoints = [];
+            let totalPeriods, timeUnit, periodName;
+            
+            switch(period) {
+                case '1M':
+                    totalPeriods = 30; // 30 days
+                    timeUnit = 'day';
+                    periodName = 'daily';
+                    break;
+                case '1Y':
+                    totalPeriods = 12; // 12 months
+                    timeUnit = 'month';
+                    periodName = 'monthly';
+                    break;
+                case '2Y':
+                    totalPeriods = 24; // 24 months
+                    timeUnit = 'month';
+                    periodName = 'monthly';
+                    break;
+                case '5Y':
+                    totalPeriods = 60; // 60 months
+                    timeUnit = 'month';
+                    periodName = 'monthly';
+                    break;
+                case '10Y':
+                    totalPeriods = 120; // 120 months
+                    timeUnit = 'month';
+                    periodName = 'monthly';
+                    break;
+                default:
+                    totalPeriods = 12;
+                    timeUnit = 'month';
+                    periodName = 'monthly';
+            }
+            
+            // Get base parameters
+            const growthRate = parseFloat(document.getElementById('growthRate').value) / 100;
+            const costPercentage = parseFloat(document.getElementById('costPercentage').value) / 100;
+            const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+            const baseOperatingExpenses = parseFloat(document.getElementById('operatingExpenses').value) || 0;
+            const seasonality = document.getElementById('seasonality').value;
+            
+            for (let i = 0; i < totalPeriods; i++) {
+                let periodDate, monthLabel;
+                
+                if (timeUnit === 'day') {
+                    periodDate = new Date(currentDate);
+                    periodDate.setDate(currentDate.getDate() + i);
+                    monthLabel = periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else {
+                    periodDate = new Date(currentDate);
+                    periodDate.setMonth(currentDate.getMonth() + i);
+                    monthLabel = periodDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                }
+                
+                let totalRevenue = 0;
+                let totalCost = 0;
+                let totalVolume = 0;
+                
+                // Calculate for each segment
+                window.segments.forEach(segment => {
+                    const segmentGrowthRate = segment.volumeGrowth / 100;
+                    const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+                    
+                    let projectedVolume;
+                    if (timeUnit === 'day') {
+                        // For daily data, divide monthly volume by 30 and apply growth
+                        const dailyBaseVolume = segment.monthlyVolume / 30;
+                        const periodGrowthRate = timeUnit === 'day' ? segmentGrowthRate / 30 : segmentGrowthRate; // Daily growth rate
+                        projectedVolume = dailyBaseVolume * Math.pow(1 + periodGrowthRate, i) * seasonalMultiplier;
+                    } else {
+                        // For monthly data, use the standard calculation
+                        projectedVolume = segment.monthlyVolume * Math.pow(1 + segmentGrowthRate, i) * seasonalMultiplier;
+                    }
+                    
+                    const segmentRevenue = projectedVolume * segment.pricePerTransaction;
+                    const segmentCost = projectedVolume * segment.costPerTransaction;
+                    
+                    totalRevenue += segmentRevenue;
+                    totalCost += segmentCost;
+                    totalVolume += projectedVolume;
+                });
+                
+                // Calculate operating expenses
+                let operatingExpenses = 0;
+                if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+                    operatingExpenses += timeUnit === 'day' ? baseOperatingExpenses / 30 : baseOperatingExpenses;
+                }
+                if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+                    const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+                    operatingExpenses += (totalRevenue * percentageExpense / 100);
+                }
+                
+                const netProfit = totalRevenue - totalCost - operatingExpenses;
+                const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+                
+                dataPoints.push({
+                    month: monthLabel,
+                    revenue: totalRevenue,
+                    cogs: totalCost,
+                    grossProfit: totalRevenue - totalCost,
+                    operatingExpenses: operatingExpenses,
+                    netProfit: netProfit,
+                    profitMargin: profitMargin,
+                    volume: totalVolume
+                });
+            }
+            
+            return dataPoints;
+        }
+        
+        function generateSegmentChartData(period) {
+            if (!window.segments || window.segments.length === 0) {
+                return {};
+            }
+            
+            const currentDate = new Date();
+            let segmentData = {};
+            let totalPeriods, timeUnit;
+            
+            switch(period) {
+                case '1M':
+                    totalPeriods = 30;
+                    timeUnit = 'day';
+                    break;
+                case '1Y':
+                    totalPeriods = 12;
+                    timeUnit = 'month';
+                    break;
+                case '2Y':
+                    totalPeriods = 24;
+                    timeUnit = 'month';
+                    break;
+                case '5Y':
+                    totalPeriods = 60;
+                    timeUnit = 'month';
+                    break;
+                case '10Y':
+                    totalPeriods = 120;
+                    timeUnit = 'month';
+                    break;
+                default:
+                    totalPeriods = 12;
+                    timeUnit = 'month';
+            }
+            
+            const seasonality = document.getElementById('seasonality').value;
+            
+            // Initialize segment data
+            window.segments.forEach(segment => {
+                segmentData[segment.name] = [];
+            });
+            
+            for (let i = 0; i < totalPeriods; i++) {
+                let periodDate, monthLabel;
+                
+                if (timeUnit === 'day') {
+                    periodDate = new Date(currentDate);
+                    periodDate.setDate(currentDate.getDate() + i);
+                    monthLabel = periodDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else {
+                    periodDate = new Date(currentDate);
+                    periodDate.setMonth(currentDate.getMonth() + i);
+                    monthLabel = periodDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                }
+                
+                window.segments.forEach(segment => {
+                    const segmentGrowthRate = segment.volumeGrowth / 100;
+                    const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+                    
+                    let projectedVolume;
+                    if (timeUnit === 'day') {
+                        const dailyBaseVolume = segment.monthlyVolume / 30;
+                        const periodGrowthRate = segmentGrowthRate / 30;
+                        projectedVolume = dailyBaseVolume * Math.pow(1 + periodGrowthRate, i) * seasonalMultiplier;
+                    } else {
+                        projectedVolume = segment.monthlyVolume * Math.pow(1 + segmentGrowthRate, i) * seasonalMultiplier;
+                    }
+                    
+                    const segmentRevenue = projectedVolume * segment.pricePerTransaction;
+                    const segmentCost = projectedVolume * segment.costPerTransaction;
+                    const segmentProfit = segmentRevenue - segmentCost;
+                    const segmentMargin = segmentRevenue > 0 ? (segmentProfit / segmentRevenue) * 100 : 0;
+                    
+                    segmentData[segment.name].push({
+                        month: monthLabel,
+                        volume: projectedVolume,
+                        revenue: segmentRevenue,
+                        cost: segmentCost,
+                        profit: segmentProfit,
+                        margin: segmentMargin
+                    });
+                });
+            }
+            
+            return segmentData;
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const metric = document.getElementById('chartMetric').value;
+            const view = document.getElementById('chartView').value;
+            const period = document.getElementById('chartPeriod').value;
+            
+            if (window.chart) {
+                window.chart.destroy();
+            }
+            
+            // Generate data based on selected period
+            const chartData = generateChartData(period);
+            
+            let datasets = [];
+            const colors = ['#667eea', '#38ef7d', '#f093fb', '#11998e', '#f5576c', '#764ba2', '#ffd700', '#ff6b6b'];
+            
+            if (view === 'total' || window.segments.length === 0) {
+                let data, label, color;
+                
+                switch(metric) {
+                    case 'revenue':
+                        data = chartData.map(item => item.revenue);
+                        label = 'Revenue';
+                        color = '#667eea';
+                        break;
+                    case 'profit':
+                        data = chartData.map(item => item.netProfit);
+                        label = 'Net Profit';
+                        color = '#38ef7d';
+                        break;
+                    case 'margin':
+                        data = chartData.map(item => item.profitMargin);
+                        label = 'Profit Margin (%)';
+                        color = '#f093fb';
+                        break;
+                    case 'volume':
+                        data = chartData.map(item => item.volume);
+                        label = period === '1M' ? 'Daily Transaction Volume' : 'Transaction Volume';
+                        color = '#11998e';
+                        break;
+                }
+                
+                datasets.push({
+                    label,
+                    data,
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 3,
+                    tension: 0.4
+                });
+            } else {
+                // For segment view, generate segment-specific data for the selected period
+                const segmentData = generateSegmentChartData(period);
+                
+                window.segments.forEach((segment, index) => {
+                    const segmentProjections = segmentData[segment.name];
+                    if (!segmentProjections) return;
+                    
+                    let data, label;
+                    
+                    switch(metric) {
+                        case 'revenue':
+                            data = segmentProjections.map(item => item.revenue);
+                            label = `${segment.name} Revenue`;
+                            break;
+                        case 'profit':
+                            data = segmentProjections.map(item => item.profit || 0);
+                            label = `${segment.name} Profit`;
+                            break;
+                        case 'margin':
+                            data = segmentProjections.map(item => item.margin || 0);
+                            label = `${segment.name} Margin (%)`;
+                            break;
+                        case 'volume':
+                            data = segmentProjections.map(item => item.volume || 0);
+                            label = `${segment.name} ${period === '1M' ? 'Daily' : ''} Volume`;
+                            break;
+                    }
+                    
+                    const color = colors[index % colors.length];
+                    datasets.push({
+                        label,
+                        data,
+                        borderColor: color,
+                        backgroundColor: color + '20',
+                        borderWidth: 2,
+                        tension: 0.4
+                    });
+                });
+            }
+            
+            window.chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(item => item.month),
+                    datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            bottom: 20
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    if (metric === 'margin') {
+                                        return context.dataset.label + ': ' + value.toFixed(1) + '%';
+                                    } else if (metric === 'volume') {
+                                        const period = document.getElementById('chartPeriod').value;
+                                        const unit = period === '1M' ? ' daily transactions' : ' transactions';
+                                        return context.dataset.label + ': ' + value.toLocaleString('en-IN', {maximumFractionDigits: 0}) + unit;
+                                    }
+                                    return context.dataset.label + ': ₹' + value.toLocaleString('en-IN', {maximumFractionDigits: 0});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 0
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    if (metric === 'margin') {
+                                        return value + '%';
+                                    } else if (metric === 'volume') {
+                                        return value.toLocaleString('en-IN') + ' txns';
+                                    }
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update table data to match chart period
+            window.currentTableData = chartData;
+            
+            // Update table if results are visible
+            if (document.getElementById('results') && document.getElementById('results').style.display !== 'none') {
+                displayConsolidatedTable();
+            }
+        }
+
+        function toggleSegmentBreakdown() {
+            const content = document.getElementById('segmentBreakdownContent');
+            const icon = document.querySelector('.collapse-icon');
+            const text = document.querySelector('.collapse-text');
+            
+            if (content && icon && text) {
+                const isCollapsed = content.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    // Expand
+                    content.classList.remove('collapsed');
+                    icon.classList.remove('collapsed');
+                    icon.textContent = '▼';
+                    text.textContent = 'Hide Details';
+                } else {
+                    // Collapse
+                    content.classList.add('collapsed');
+                    icon.classList.add('collapsed');
+                    icon.textContent = '▶';
+                    text.textContent = 'Show Details';
+                }
+            }
+        }
+
+        function runScenarios() {
+            // Check current state
+            console.log('Run Scenarios Debug: window.segments.length =', window.segments.length);
+            console.log('Run Scenarios Debug: Current segments:', window.segments);
+            
+            if (window.projectionData.length === 0) {
+                calculateProjections();
+            }
+            
+            switchTab('analysis');
+            
+            // Check if we have SKU-based segments for accurate scenario modeling
+            if (window.segments.length === 0) {
+                document.getElementById('scenarioSection').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <h3>No SKUs Available</h3>
+                        <p>No SKUs found for scenario analysis. This might happen if the auto-load failed or segments were cleared.</p>
+                        <div style="margin: 20px 0;">
+                            <button class="btn-primary" onclick="loadPensionModel(false); setTimeout(() => { if(window.segments.length > 0) runScenarios(); }, 1000);" style="margin: 5px;">
+                                Load Default Pension Model
+                            </button>
+                            <button class="btn-primary" onclick="switchTab('setup')" style="margin: 5px;">
+                                Go to Setup & Add SKUs
+                            </button>
+                        </div>
+                        <div style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: left;">
+                            <h4>Quick Debug Info:</h4>
+                            <div style="font-family: monospace; font-size: 0.9em; color: #333;">
+                                • Current SKUs: ${window.segments.length}<br>
+                                • Saved Models: ${window.savedModels.length}<br>
+                                • Last Model ID: ${localStorage.getItem('lastLoadedModelId') || 'None'}<br>
+                                • Auto-load Status: ${localStorage.getItem('lastLoadedModelId') ? 'Model found' : 'No saved model'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('scenarioSection').style.display = 'block';
+                return;
+            }
+            
+            // Use external scenario definitions if available, otherwise use defaults
+            const scenarios = window.externalScenarioDefinitions || [
+                { 
+                    name: 'Conservative', 
+                    volumeGrowthMultiplier: 0.6, 
+                    priceMultiplier: 0.95, 
+                    costMultiplier: 1.1,
+                    operatingExpenseMultiplier: 1.15
+                },
+                { 
+                    name: 'Base Case', 
+                    volumeGrowthMultiplier: 1, 
+                    priceMultiplier: 1, 
+                    costMultiplier: 1,
+                    operatingExpenseMultiplier: 1
+                },
+                { 
+                    name: 'Optimistic', 
+                    volumeGrowthMultiplier: 1.5, 
+                    priceMultiplier: 1.08, 
+                    costMultiplier: 0.92,
+                    operatingExpenseMultiplier: 0.95
+                }
+            ];
+            
+            const months = parseInt(document.getElementById('projectionMonths').value);
+            const seasonality = document.getElementById('seasonality').value;
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // Calculate base operating expenses using the same logic as main calculations
+            const operatingExpenseType = document.getElementById('operatingExpenseType').value;
+            let baseOperatingExpenses = 0;
+            
+            if (operatingExpenseType === 'fixed' || operatingExpenseType === 'hybrid') {
+                baseOperatingExpenses = parseFloat(document.getElementById('operatingExpenses').value) || 0;
+            }
+            
+            let scenarioHTML = '';
+            
+            scenarios.forEach(scenario => {
+                let totalRevenue = 0;
+                let totalCosts = 0;
+                let totalOperatingExpenses = 0;
+                
+                // Calculate scenario projections using the same logic as main projections
+                for (let i = 0; i < months; i++) {
+                    let monthRevenue = 0;
+                    let monthCosts = 0;
+                    
+                    // Calculate for each segment with scenario multipliers
+                    window.segments.forEach(segment => {
+                        const monthlyVolume = segment.monthlyVolume || 0;
+                        const pricePerTransaction = segment.pricePerTransaction || 0;
+                        const costPerTransaction = segment.costPerTransaction || 0;
+                        const volumeGrowth = segment.volumeGrowth || 0;
+                        
+                        const adjustedVolumeGrowth = (volumeGrowth / 100) * scenario.volumeGrowthMultiplier;
+                        const adjustedPrice = pricePerTransaction * scenario.priceMultiplier;
+                        const adjustedCost = costPerTransaction * scenario.costMultiplier;
+                        const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+                        
+                        // Calculate volume with adjusted growth
+                        const projectedVolume = monthlyVolume * 
+                                              Math.pow(1 + adjustedVolumeGrowth, i) * 
+                                              seasonalMultiplier;
+                        
+                        const segmentRevenue = projectedVolume * adjustedPrice;
+                        const segmentCost = projectedVolume * adjustedCost;
+                        
+                        monthRevenue += segmentRevenue;
+                        monthCosts += segmentCost;
+                    });
+                    
+                    totalRevenue += monthRevenue;
+                    totalCosts += monthCosts;
+                    
+                    // Calculate operating expenses for this month
+                    let monthOperatingExpenses = baseOperatingExpenses * scenario.operatingExpenseMultiplier;
+                    
+                    if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+                        const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+                        monthOperatingExpenses += (monthRevenue * percentageExpense / 100) * scenario.operatingExpenseMultiplier;
+                    }
+                    
+                    totalOperatingExpenses += monthOperatingExpenses;
+                }
+                
+                const totalProfit = totalRevenue - totalCosts - totalOperatingExpenses;
+                const avgMonthlyRevenue = totalRevenue / months;
+                const avgMonthlyProfit = totalProfit / months;
+                const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                
+                // Determine scenario color based on performance
+                let scenarioColor = '#667eea'; // Default blue
+                if (scenario.name === 'Conservative') scenarioColor = '#ef4444'; // Red
+                else if (scenario.name === 'Optimistic') scenarioColor = '#22c55e'; // Green
+                
+                scenarioHTML += `
+                    <div class="scenario-card" style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); border-left: 4px solid ${scenarioColor};">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="color: ${scenarioColor}; margin: 0; font-size: 1.3em;">${scenario.name}</h4>
+                            <div style="background: ${scenarioColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600;">
+                                SKU-Based Analysis
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.8em; color: #666; text-transform: uppercase; margin-bottom: 5px;">Volume Growth</div>
+                                <div style="font-weight: 600; color: #333;">${(scenario.volumeGrowthMultiplier * 100).toFixed(0)}% of base</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 0.8em; color: #666; text-transform: uppercase; margin-bottom: 5px;">Price Adjustment</div>
+                                <div style="font-weight: 600; color: #333;">${(scenario.priceMultiplier * 100).toFixed(0)}% of base</div>
+                            </div>
+                        </div>
+                        
+                        <div class="scenario-metric" style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <span class="metric-label" style="color: #666; font-size: 0.9em;">Avg Monthly Revenue</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: #333;">₹${avgMonthlyRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                                <div style="font-size: 0.8em; color: #666;">${(avgMonthlyRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                            </div>
+                        </div>
+                        <div class="scenario-metric" style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+                            <span class="metric-label" style="color: #666; font-size: 0.9em;">Avg Monthly Profit</span>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 600; color: ${avgMonthlyProfit >= 0 ? '#22c55e' : '#ef4444'};">₹${avgMonthlyProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                                <div style="font-size: 0.8em; color: #666;">${(avgMonthlyProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                            </div>
+                        </div>
+                        <div class="scenario-metric" style="display: flex; justify-content: space-between; padding: 12px 0;">
+                            <span class="metric-label" style="color: #666; font-size: 0.9em;">Net Profit Margin</span>
+                            <span class="metric-value" style="font-weight: 600; color: ${profitMargin >= 0 ? '#22c55e' : '#ef4444'}; font-size: 1.1em;">${profitMargin.toFixed(1)}%</span>
+                        </div>
+                        
+                        <div style="margin-top: 15px; padding: 12px; background: #f0f4ff; border-radius: 8px; border-left: 3px solid ${scenarioColor};">
+                            <div style="font-size: 0.8em; color: #333; line-height: 1.4;">
+                                <strong>Scenario Assumptions:</strong><br>
+                                Volume Growth: ${(scenario.volumeGrowthMultiplier * 100).toFixed(0)}% • 
+                                Pricing: ${(scenario.priceMultiplier * 100).toFixed(0)}% • 
+                                Costs: ${(scenario.costMultiplier * 100).toFixed(0)}% • 
+                                OpEx: ${(scenario.operatingExpenseMultiplier * 100).toFixed(0)}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Create tabular format similar to the screenshot
+            const tabularHTML = `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0;">
+                    ${scenarios.map((scenario, index) => {
+                        // Recalculate values for tabular display
+                        let totalRevenue = 0;
+                        let totalCosts = 0;
+                        let totalOperatingExpenses = 0;
+                        
+                        for (let i = 0; i < months; i++) {
+                            let monthRevenue = 0;
+                            let monthCosts = 0;
+                            
+                            window.segments.forEach(segment => {
+                                const monthlyVolume = segment.monthlyVolume || 0;
+                                const pricePerTransaction = segment.pricePerTransaction || 0;
+                                const costPerTransaction = segment.costPerTransaction || 0;
+                                const volumeGrowth = segment.volumeGrowth || 0;
+                                
+                                const adjustedVolumeGrowth = (volumeGrowth / 100) * scenario.volumeGrowthMultiplier;
+                                const adjustedPrice = pricePerTransaction * scenario.priceMultiplier;
+                                const adjustedCost = costPerTransaction * scenario.costMultiplier;
+                                const seasonalMultiplier = getSeasonalityMultiplier(i, seasonality);
+                                
+                                const projectedVolume = monthlyVolume * Math.pow(1 + adjustedVolumeGrowth, i) * seasonalMultiplier;
+                                
+                                monthRevenue += projectedVolume * adjustedPrice;
+                                monthCosts += projectedVolume * adjustedCost;
+                            });
+                            
+                            totalRevenue += monthRevenue;
+                            totalCosts += monthCosts;
+                            
+                            let monthOperatingExpenses = baseOperatingExpenses * scenario.operatingExpenseMultiplier;
+                            if (operatingExpenseType === 'percentage' || operatingExpenseType === 'hybrid') {
+                                const percentageExpense = parseFloat(document.getElementById('operatingExpensePercentage').value) || 0;
+                                monthOperatingExpenses += (monthRevenue * percentageExpense / 100) * scenario.operatingExpenseMultiplier;
+                            }
+                            totalOperatingExpenses += monthOperatingExpenses;
+                        }
+                        
+                        const totalProfit = totalRevenue - totalCosts - totalOperatingExpenses;
+                        const avgMonthlyRevenue = totalRevenue / months;
+                        const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+                        const growthRate = scenario.volumeGrowthMultiplier === 1 ? 5.0 : 
+                                          scenario.volumeGrowthMultiplier < 1 ? 2.5 : 7.5;
+                        
+                        return `
+                            <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                <h3 style="color: ${scenario.name === 'Conservative' ? '#ef4444' : 
+                                                   scenario.name === 'Optimistic' ? '#22c55e' : '#667eea'}; 
+                                           margin-bottom: 20px; text-align: center;">${scenario.name}</h3>
+                                
+                                <div style="space-y: 12px;">
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                                        <span style="color: #666;">Total Revenue</span>
+                                        <div style="text-align: right;">
+                                            <div style="font-weight: 600;">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                                            <div style="font-size: 0.8em; color: #666;">$${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                                        <span style="color: #666;">Total Profit</span>
+                                        <div style="text-align: right;">
+                                            <div style="font-weight: 600; color: ${totalProfit >= 0 ? '#22c55e' : '#ef4444'};">₹${totalProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                                            <div style="font-size: 0.8em; color: #666;">$${(totalProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                                        <span style="color: #666;">Avg Monthly Revenue</span>
+                                        <div style="text-align: right;">
+                                            <div style="font-weight: 600;">₹${avgMonthlyRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                                            <div style="font-size: 0.8em; color: #666;">$${(avgMonthlyRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0;">
+                                        <span style="color: #666;">Profit Margin</span>
+                                        <span style="font-weight: 600; color: ${profitMargin >= 0 ? '#22c55e' : '#ef4444'};">${profitMargin.toFixed(1)}%</span>
+                                    </div>
+                                    
+                                    <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+                                        <span style="color: #666;">Growth Rate</span>
+                                        <span style="font-weight: 600;">${growthRate.toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            
+            // First, clear any existing content in the entire analysis tab
+            const analysisTab = document.getElementById('analysis');
+            analysisTab.innerHTML = `
+                <div class="scenario-section" id="scenarioSection">
+                    <h2>Scenario Analysis</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Analysis based on ${window.segments.length} SKUs with realistic volume growth, pricing adjustments, and cost variations.
+                    </p>
+                    ${tabularHTML}
+                </div>
+                <div class="buttons" style="margin-top: 30px;">
+                    <button class="btn-success" onclick="exportToExcel()">Export to Excel</button>
+                </div>
+            `;
+            
+            // Show the section
+            document.getElementById('scenarioSection').style.display = 'block';
+            document.getElementById('scenarioSection').classList.add('fade-in');
+        }
+
+        function exportToExcel() {
+            if (window.projectionData.length === 0) {
+                alert('No projection data to export. Please calculate projections first.');
+                return;
+            }
+
+            // Check if XLSX library is available
+            if (typeof XLSX === 'undefined') {
+                alert('Excel export requires the XLSX library. This feature exports data as CSV instead.');
+                exportToCSV();
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // Consolidated projections sheet
+            const mainData = window.projectionData.map(row => ({
+                'Month': row.month,
+                'Revenue (INR)': row.revenue,
+                'Revenue (USD)': row.revenue / usdRate,
+                'COGS (INR)': row.cogs,
+                'COGS (USD)': row.cogs / usdRate,
+                'Gross Profit (INR)': row.grossProfit,
+                'Gross Profit (USD)': row.grossProfit / usdRate,
+                'Operating Expenses (INR)': row.operatingExpenses,
+                'Operating Expenses (USD)': row.operatingExpenses / usdRate,
+                'Net Profit (INR)': row.netProfit,
+                'Net Profit (USD)': row.netProfit / usdRate,
+                'Profit Margin (%)': row.profitMargin,
+                'Cumulative Revenue (INR)': row.cumulativeRevenue,
+                'Cumulative Revenue (USD)': row.cumulativeRevenue / usdRate
+            }));
+            
+            const ws1 = XLSX.utils.json_to_sheet(mainData);
+            XLSX.utils.book_append_sheet(wb, ws1, 'Consolidated Projections');
+            
+            // Summary sheet
+            const totalRevenue = window.projectionData.reduce((sum, item) => sum + item.revenue, 0);
+            const totalProfit = window.projectionData.reduce((sum, item) => sum + item.netProfit, 0);
+            const avgProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue * 100) : 0;
+            
+            const summaryData = [
+                ['INDIA REVENUE PROJECTION SUMMARY', ''],
+                ['Export Date', new Date().toLocaleString()],
+                ['Exchange Rate (INR/USD)', usdRate],
+                ['', ''],
+                ['FINANCIAL SUMMARY', ''],
+                ['Total Revenue (INR)', totalRevenue],
+                ['Total Revenue (USD)', totalRevenue / usdRate],
+                ['Total Net Profit (INR)', totalProfit],
+                ['Total Net Profit (USD)', totalProfit / usdRate],
+                ['Average Profit Margin (%)', avgProfitMargin],
+                ['', ''],
+                ['INPUT PARAMETERS', ''],
+                ['Starting Revenue (INR)', parseFloat(document.getElementById('startRevenue').value)],
+                ['Growth Rate (% monthly)', parseFloat(document.getElementById('growthRate').value)],
+                ['Projection Period (Months)', parseInt(document.getElementById('projectionMonths').value)],
+                ['COGS (%)', parseFloat(document.getElementById('costPercentage').value)],
+                ['Operating Expenses (INR)', parseFloat(document.getElementById('operatingExpenses').value)],
+                ['Seasonality', document.getElementById('seasonality').value],
+                ['', ''],
+                ['SEGMENTS OVERVIEW', ''],
+                ['Total Segments', window.segments.length]
+            ];
+            
+            if (window.segments.length > 0) {
+                summaryData.push(['', '']);
+                summaryData.push(['SEGMENT DETAILS', '']);
+                window.segments.forEach(segment => {
+                    const monthlyRevenue = segment.monthlyVolume * segment.pricePerTransaction;
+                    const pensionInfo = segment.pensionPct ? `, Pension: ${segment.pensionPct}%` : '';
+                    summaryData.push([
+                        segment.name,
+                        `Vol: ${(segment.monthlyVolume/1000000).toFixed(2)}M, Price: ₹${segment.pricePerTransaction}${pensionInfo}, Revenue: ₹${monthlyRevenue.toLocaleString('en-IN')}`
+                    ]);
+                });
+            }
+            
+            const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+            
+            // Segment breakdown sheets
+            if (window.segments.length > 0 && Object.keys(window.segmentProjections).length > 0) {
+                window.segments.forEach(segment => {
+                    const segmentData = window.segmentProjections[segment.name];
+                    if (segmentData && segmentData.length > 0) {
+                        const segmentSheet = segmentData.map(row => ({
+                            'Month': row.month,
+                            'Volume': row.volume || 'N/A',
+                            'Revenue (INR)': row.revenue,
+                            'Revenue (USD)': row.revenue / usdRate,
+                            'Cost (INR)': row.cost || 'N/A',
+                            'Cost (USD)': row.cost ? row.cost / usdRate : 'N/A',
+                            'Profit (INR)': row.profit || row.netProfit || 'N/A',
+                            'Profit (USD)': (row.profit || row.netProfit) ? (row.profit || row.netProfit) / usdRate : 'N/A',
+                            'Margin (%)': row.margin || row.profitMargin || 'N/A'
+                        }));
+                        
+                        const ws = XLSX.utils.json_to_sheet(segmentSheet);
+                        const sheetName = segment.name.substring(0, 30); // Excel sheet name limit
+                        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                    }
+                });
+            }
+            
+            // Download the file
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `India_Revenue_Projections_${timestamp}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            alert(`Excel file "${filename}" has been downloaded to your Downloads folder.`);
+        }
+
+        // Fallback CSV export function
+        function exportToCSV() {
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // Create CSV content
+            let csvContent = "Month,Revenue (INR),Revenue (USD),COGS (INR),COGS (USD),Net Profit (INR),Net Profit (USD),Profit Margin (%)\n";
+            
+            window.projectionData.forEach(row => {
+                csvContent += [
+                    row.month,
+                    row.revenue.toFixed(2),
+                    (row.revenue / usdRate).toFixed(2),
+                    row.cogs.toFixed(2),
+                    (row.cogs / usdRate).toFixed(2),
+                    row.netProfit.toFixed(2),
+                    (row.netProfit / usdRate).toFixed(2),
+                    row.profitMargin.toFixed(2)
+                ].join(',') + '\n';
+            });
+            
+            // Create and download CSV file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `India_Revenue_Projections_${new Date().toISOString().split('T')[0]}.csv`;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('CSV file has been downloaded to your Downloads folder.');
+        }
+
+        // Global variable to store the loaded model configuration
+        window.externalModelConfig = null;
+        
+        // Current country and its configuration
+        window.currentCountry = 'india';
+        window.currentCountryConfig = null;
+
+        // Function to change country
+        function changeCountry(countryCode) {
+            if (!window.externalModelConfig || !window.externalModelConfig.countries) {
+                showErrorMessage('Country data not loaded. Please load the external model configuration first.');
+                return;
+            }
+
+            const countryData = window.externalModelConfig.countries[countryCode];
+            if (!countryData) {
+                showErrorMessage(`Country "${countryCode}" not found in configuration.`);
+                return;
+            }
+
+            window.currentCountry = countryCode;
+            window.currentCountryConfig = countryData;
+            
+            // Update UI elements
+            updateCountryUI();
+            
+            // Load country-specific defaults
+            loadCountryDefaults();
+            
+            showSuccessMessage(`Switched to ${countryData.name}!`);
+        }
+
+        // Function to update UI with country-specific information
+        function updateCountryUI() {
+            const config = window.currentCountryConfig;
+            if (!config) return;
+
+            // Update title
+            const title = document.getElementById('mainTitle');
+            const countryFlag = getCountryFlag(window.currentCountry);
+            title.textContent = `${countryFlag} ${config.name} Revenue Projection Tool`;
+
+            // Update currency symbols in labels
+            updateCurrencyLabels(config.currencySymbol);
+            
+            // Update market context
+            updateMarketContext();
+            
+            // Update exchange rate input
+            const usdRateInput = document.getElementById('usdRate');
+            if (usdRateInput) {
+                usdRateInput.value = config.exchangeRate;
+                
+                // Update label to show correct conversion
+                const usdRateLabel = usdRateInput.parentElement.querySelector('label');
+                if (usdRateLabel) {
+                    usdRateLabel.textContent = `USD Exchange Rate (${config.currencySymbol}/USD)`;
+                }
+            }
+        }
+
+        // Function to get country flag emoji
+        function getCountryFlag(countryCode) {
+            const flags = {
+                'india': '🇮🇳',
+                'singapore': '🇸🇬',
+                'australia': '🇦🇺',
+                'japan': '🇯🇵',
+                'south_korea': '🇰🇷',
+                'thailand': '🇹🇭',
+                'indonesia': '🇮🇩',
+                'philippines': '🇵🇭'
+            };
+            return flags[countryCode] || '🌏';
+        }
+
+        // Function to update currency labels throughout the UI
+        function updateCurrencyLabels(currencySymbol) {
+            // Update all labels that show currency
+            const currencyLabels = [
+                'Base Monthly Revenue',
+                'Base Operating Expenses',
+                'Price/Transaction',
+                'Cost/Transaction',
+                'Price per Transaction',
+                'Cost per Transaction',
+                'Operating Expenses'
+            ];
+
+            currencyLabels.forEach(labelText => {
+                const labels = document.querySelectorAll('label');
+                labels.forEach(label => {
+                    if (label.textContent.includes(labelText)) {
+                        // Replace existing currency symbol with new one
+                        label.textContent = label.textContent.replace(/[₹$£€R\$S\$A\$¥₩฿Rp₱]/g, currencySymbol);
+                    }
+                });
+            });
+        }
+
+        // Function to load country-specific defaults
+        function loadCountryDefaults() {
+            const config = window.currentCountryConfig;
+            if (!config || !config.defaultModel) return;
+
+            const defaultModel = config.defaultModel;
+            
+            // Update form fields with country defaults
+            if (defaultModel.baseParams) {
+                const params = defaultModel.baseParams;
+                
+                Object.keys(params).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element && params[key] !== undefined) {
+                        element.value = params[key];
+                    }
+                });
+            }
+            
+            // Update model name and description if available
+            const modelNameInput = document.getElementById('editModelName');
+            const modelDescInput = document.getElementById('editModelDescription');
+            
+            if (modelNameInput) modelNameInput.value = defaultModel.name || '';
+            if (modelDescInput) modelDescInput.value = defaultModel.description || '';
+        }
+
+        // Function to update market context based on country
+        function updateMarketContext() {
+            const config = window.currentCountryConfig;
+            const country = window.currentCountry;
+            
+            const titleElement = document.getElementById('marketContextTitle');
+            const contentElement = document.getElementById('marketContextContent');
+            
+            if (!titleElement || !contentElement || !config) return;
+            
+            titleElement.textContent = `🔍 Digital Authentication Market Context - ${config.name}`;
+            
+            const marketContexts = {
+                'india': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. Authentication Services</strong><br>
+                        • <strong>OTP (SMS):</strong> 50+ billion transactions annually • ₹0.10-0.15/SMS • Banking, e-commerce, govt services<br>
+                        • <strong>Biometric:</strong> 5.2 crore pension + banking • ₹2-5/transaction • Aadhaar-based fingerprint/iris verification
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. KYC (eKYC)</strong><br>
+                        • 200+ crore annual verifications • ₹15-25/verification • Banking, telecom, mutual funds, insurance onboarding
+                    </p>
+                    <p>
+                        <strong>3. Tokenization</strong><br>
+                        • 15+ billion card transactions • ₹0.50-1.50/tokenization • Payment security, card data protection, UPI growth
+                    </p>
+                `,
+                'singapore': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. SingPass Digital ID</strong><br>
+                        • <strong>National Authentication:</strong> 40M+ authentications annually • S$1.20/auth • Government, banking, healthcare<br>
+                        • <strong>Smart Nation Services:</strong> Integrated digital services • S$0.80/verification • IoT and smart city applications
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. Digital Banking & Fintech</strong><br>
+                        • 60M+ PayNow transactions • S$0.40/transaction • Instant payments, digital wallets<br>
+                        • Digital bank KYC • S$3.50/onboarding • Licensed digital banks, wealth management
+                    </p>
+                    <p>
+                        <strong>3. Financial Hub Services</strong><br>
+                        • Cross-border payment authentication • Regional fintech hub • High-value transaction security
+                    </p>
+                `,
+                'australia': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. Government Digital Services</strong><br>
+                        • <strong>myGov Authentication:</strong> 50M+ verifications • A$2.00/auth • Tax, benefits, healthcare services<br>
+                        • <strong>ABN Verification:</strong> Business registration checks • A$1.50/check • Commercial and regulatory compliance
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. Banking & Financial Services</strong><br>
+                        • 120M+ bank account verifications • A$1.80/verification • Open banking, superannuation, lending
+                    </p>
+                    <p>
+                        <strong>3. Mobile & Digital Identity</strong><br>
+                        • 200M+ mobile authentications • A$0.60/auth • Strong digital identity framework, privacy-focused
+                    </p>
+                `,
+                'japan': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. Government Digital Services</strong><br>
+                        • <strong>My Number Authentication:</strong> 180M+ verifications • ¥180/auth • Social security, tax, healthcare<br>
+                        • <strong>Digital Hanko:</strong> Business authentication • ¥300/signature • Corporate governance, contracts
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. Financial Services</strong><br>
+                        • 300M+ JCB card authentications • ¥120/auth • Credit cards, digital payments<br>
+                        • Mobile payment systems • ¥80/transaction • LINE Pay, PayPay, Rakuten Pay
+                    </p>
+                    <p>
+                        <strong>3. Traditional Integration</strong><br>
+                        • Hybrid digital-physical authentication • Strong security focus • Enterprise and government emphasis
+                    </p>
+                `,
+                'south_korea': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. National Digital Identity</strong><br>
+                        • <strong>Korean ID Verification:</strong> 240M+ authentications • ₩1,500/auth • Government, banking, telecom<br>
+                        • <strong>Samsung Pass Biometric:</strong> 180M+ biometric auths • ₩1,200/auth • Advanced mobile security
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. Mobile Payment Ecosystem</strong><br>
+                        • 420M+ KakaoPay transactions • ₩800/transaction • Dominant mobile payment platform<br>
+                        • Naver platform integration • ₩600/verification • E-commerce and social platform auth
+                    </p>
+                    <p>
+                        <strong>3. Advanced Technology</strong><br>
+                        • World's highest mobile penetration • Leading 5G adoption • Innovative fintech solutions
+                    </p>
+                `,
+                'thailand': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. National Digital ID</strong><br>
+                        • <strong>Thai ID Authentication:</strong> 360M+ verifications • ฿25/auth • Government services, banking<br>
+                        • <strong>Tourism & Travel:</strong> 144M+ visa checks • ฿120/verification • Tourism industry, visa processing
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. Digital Payments</strong><br>
+                        • 540M+ PromptPay transactions • ฿15/transaction • National instant payment system<br>
+                        • Banking KYC services • ฿80/onboarding • Digital transformation in finance
+                    </p>
+                    <p>
+                        <strong>3. Digital Transformation</strong><br>
+                        • Government digitization initiatives • Growing e-commerce sector • Regional payment hub development
+                    </p>
+                `,
+                'indonesia': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. National Digital Identity</strong><br>
+                        • <strong>KTP Digital Verification:</strong> 960M+ verifications annually • Rp5,000/auth • Government services, banking<br>
+                        • <strong>Archipelago Connectivity:</strong> 17,000+ islands served • Mobile-first approach for rural inclusion
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. E-wallet Ecosystem</strong><br>
+                        • 1.44B+ OVO transactions • Rp2,500/transaction • Leading super-app integration<br>
+                        • 1.8B+ GoPay transactions • Rp2,000/transaction • Gojek ecosystem integration<br>
+                        • Bank Indonesia eKYC • Rp15,000/onboarding • Central bank regulatory compliance
+                    </p>
+                    <p>
+                        <strong>3. E-commerce & Financial Inclusion</strong><br>
+                        • World's 4th largest population • Rapid digital adoption • Cross-border trade authentication
+                    </p>
+                `,
+                'philippines': `
+                    <p style="margin-bottom: 10px;">
+                        <strong>1. National ID System</strong><br>
+                        • <strong>PhilID Authentication:</strong> 720M+ verifications annually • ₱150/auth • Universal ID system rollout<br>
+                        • <strong>BPO Industry Support:</strong> 180M+ employee verifications • ₱200/verification • Global outsourcing hub
+                    </p>
+                    <p style="margin-bottom: 10px;">
+                        <strong>2. Mobile Payment Dominance</strong><br>
+                        • 1.2B+ GCash transactions • ₱80/transaction • Market-leading mobile wallet<br>
+                        • 960M+ PayMaya transactions • ₱75/transaction • Digital banking integration<br>
+                        • BSP banking eKYC • ₱450/onboarding • Central bank compliance
+                    </p>
+                    <p>
+                        <strong>3. Remittance Economy</strong><br>
+                        • $35B annual remittances • 420M+ remittance verifications • ₱300/verification • OFW diaspora services
+                    </p>
+                `
+            };
+            
+            const contextHTML = marketContexts[country] || marketContexts['india'];
+            contentElement.innerHTML = contextHTML.replace(/[₹$£€R\$S\$A\$¥₩฿Rp₱]/g, config.currencySymbol);
+        }
+
+        // Function to load external model configuration file
+        function loadExternalModelConfig() {
+            // Try to load from default path first
+            return fetch('./model-config.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(config => {
+                    // Validate configuration structure
+                    if (!config || typeof config !== 'object') {
+                        throw new Error('Invalid configuration format');
+                    }
+                    
+                    if (!config.segmentLibraries || typeof config.segmentLibraries !== 'object') {
+                        throw new Error('Missing or invalid segmentLibraries in configuration');
+                    }
+                    
+                    if (!config.countries || typeof config.countries !== 'object') {
+                        throw new Error('Missing or invalid countries in configuration');
+                    }
+                    
+                    window.externalModelConfig = config;
+                    
+                    // Initialize country configuration
+                    const defaultCountry = config.defaultCountry || 'india';
+                    if (config.countries && config.countries[defaultCountry]) {
+                        window.currentCountry = defaultCountry;
+                        window.currentCountryConfig = config.countries[defaultCountry];
+                        
+                        // Update country selector
+                        const countrySelect = document.getElementById('countrySelect');
+                        if (countrySelect) {
+                            countrySelect.value = defaultCountry;
+                        }
+                        
+                        // Update UI immediately
+                        updateCountryUI();
+                    }
+                    
+                    showSuccessMessage('External model configuration loaded successfully!');
+                    
+                    // Optionally apply the configuration immediately
+                    if (confirm('Apply the loaded configuration now?')) {
+                        applyExternalModelConfig();
+                    }
+                    
+                    return config;
+                })
+                .catch(error => {
+                    console.log('Failed to load external config:', error);
+                    
+                    let errorMessage = 'Failed to load external model configuration';
+                    if (error.message.includes('404')) {
+                        errorMessage += ': model-config.json file not found';
+                        console.log('Default config not found, prompting for file selection');
+                        document.getElementById('modelConfigFile').click();
+                    } else if (error.message.includes('JSON')) {
+                        errorMessage += ': invalid JSON format';
+                        showErrorMessage(errorMessage);
+                    } else if (error.message.includes('Missing')) {
+                        errorMessage += ': ' + error.message;
+                        showErrorMessage(errorMessage);
+                    } else {
+                        showErrorMessage(errorMessage);
+                    }
+                    
+                    throw error;
+                });
+        }
+
+        // Function to handle file selection
+        function handleModelConfigFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                showErrorMessage('Please select a JSON file (.json extension)');
+                return;
+            }
+            
+            // Validate file size (limit to 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showErrorMessage('File is too large. Please select a file smaller than 10MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onerror = function() {
+                showErrorMessage('Failed to read the selected file. Please try again.');
+            };
+            
+            reader.onload = function(e) {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    
+                    // Validate configuration structure
+                    if (!config || typeof config !== 'object') {
+                        throw new Error('Invalid configuration format');
+                    }
+                    
+                    if (!config.segmentLibraries || typeof config.segmentLibraries !== 'object') {
+                        throw new Error('Missing or invalid segmentLibraries in configuration');
+                    }
+                    
+                    if (!config.countries || typeof config.countries !== 'object') {
+                        throw new Error('Missing or invalid countries in configuration');
+                    }
+                    
+                    // Validate segment library entries for each country
+                    Object.keys(config.segmentLibraries).forEach(countryCode => {
+                        const segments = config.segmentLibraries[countryCode];
+                        if (!Array.isArray(segments)) {
+                            throw new Error(`Invalid segment library for country: ${countryCode}`);
+                        }
+                        
+                        segments.forEach((segment, index) => {
+                            if (!segment.name || typeof segment.name !== 'string') {
+                                throw new Error(`Invalid segment name at index ${index} in ${countryCode}`);
+                            }
+                            if (typeof segment.price !== 'number' || segment.price < 0) {
+                                throw new Error(`Invalid price for segment "${segment.name}" in ${countryCode}`);
+                            }
+                            if (typeof segment.volume !== 'number' || segment.volume < 0) {
+                                throw new Error(`Invalid volume for segment "${segment.name}" in ${countryCode}`);
+                            }
+                        });
+                    });
+                    
+                    window.externalModelConfig = config;
+                    
+                    // Count total segments across all countries
+                    let totalSegments = 0;
+                    Object.values(config.segmentLibraries).forEach(segments => {
+                        totalSegments += segments.length;
+                    });
+                    
+                    showSuccessMessage(`Model configuration loaded successfully from ${file.name}! Found ${totalSegments} segments across ${Object.keys(config.countries).length} countries.`);
+                    
+                    // Optionally apply the configuration immediately
+                    if (confirm('Apply the loaded configuration now?')) {
+                        applyExternalModelConfig();
+                    }
+                    
+                } catch (error) {
+                    let errorMessage = 'Invalid configuration file';
+                    if (error instanceof SyntaxError) {
+                        errorMessage += ': Invalid JSON format';
+                    } else if (error.message.includes('Missing') || error.message.includes('Invalid')) {
+                        errorMessage += ': ' + error.message;
+                    }
+                    showErrorMessage(errorMessage);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset the file input so the same file can be selected again
+            event.target.value = '';
+        }
+
+        // Function to apply the loaded external model configuration
+        function applyExternalModelConfig() {
+            if (!window.externalModelConfig) {
+                alert('No external configuration loaded. Please load a configuration file first.');
+                return;
+            }
+            
+            const config = window.externalModelConfig;
+            const currentCountry = window.currentCountry || 'india';
+            
+            // Get country-specific model configuration
+            let modelConfig = null;
+            if (config.countries && config.countries[currentCountry] && config.countries[currentCountry].defaultModel) {
+                modelConfig = config.countries[currentCountry].defaultModel;
+            } else if (config.defaultModel) {
+                // Fallback to legacy structure
+                modelConfig = config.defaultModel;
+            }
+            
+            if (!modelConfig) {
+                showErrorMessage(`No model configuration found for ${currentCountry}`);
+                return;
+            }
+            
+            // Apply base parameters
+            if (modelConfig.baseParams) {
+                const params = modelConfig.baseParams;
+                
+                // Set form values
+                if (params.growthRate !== undefined) {
+                    document.getElementById('growthRate').value = params.growthRate;
+                }
+                if (params.projectionMonths !== undefined) {
+                    document.getElementById('projectionMonths').value = params.projectionMonths;
+                }
+                if (params.costPercentage !== undefined) {
+                    document.getElementById('costPercentage').value = params.costPercentage;
+                }
+                if (params.operatingExpenses !== undefined) {
+                    document.getElementById('operatingExpenses').value = params.operatingExpenses;
+                }
+                if (params.operatingExpenseType !== undefined) {
+                    document.getElementById('operatingExpenseType').value = params.operatingExpenseType;
+                    toggleOperatingExpenseInputs();
+                }
+                if (params.operatingExpensePercentage !== undefined) {
+                    document.getElementById('operatingExpensePercentage').value = params.operatingExpensePercentage;
+                }
+                if (params.seasonality !== undefined) {
+                    document.getElementById('seasonality').value = params.seasonality;
+                }
+                // Don't override exchange rate from country config - use country-specific rate
+                const countryConfig = window.currentCountryConfig;
+                if (countryConfig && countryConfig.exchangeRate !== undefined) {
+                    document.getElementById('usdRate').value = countryConfig.exchangeRate;
+                } else if (params.usdRate !== undefined) {
+                    document.getElementById('usdRate').value = params.usdRate;
+                }
+            }
+            
+            // Load segment library if available (country-specific)
+            if (config.segmentLibraries && config.segmentLibraries[currentCountry]) {
+                window.externalSegmentLibrary = config.segmentLibraries[currentCountry];
+                console.log(`Loaded ${config.segmentLibraries[currentCountry].length} segments for ${currentCountry}`);
+            } else if (config.segmentLibrary) {
+                // Fallback to legacy structure
+                window.externalSegmentLibrary = config.segmentLibrary;
+                console.log(`Loaded ${config.segmentLibrary.length} segments (legacy format)`);
+            }
+            
+            // Load regional data - check for external demographic files first
+            if (config.demographicDataConfig && config.demographicDataConfig.externalFiles) {
+                // Load external demographic data for current country
+                loadExternalDemographicData(currentCountry, config.demographicDataConfig);
+            } else if (config.regionalData && config.regionalData[currentCountry]) {
+                // Fallback to embedded regional data
+                const regionalData = config.regionalData[currentCountry];
+                if (regionalData.demographicSegments) {
+                    window.externalDemographicSegments = regionalData.demographicSegments;
+                    console.log(`Loaded ${regionalData.demographicSegments.length} demographic segments for ${currentCountry} (embedded)`);
+                } else if (regionalData.pensionStates) {
+                    // Fallback for legacy structure
+                    window.externalDemographicSegments = regionalData.pensionStates;
+                    console.log(`Loaded ${regionalData.pensionStates.length} pension states (legacy format) for ${currentCountry}`);
+                }
+            } else if (config.pensionStates) {
+                // Fallback to legacy structure
+                window.externalDemographicSegments = config.pensionStates;
+                console.log(`Loaded ${config.pensionStates.length} pension states (legacy format)`);
+            }
+            
+            // Store scenario definitions if available
+            if (config.scenarioDefinitions) {
+                window.externalScenarioDefinitions = config.scenarioDefinitions;
+                console.log(`Loaded ${config.scenarioDefinitions.length} scenario definitions`);
+            }
+            
+            // Apply UI configuration if available
+            if (config.uiConfig) {
+                applyUIConfig(config.uiConfig);
+            }
+            
+            const countryName = window.currentCountryConfig?.name || currentCountry;
+            showSuccessMessage(`External configuration for ${countryName} applied successfully!`);
+            
+            // Update the UI
+            updateProfitabilityWarning();
+        }
+
+        // Function to apply UI configuration
+        function applyUIConfig(uiConfig) {
+            if (uiConfig.colors) {
+                // Could apply custom color scheme here if needed
+                console.log('UI colors loaded:', uiConfig.colors);
+            }
+            
+            if (uiConfig.chartOptions) {
+                window.chartOptions = uiConfig.chartOptions;
+                console.log('Chart options loaded:', uiConfig.chartOptions);
+            }
+        }
+
+        // Function to load segments from external library
+        function loadSegmentsFromExternalLibrary() {
+            try {
+                if (!window.externalModelConfig || !window.externalModelConfig.segmentLibraries) {
+                    // Try to load configuration first
+                    loadExternalModelConfig()
+                        .then(() => {
+                            loadSegmentsFromExternalLibrary();
+                        })
+                        .catch(() => {
+                            showErrorMessage('No external model configuration available. Please load a configuration file or ensure model-config.json exists.');
+                        });
+                    return;
+                }
+
+                // Get segment library for current country
+                const countryLibraries = window.externalModelConfig.segmentLibraries;
+                const currentCountry = window.currentCountry || 'india';
+                const library = countryLibraries[currentCountry];
+                
+                if (!Array.isArray(library) || library.length === 0) {
+                    const countryName = window.currentCountryConfig?.name || currentCountry;
+                    showErrorMessage(`External library contains no segments for ${countryName}.`);
+                    return;
+                }
+
+                let loadedCount = 0;
+                let skippedCount = 0;
+                const errors = [];
+
+                library.forEach((segment, index) => {
+                    try {
+                        // Validate segment data
+                        if (!segment.name || typeof segment.name !== 'string') {
+                            throw new Error(`Invalid name at index ${index}`);
+                        }
+                        
+                        if (typeof segment.price !== 'number' || segment.price < 0) {
+                            throw new Error(`Invalid price for "${segment.name}"`);
+                        }
+                        
+                        if (typeof segment.volume !== 'number' || segment.volume < 0) {
+                            throw new Error(`Invalid volume for "${segment.name}"`);
+                        }
+                        
+                        // Check for duplicates
+                        const exists = window.segments.find(existing => 
+                            existing.name.toLowerCase() === segment.name.toLowerCase()
+                        );
+                        
+                        if (exists) {
+                            skippedCount++;
+                            return; // Skip duplicate
+                        }
+
+                        const newSegment = {
+                            id: generateId(),
+                            name: segment.name,
+                            type: 'sku',
+                            pricePerTransaction: segment.price,
+                            costPerTransaction: segment.cost || (segment.price * 0.3),
+                            monthlyVolume: segment.volume,
+                            volumeGrowth: segment.volumeGrowth || 5,
+                            category: segment.category || 'authentication',
+                            notes: segment.description || ''
+                        };
+                        
+                        window.segments.push(newSegment);
+                        loadedCount++;
+                        
+                    } catch (error) {
+                        errors.push(error.message);
+                    }
+                });
+
+                if (loadedCount > 0) {
+                    saveData();
+                    renderSegments();
+                }
+                
+                // Show result message
+                const countryName = window.currentCountryConfig?.name || currentCountry;
+                let message = `Loaded ${loadedCount} segments from ${countryName} library.`;
+                if (skippedCount > 0) {
+                    message += ` Skipped ${skippedCount} duplicates.`;
+                }
+                if (errors.length > 0) {
+                    message += ` ${errors.length} errors encountered.`;
+                }
+                
+                if (loadedCount > 0) {
+                    showSuccessMessage(message);
+                } else if (errors.length > 0) {
+                    showErrorMessage(`Failed to load segments: ${errors[0]}`);
+                } else {
+                    showWarningMessage('No new segments to load (all were duplicates).');
+                }
+                
+            } catch (error) {
+                console.error('Error loading segments from external library:', error);
+                showErrorMessage('Failed to load segments from external library: ' + error.message);
+            }
+        }
+
+        // Function to load pension model from external configuration
+        function loadPensionModelFromExternal(silent = false) {
+            const currentCountry = window.currentCountry || 'india';
+            
+            // Try to load country-specific regional data
+            let demographicData = null;
+            let dataType = null;
+            
+            if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+                window.externalModelConfig.regionalData[currentCountry]) {
+                
+                const countryData = window.externalModelConfig.regionalData[currentCountry];
+                
+                // Use standardized demographicSegments structure
+                if (countryData.demographicSegments) {
+                    demographicData = countryData.demographicSegments;
+                    dataType = 'demographic';
+                } else if (countryData.pensionStates) {
+                    // Fallback for legacy structure
+                    demographicData = countryData.pensionStates;
+                    dataType = 'pension';
+                }
+            } else if (window.externalDemographicSegments) {
+                // Use global demographic segments
+                demographicData = window.externalDemographicSegments;
+                dataType = 'demographic';
+            } else if (window.externalPensionStates) {
+                // Fallback to legacy global pension states
+                demographicData = window.externalPensionStates;
+                dataType = 'pension';
+            }
+            
+            if (!demographicData) {
+                const countryName = window.currentCountryConfig?.name || currentCountry;
+                if (!silent) {
+                    showErrorMessage(`No regional data available for ${countryName}. This feature may not be available for this country.`);
+                }
+                return;
+            }
+            
+            // Clear existing segments
+            window.segments = [];
+            
+            // Use country-specific exchange rate
+            const countryConfig = window.currentCountryConfig;
+            const usdRate = countryConfig?.exchangeRate || parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // Add each state/region from external configuration
+            demographicData.forEach((segment, index) => {
+                // Handle different data structures
+                let authRate, authFrequency, populationInMillions, segmentName, notes;
+                
+                if (dataType === 'pension') {
+                    // Legacy India pension states format
+                    populationInMillions = segment.population;
+                    authRate = segment.pensionPct / 100;
+                    authFrequency = segment.authFreq || 1.0;
+                    segmentName = segment.name;
+                    notes = `State: ${segment.name.split(' -')[0]}, Population: ${segment.population}M, Pension Coverage: ${segment.pensionPct}%`;
+                } else {
+                    // Enhanced demographic segments format (all countries)
+                    populationInMillions = segment.population;
+                    authRate = segment.authPct / 100;
+                    authFrequency = segment.authFreq || 1.0;
+                    segmentName = segment.name;
+                    
+                    // Create comprehensive notes with new demographic fields
+                    const digitalAdoption = segment.digitalAdoption || 'N/A';
+                    const economicTier = segment.economicTier || 'N/A';
+                    const urbanization = segment.urbanization || 'N/A';
+                    const authGrowthRate = segment.authGrowthRate || 'N/A';
+                    const pensionPct = segment.pensionPct || 'N/A';
+                    
+                    notes = `Region: ${segment.name}, Pop: ${segment.population}M, Auth: ${segment.authPct}%, Pension: ${pensionPct}%, Digital: ${digitalAdoption}%, Economic: ${economicTier}, Urban: ${urbanization}%, Growth: ${authGrowthRate}%`;
+                }
+                
+                // Monthly authentication volume = Population * Auth Rate * Monthly Auth Frequency
+                const monthlyVolume = Math.round(populationInMillions * 1000000 * authRate * authFrequency);
+                
+                // Use segment-specific growth rate if available, otherwise default to 3%
+                const segmentGrowthRate = segment.authGrowthRate || 3;
+                
+                // Adjust pricing based on economic tier and digital adoption
+                let pricePerTransaction = 0.12; // Default price
+                let costPerTransaction = 0.04;  // Default cost
+                
+                if (segment.economicTier === 'high') {
+                    pricePerTransaction = 0.18;
+                    costPerTransaction = 0.05;
+                } else if (segment.economicTier === 'low') {
+                    pricePerTransaction = 0.08;
+                    costPerTransaction = 0.03;
+                }
+                
+                // Digital adoption bonus - higher digital adoption can support higher prices
+                if (segment.digitalAdoption >= 80) {
+                    pricePerTransaction *= 1.2;
+                } else if (segment.digitalAdoption <= 50) {
+                    pricePerTransaction *= 0.9;
+                }
+                
+                window.segments.push({
+                    id: Date.now() + index + Math.random(),
+                    name: segmentName,
+                    type: 'sku',
+                    pricePerTransaction: Math.round(pricePerTransaction * 100) / 100,
+                    costPerTransaction: Math.round(costPerTransaction * 100) / 100,
+                    monthlyVolume: monthlyVolume,
+                    volumeGrowth: segmentGrowthRate,
+                    category: 'biometric',
+                    notes: notes,
+                    pensionPct: segment.pensionPct || null,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            });
+            
+            // Update configuration settings from external config (country-specific)
+            if (window.externalModelConfig && window.externalModelConfig.countries && 
+                window.externalModelConfig.countries[currentCountry] && 
+                window.externalModelConfig.countries[currentCountry].defaultModel) {
+                const params = window.externalModelConfig.countries[currentCountry].defaultModel.baseParams;
+                if (params) {
+                    document.getElementById('growthRate').value = params.growthRate || 4;
+                    document.getElementById('projectionMonths').value = params.projectionMonths || 12;
+                    document.getElementById('costPercentage').value = params.costPercentage || 35;
+                    document.getElementById('operatingExpenses').value = params.operatingExpenses || 0;
+                    document.getElementById('seasonality').value = params.seasonality || 'none';
+                    // Use country-specific exchange rate
+                    document.getElementById('usdRate').value = usdRate;
+                }
+            } else if (window.externalModelConfig && window.externalModelConfig.defaultModel) {
+                // Fallback to legacy structure
+                const params = window.externalModelConfig.defaultModel.baseParams;
+                if (params) {
+                    document.getElementById('growthRate').value = params.growthRate || 4;
+                    document.getElementById('projectionMonths').value = params.projectionMonths || 12;
+                    document.getElementById('costPercentage').value = params.costPercentage || 35;
+                    document.getElementById('operatingExpenses').value = params.operatingExpenses || 0;
+                    document.getElementById('seasonality').value = params.seasonality || 'none';
+                }
+            }
+            
+            // Update segments display
+            window.renderSegments();
+            updateSegmentCount();
+            
+            // Calculate total values
+            const totalVolume = window.segments.reduce((sum, seg) => sum + seg.monthlyVolume, 0);
+            const totalRevenue = window.segments.reduce((sum, seg) => sum + (seg.monthlyVolume * seg.pricePerTransaction), 0);
+            
+            if (!silent) {
+                const countryName = window.currentCountryConfig?.name || currentCountry;
+                const currencySymbol = window.currentCountryConfig?.currencySymbol || '₹';
+                
+                alert(`Loaded ${window.segments.length} regional segments from ${countryName}!\n\n` +
+                      `✅ Total Monthly Authentication Volume: ${(totalVolume/1000000).toFixed(2)}M\n` +
+                      `✅ Total Monthly Revenue Potential: ${currencySymbol}${totalRevenue.toLocaleString('en-IN')} (${(totalRevenue/usdRate).toFixed(2)} USD)\n` +
+                      `✅ Price: ${currencySymbol}0.12 per authentication (${(0.12/usdRate).toFixed(4)} USD)\n` +
+                      `✅ Exchange Rate: ${currencySymbol}${usdRate}/USD\n\n` +
+                      `Click "Calculate Projections" to see the 12-month forecast!`);
+            }
+        }
+
+        // Modified loadPensionModel to use external config if available
+        function loadPensionModel(silent = false) {
+            // Check if external pension states are available
+            if (window.externalPensionStates) {
+                loadPensionModelFromExternal(silent);
+                return;
+            }
+            
+            // Otherwise use the original implementation
+            // Clear existing segments
+            window.segments = [];
+            
+            const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
+            
+            // State-wise pension data with population and coverage percentages
+            const statesPensionData = [
+                { name: 'UP - Pension Auth', population: 235, pensionPct: 6.4 },
+                { name: 'MH - Pension Auth', population: 129, pensionPct: 8.5 },
+                { name: 'Bihar - Pension Auth', population: 125, pensionPct: 4.2 },
+                { name: 'WB - Pension Auth', population: 105, pensionPct: 10.8 },
+                { name: 'MP - Pension Auth', population: 85, pensionPct: 7.2 },
+                { name: 'TN - Pension Auth', population: 81, pensionPct: 15.2 },
+                { name: 'Karnataka - Pension Auth', population: 71, pensionPct: 12.1 },
+                { name: 'Gujarat - Pension Auth', population: 70, pensionPct: 9.8 },
+                { name: 'AP - Pension Auth', population: 59, pensionPct: 13.2 },
+                { name: 'Rajasthan - Pension Auth', population: 81, pensionPct: 7.8 },
+                { name: 'Odisha - Pension Auth', population: 49, pensionPct: 8.9 },
+                { name: 'Kerala - Pension Auth', population: 39, pensionPct: 14.8 },
+                { name: 'Jharkhand - Pension Auth', population: 39, pensionPct: 6.8 },
+                { name: 'Assam - Pension Auth', population: 36, pensionPct: 5.8 },
+                { name: 'Punjab - Pension Auth', population: 32, pensionPct: 11.5 },
+                { name: 'Chhattisgarh - Pension Auth', population: 29, pensionPct: 8.1 },
+                { name: 'Haryana - Pension Auth', population: 29, pensionPct: 10.2 },
+                { name: 'Telangana - Pension Auth', population: 42, pensionPct: 12.8 },
+                { name: 'HP - Pension Auth', population: 8, pensionPct: 9.2 },
+                { name: 'Uttarakhand - Pension Auth', population: 12, pensionPct: 8.7 },
+                { name: 'Delhi - Pension Auth', population: 28, pensionPct: 8.9 }
+            ];
+            
+            // Set base parameters for pension authentication
+            document.getElementById('startRevenue').value = '0';
+            document.getElementById('growthRate').value = '5';
+            document.getElementById('projectionMonths').value = '12';
+            document.getElementById('costPercentage').value = '40';
+            document.getElementById('operatingExpenses').value = '0';
+            document.getElementById('seasonality').value = 'none';
+            
+            // Add each state as a segment
+            statesPensionData.forEach(state => {
+                // Calculate monthly pension authentication volume
+                const pensioners = state.population * state.pensionPct * 10000; // This gives actual number of pensioners
+                const monthlyVolume = pensioners * 1.2; // Assume 1.2 authentications per pensioner per month
+                
+                window.segments.push({
+                    id: Date.now() + Math.random(),
+                    name: state.name,
+                    type: 'sku',
+                    pricePerTransaction: 0.12, // ₹0.12 per transaction for better margins
+                    costPerTransaction: 0.04, // Optimized cost
+                    monthlyVolume: monthlyVolume,
+                    volumeGrowth: 3, // Conservative 3% monthly growth
+                    category: 'biometric',
+                    notes: `State: ${state.name.split(' -')[0]}, Population: ${state.population}M, Pension Coverage: ${state.pensionPct}%`,
+                    pensionPct: state.pensionPct,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            });
+            
+            // Render the segments
+            window.renderSegments();
+            updateSegmentCount();
+            
+            // Calculate total values
+            const totalVolume = window.segments.reduce((sum, seg) => sum + seg.monthlyVolume, 0);
+            const totalRevenue = window.segments.reduce((sum, seg) => sum + (seg.monthlyVolume * seg.pricePerTransaction), 0);
+            
+            // Show confirmation only if not silent
+            if (!silent) {
+                alert(`Loaded Pension Authentication Model:\n\n` +
+                      `✅ ${window.segments.length} State SKUs added\n` +
+                      `✅ Total Monthly Volume: ${(totalVolume/1000000).toFixed(1)}M transactions\n` +
+                      `✅ Total Monthly Revenue: ₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})} (${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})} USD)\n` +
+                      `✅ Price: ₹0.08 per authentication (${(0.08/usdRate).toFixed(4)} USD)\n` +
+                      `✅ Exchange Rate: ₹${usdRate}/USD\n\n` +
+                      `Click "Calculate Projections" to see the 12-month forecast!`);
+            }
+        }
+
+        // Model Management Functions
+        // Using window.savedModels and window.selectedModelId already defined globally
+
+        function loadSavedModels() {
+            try {
+                const models = localStorage.getItem('revenueProjectionModels');
+                window.savedModels = models ? JSON.parse(models) : [];
+                renderModelsGrid();
+            } catch (error) {
+                console.error('Error loading saved models:', error);
+                window.savedModels = [];
+            }
+        }
+
+        function saveModelsToStorage() {
+            try {
+                localStorage.setItem('revenueProjectionModels', JSON.stringify(window.savedModels));
+            } catch (error) {
+                console.error('Error saving models:', error);
+                alert('Error saving model. Please check your browser storage.');
+            }
+        }
+
+        function showSaveModelDialog() {
+            // Clear previous values
+            document.getElementById('modelName').value = '';
+            document.getElementById('modelDescription').value = '';
+            document.getElementById('modelTags').value = '';
+            
+            // Show the dialog
+            const dialog = document.getElementById('saveModelDialog');
+            if (dialog) {
+                dialog.style.display = 'flex';
+            } else {
+                alert('Save dialog not found. Please refresh the page and try again.');
+            }
+        }
+
+        function closeSaveModelDialog() {
+            const dialog = document.getElementById('saveModelDialog');
+            if (dialog) {
+                dialog.style.display = 'none';
+            }
+        }
+
+        function saveCurrentModel() {
+            // Prevent recursive calls
+            if (window.isSaving) {
+                console.warn('Save operation already in progress, ignoring duplicate call');
+                return;
+            }
+            window.isSaving = true;
+            
+            const name = document.getElementById('modelName').value.trim();
+            const description = document.getElementById('modelDescription').value.trim();
+            const tags = document.getElementById('modelTags').value.split(',').map(tag => tag.trim()).filter(tag => tag);
+            
+            if (!name) {
+                alert('Please enter a model name.');
+                window.isSaving = false;
+                return;
+            }
+
+            if (window.segments.length === 0) {
+                alert('No segments to save. Please add at least one segment before saving.');
+                window.isSaving = false;
+                return;
+            }
+
+            // Check if a model with this name already exists
+            const existingModel = window.savedModels.find(m => m.name === name);
+            
+            if (existingModel) {
+                // Show versioning options
+                const choice = confirm(
+                    `A model named "${name}" already exists (v${existingModel.version || 1}).\n\n` +
+                    `Click OK to create a new version (v${(existingModel.version || 1) + 1})\n` +
+                    `Click Cancel to overwrite the existing model`
+                );
+                
+                if (choice) {
+                    // Create new version
+                    createNewModelVersion(existingModel, description, tags);
+                } else {
+                    // Overwrite existing model
+                    overwriteExistingModel(existingModel, description, tags);
+                }
+            } else {
+                // Create completely new model
+                createNewModel(name, description, tags);
+            }
+        }
+
+        function createNewModel(name, description, tags) {
+            const model = {
+                id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
+                name: name,
+                description: description,
+                tags: tags,
+                version: 1,
+                baseModelId: null,
+                parentVersionId: null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                versionHistory: [],
+                data: {
+                    country: {
+                        code: window.currentCountry || 'india',
+                        name: window.currentCountryConfig?.name || 'India',
+                        currency: window.currentCountryConfig?.currency || 'INR',
+                        currencySymbol: window.currentCountryConfig?.currencySymbol || '₹',
+                        exchangeRate: window.currentCountryConfig?.exchangeRate || 83.50
+                    },
+                    baseParams: {
+                        startRevenue: parseFloat(document.getElementById('startRevenue').value),
+                        growthRate: parseFloat(document.getElementById('growthRate').value),
+                        projectionMonths: parseInt(document.getElementById('projectionMonths').value),
+                        costPercentage: parseFloat(document.getElementById('costPercentage').value),
+                        operatingExpenses: parseFloat(document.getElementById('operatingExpenses').value),
+                        seasonality: document.getElementById('seasonality').value,
+                        usdRate: parseFloat(document.getElementById('usdRate').value)
+                    },
+                    segments: JSON.parse(JSON.stringify(window.segments)), // Deep copy
+                    currentView: window.currentView,
+                    currentSegmentType: window.currentSegmentType
+                }
+            };
+
+            // Add to saved models
+            window.savedModels.push(model);
+            
+            // Set as current model
+            localStorage.setItem('lastLoadedModelId', model.id);
+            localStorage.setItem('currentModelName', model.name);
+            updateCurrentModelIndicator(`${model.name} v${model.version}`);
+            
+            // Save to storage and update UI
+            try {
+                saveModelsToStorage();
+                renderModelsGrid();
+                closeSaveModelDialog();
+                
+                showSuccessMessage(`New model "${model.name}" v${model.version} created successfully!`);
+            } catch (error) {
+                console.error('Error saving model:', error);
+                alert('Error saving model: ' + error.message);
+            } finally {
+                window.isSaving = false;
+            }
+        }
+
+        function createNewModelVersion(existingModel, description, tags) {
+            // Create version snapshot of current model before creating new version
+            const versionSnapshot = {
+                versionId: existingModel.id,
+                version: existingModel.version || 1,
+                description: existingModel.description,
+                tags: existingModel.tags,
+                data: JSON.parse(JSON.stringify(existingModel.data)), // Deep copy
+                updatedAt: existingModel.updatedAt,
+                segmentCount: existingModel.data.segments.length,
+                totalRevenue: calculateModelTotalRevenue(existingModel)
+            };
+
+            // Add current version to history if not already there
+            if (!existingModel.versionHistory) {
+                existingModel.versionHistory = [];
+            }
+            
+            // Only add to history if it's not already the latest entry
+            const latestInHistory = existingModel.versionHistory[existingModel.versionHistory.length - 1];
+            if (!latestInHistory || latestInHistory.version !== existingModel.version) {
+                existingModel.versionHistory.push(versionSnapshot);
+            }
+
+            // Update the existing model with new version
+            const newVersion = (existingModel.version || 1) + 1;
+            existingModel.version = newVersion;
+            existingModel.description = description;
+            existingModel.tags = tags;
+            existingModel.updatedAt = new Date().toISOString();
+            existingModel.data = {
+                country: {
+                    code: window.currentCountry || 'india',
+                    name: window.currentCountryConfig?.name || 'India',
+                    currency: window.currentCountryConfig?.currency || 'INR',
+                    currencySymbol: window.currentCountryConfig?.currencySymbol || '₹',
+                    exchangeRate: window.currentCountryConfig?.exchangeRate || 83.50
+                },
+                baseParams: {
+                    startRevenue: parseFloat(document.getElementById('startRevenue').value),
+                    growthRate: parseFloat(document.getElementById('growthRate').value),
+                    projectionMonths: parseInt(document.getElementById('projectionMonths').value),
+                    costPercentage: parseFloat(document.getElementById('costPercentage').value),
+                    operatingExpenses: parseFloat(document.getElementById('operatingExpenses').value),
+                    seasonality: document.getElementById('seasonality').value,
+                    usdRate: parseFloat(document.getElementById('usdRate').value)
+                },
+                segments: [...window.segments],
+                currentView: window.currentView,
+                currentSegmentType: window.currentSegmentType
+            };
+
+            // Set as current model
+            localStorage.setItem('lastLoadedModelId', existingModel.id);
+            localStorage.setItem('currentModelName', existingModel.name);
+            updateCurrentModelIndicator(`${existingModel.name} v${existingModel.version}`);
+            
+            saveModelsToStorage();
+            renderModelsGrid();
+            closeSaveModelDialog();
+            showSuccessMessage(`Model "${existingModel.name}" updated to v${existingModel.version}!`);
+            window.isSaving = false;
+        }
+
+        function overwriteExistingModel(existingModel, description, tags) {
+            // Update existing model without versioning
+            existingModel.description = description;
+            existingModel.tags = tags;
+            existingModel.updatedAt = new Date().toISOString();
+            existingModel.data = {
+                baseParams: {
+                    startRevenue: parseFloat(document.getElementById('startRevenue').value),
+                    growthRate: parseFloat(document.getElementById('growthRate').value),
+                    projectionMonths: parseInt(document.getElementById('projectionMonths').value),
+                    costPercentage: parseFloat(document.getElementById('costPercentage').value),
+                    operatingExpenses: parseFloat(document.getElementById('operatingExpenses').value),
+                    seasonality: document.getElementById('seasonality').value,
+                    usdRate: parseFloat(document.getElementById('usdRate').value)
+                },
+                segments: [...window.segments],
+                currentView: window.currentView,
+                currentSegmentType: window.currentSegmentType
+            };
+            
+            // Set as current model
+            localStorage.setItem('lastLoadedModelId', existingModel.id);
+            localStorage.setItem('currentModelName', existingModel.name);
+            updateCurrentModelIndicator(`${existingModel.name} v${existingModel.version || 1}`);
+            
+            saveModelsToStorage();
+            renderModelsGrid();
+            closeSaveModelDialog();
+            showSuccessMessage(`Model "${existingModel.name}" v${existingModel.version || 1} overwritten successfully!`);
+            window.isSaving = false;
+        }
+
+        function renderModelsGrid() {
+            const grid = document.getElementById('modelsGrid');
+            if (!grid) return; // Element doesn't exist yet
+            
+            const currentModelId = localStorage.getItem('lastLoadedModelId');
+            
+            if (window.savedModels.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <h3>No Saved Models</h3>
+                        <p>Save your first revenue projection model to get started.<br>
+                        Configure your segments and parameters, then click "Save Current Model".</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = window.savedModels.map(model => {
+                const createdDate = new Date(model.createdAt).toLocaleDateString();
+                const updatedDate = new Date(model.updatedAt).toLocaleDateString();
+                const segmentCount = model.data.segments.length;
+                const totalRevenue = calculateModelTotalRevenue(model);
+                const isCurrentModel = model.id === currentModelId;
+                const version = model.version || 1;
+                const hasVersionHistory = model.versionHistory && model.versionHistory.length > 0;
+                
+                return `
+                    <div class="model-card ${isCurrentModel ? 'current-model' : ''}" style="${isCurrentModel ? 'border-color: #22c55e; background: #f0fdf4;' : ''}">
+                        <div class="model-card-header">
+                            <div>
+                                <div class="model-title">
+                                    ${model.name} 
+                                    <span style="color: #667eea; font-size: 0.8em; font-weight: normal;">v${version}</span>
+                                    ${isCurrentModel ? '<span style="color: #22c55e; font-size: 0.8em;"> ✓ Current</span>' : ''}
+                                </div>
+                                <div class="model-date">Created: ${createdDate} | Updated: ${updatedDate}</div>
+                                ${model.data.country ? `<div style="font-size: 0.8em; color: #667eea;">🌏 ${model.data.country.name || model.data.country.code} (${model.data.country.currencySymbol || model.data.country.currency})</div>` : ''}
+                                ${hasVersionHistory ? `<div style="font-size: 0.7em; color: #8b5cf6;">📚 ${model.versionHistory.length} previous version(s)</div>` : ''}
+                            </div>
+                            <div class="model-actions">
+                                <button class="model-action-btn load" onclick="loadModel('${model.id}')" title="Load Model">
+                                    📂
+                                </button>
+                                ${hasVersionHistory ? `<button class="model-action-btn" style="background: #8b5cf6;" onclick="showVersionHistory('${model.id}')" title="Version History">📚</button>` : ''}
+                                <button class="model-action-btn duplicate" onclick="duplicateModelFromGrid('${model.id}')" title="Duplicate Model" style="background: #f59e0b;">
+                                    📋
+                                </button>
+                                <button class="model-action-btn details" onclick="showModelDetails('${model.id}')" title="View Details">
+                                    👁️
+                                </button>
+                                <button class="model-action-btn delete" onclick="deleteModel('${model.id}')" title="Delete Model">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        
+                        ${model.description ? `<div class="model-description">${model.description}</div>` : ''}
+                        
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-label">Segments</div>
+                                <div class="model-stat-value">${segmentCount}</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-label">Projected Revenue</div>
+                                <div class="model-stat-value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-label">Version</div>
+                                <div class="model-stat-value">v${version}${hasVersionHistory ? ` (+${model.versionHistory.length})` : ''}</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-label">Last Updated</div>
+                                <div class="model-stat-value">${updatedDate}</div>
+                            </div>
+                        </div>
+
+                        ${segmentCount > 0 ? `
+                            <div class="model-segments">
+                                <div class="model-segments-title">Segments (v${version})</div>
+                                <div class="model-segment-list">
+                                    ${model.data.segments.slice(0, 3).map(seg => 
+                                        `<span class="model-segment">${seg.name} ${seg.pricePerTransaction ? `(₹${seg.pricePerTransaction})` : ''}</span>`
+                                    ).join('')}
+                                    ${segmentCount > 3 ? `<span class="model-segment">+${segmentCount - 3} more</span>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        ${model.tags && model.tags.length > 0 ? `
+                            <div class="model-tags">
+                                ${model.tags.map(tag => `<span class="model-tag">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateModelTotalRevenue(model) {
+            if (!model.data || !model.data.segments) return 0;
+            return model.data.segments.reduce((total, segment) => {
+                return total + (segment.monthlyVolume * segment.pricePerTransaction * (model.data.baseParams.projectionMonths || 12));
+            }, 0);
+        }
+
+        function loadModel(modelId, silent = false) {
+            const model = window.savedModels.find(m => m.id === modelId);
+            if (!model) {
+                if (!silent) alert('Model not found.');
+                return;
+            }
+
+            // Switch to model's country if different from current
+            if (model.data.country && model.data.country.code && model.data.country.code !== window.currentCountry) {
+                if (!silent) {
+                    const modelCountry = model.data.country.name || model.data.country.code;
+                    const currentCountry = window.currentCountryConfig?.name || window.currentCountry;
+                    if (!confirm(`This model was created for ${modelCountry}. Switch to that country now?\n\nCurrent country: ${currentCountry}\nModel country: ${modelCountry}`)) {
+                        return;
+                    }
+                }
+                
+                // Switch country
+                const countrySelect = document.getElementById('countrySelect');
+                if (countrySelect) {
+                    countrySelect.value = model.data.country.code;
+                    changeCountry(model.data.country.code);
+                }
+            }
+
+            // Load base parameters
+            document.getElementById('startRevenue').value = model.data.baseParams.startRevenue || 0;
+            document.getElementById('growthRate').value = model.data.baseParams.growthRate;
+            document.getElementById('projectionMonths').value = model.data.baseParams.projectionMonths;
+            document.getElementById('costPercentage').value = model.data.baseParams.costPercentage;
+            document.getElementById('operatingExpenses').value = model.data.baseParams.operatingExpenses || 0;
+            document.getElementById('seasonality').value = model.data.baseParams.seasonality;
+
+            // Load segments
+            window.segments = [...model.data.segments];
+            window.currentView = model.data.currentView || 'consolidated';
+            window.currentSegmentType = model.data.currentSegmentType || 'sku';
+
+            // Update UI
+            window.renderSegments();
+            updateSegmentCount();
+            
+            // Save as last loaded model
+            localStorage.setItem('lastLoadedModelId', modelId);
+            localStorage.setItem('currentModelName', model.name);
+            
+            // Update the current model indicator
+            updateCurrentModelIndicator(model.name);
+            
+            // Switch to setup tab only if not silent
+            if (!silent) {
+                switchTab('setup');
+                showSuccessMessage(`Model "${model.name}" loaded successfully!`);
+            }
+        }
+
+        function updateCurrentModelIndicator(modelName) {
+            // Find or create the model indicator
+            let indicator = document.getElementById('currentModelIndicator');
+            if (!indicator) {
+                const header = document.querySelector('h1').parentElement;
+                indicator = document.createElement('div');
+                indicator.id = 'currentModelIndicator';
+                indicator.style.cssText = 'text-align: center; color: #667eea; font-size: 1em; margin-bottom: 20px; font-weight: 500;';
+                header.appendChild(indicator);
+            }
+            
+            if (modelName) {
+                // Extract version information if available
+                const currentModelId = localStorage.getItem('lastLoadedModelId');
+                const currentModel = window.savedModels.find(m => m.id === currentModelId);
+                const version = currentModel ? (currentModel.version || 1) : '';
+                const hasHistory = currentModel && currentModel.versionHistory && currentModel.versionHistory.length > 0;
+                
+                indicator.innerHTML = `📊 Current Model: <strong>${modelName}</strong>` +
+                    (version ? ` <span style="color: #8b5cf6; font-size: 0.9em;">v${version}</span>` : '') +
+                    (hasHistory ? ` <span style="color: #f59e0b; font-size: 0.8em;">(+${currentModel.versionHistory.length} versions)</span>` : '') +
+                    ` | <a href="#" onclick="clearCurrentModel(); return false;" style="color: #ef4444; text-decoration: none;">✕ Clear</a>` +
+                    (currentModel && hasHistory ? ` | <a href="#" onclick="showVersionHistory('${currentModelId}'); return false;" style="color: #8b5cf6; text-decoration: none;">📚 History</a>` : '');
+            } else {
+                indicator.innerHTML = '📊 No model loaded - Starting with blank model';
+            }
+        }
+
+        function clearCurrentModel() {
+            // Clear the current model
+            window.segments = [];
+            document.getElementById('startRevenue').value = '0';
+            document.getElementById('growthRate').value = '8';
+            document.getElementById('projectionMonths').value = '12';
+            document.getElementById('costPercentage').value = '40';
+            document.getElementById('operatingExpenses').value = '0';
+            document.getElementById('seasonality').value = 'none';
+            
+            // Clear localStorage
+            localStorage.removeItem('lastLoadedModelId');
+            localStorage.removeItem('currentModelName');
+            
+            // Update UI
+            window.renderSegments();
+            updateCurrentModelIndicator(null);
+            updateSegmentCount();
+            
+            // Clear projections if any
+            window.projectionData = [];
+            window.segmentProjections = {};
+            
+            const resultsDiv = document.getElementById('results');
+            if (resultsDiv) {
+                resultsDiv.style.display = 'none';
+            }
+        }
+
+        function deleteModel(modelId) {
+            const model = window.savedModels.find(m => m.id === modelId);
+            if (!model) return;
+
+            if (confirm(`Are you sure you want to delete the model "${model.name}"? This action cannot be undone.`)) {
+                // Check if this is the currently loaded model
+                const lastLoadedModelId = localStorage.getItem('lastLoadedModelId');
+                if (lastLoadedModelId === modelId) {
+                    localStorage.removeItem('lastLoadedModelId');
+                    localStorage.removeItem('currentModelName');
+                    updateCurrentModelIndicator(null);
+                }
+                
+                window.savedModels = window.savedModels.filter(m => m.id !== modelId);
+                saveModelsToStorage();
+                renderModelsGrid();
+                showSuccessMessage('Model deleted successfully.');
+            }
+        }
+
+        function createBlankModel() {
+            if (window.segments.length > 0 || window.projectionData.length > 0) {
+                if (!confirm('Creating a new model will clear current unsaved data. Continue?')) {
+                    return;
+                }
+            }
+            
+            clearCurrentModel();
+            switchTab('setup');
+            showSuccessMessage('New blank model created. Start adding SKUs to build your revenue projection.');
+        }
+
+        function showModelDetails(modelId) {
+            const model = window.savedModels.find(m => m.id === modelId);
+            if (!model) {
+                alert('Model not found.');
+                return;
+            }
+            
+            selectedModelId = modelId;
+            
+            // Calculate model statistics
+            const totalSegments = model.data.segments ? model.data.segments.length : 0;
+            const totalRevenue = model.data.segments ? 
+                model.data.segments.reduce((sum, seg) => 
+                    sum + (seg.monthlyVolume * seg.pricePerTransaction * (model.data.baseParams?.projectionMonths || 12)), 0
+                ) : 0;
+            
+            const avgPrice = totalSegments > 0 ? 
+                model.data.segments.reduce((sum, seg) => sum + seg.pricePerTransaction, 0) / totalSegments : 0;
+            
+            const totalVolume = model.data.segments ? 
+                model.data.segments.reduce((sum, seg) => sum + seg.monthlyVolume, 0) : 0;
+            
+            // Populate model details
+            document.getElementById('modelDetailsTitle').textContent = `📊 ${model.name}`;
+            document.getElementById('modelDetailsBody').innerHTML = `
+                <div class="model-details-content">
+                    <div class="model-info-section">
+                        <h4>📋 Model Information</h4>
+                        <div class="model-info-grid">
+                            <div class="model-info-item">
+                                <span class="label">Name:</span>
+                                <span class="value">${model.name}</span>
+                            </div>
+                            <div class="model-info-item">
+                                <span class="label">Description:</span>
+                                <span class="value">${model.description || 'No description'}</span>
+                            </div>
+                            <div class="model-info-item">
+                                <span class="label">Version:</span>
+                                <span class="value">v${model.version}</span>
+                            </div>
+                            <div class="model-info-item">
+                                <span class="label">Created:</span>
+                                <span class="value">${new Date(model.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div class="model-info-item">
+                                <span class="label">Last Modified:</span>
+                                <span class="value">${new Date(model.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                            <div class="model-info-item">
+                                <span class="label">Tags:</span>
+                                <span class="value">${model.tags ? model.tags.join(', ') : 'None'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-stats-section">
+                        <h4>📊 Model Statistics</h4>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${totalSegments}</div>
+                                <div class="stat-label">Total SKUs</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                                <div class="stat-label">Projected Revenue</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">₹${avgPrice.toFixed(2)}</div>
+                                <div class="stat-label">Avg Price/Transaction</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${(totalVolume/1000000).toFixed(1)}M</div>
+                                <div class="stat-label">Monthly Volume</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="model-params-section">
+                        <h4>⚙️ Model Parameters</h4>
+                        <div class="params-grid">
+                            <div class="param-item">
+                                <span class="label">Projection Period:</span>
+                                <span class="value">${model.data.baseParams?.projectionMonths || 12} months</span>
+                            </div>
+                            <div class="param-item">
+                                <span class="label">Growth Rate:</span>
+                                <span class="value">${model.data.baseParams?.growthRate || 0}% monthly</span>
+                            </div>
+                            <div class="param-item">
+                                <span class="label">COGS:</span>
+                                <span class="value">${model.data.baseParams?.costPercentage || 0}% of revenue</span>
+                            </div>
+                            <div class="param-item">
+                                <span class="label">Operating Expenses:</span>
+                                <span class="value">₹${(model.data.baseParams?.operatingExpenses || 0).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div class="param-item">
+                                <span class="label">Seasonality:</span>
+                                <span class="value">${model.data.baseParams?.seasonality || 'none'}</span>
+                            </div>
+                            <div class="param-item">
+                                <span class="label">USD Rate:</span>
+                                <span class="value">₹${model.data.baseParams?.usdRate || 83.50}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${totalSegments > 0 ? `
+                    <div class="model-skus-section">
+                        <h4>📦 SKUs (${totalSegments})</h4>
+                        <div class="skus-list">
+                            ${model.data.segments.slice(0, 10).map(sku => `
+                                <div class="sku-item">
+                                    <div class="sku-name">${sku.name}</div>
+                                    <div class="sku-details">
+                                        Price: ₹${sku.pricePerTransaction} | 
+                                        Volume: ${(sku.monthlyVolume/1000000).toFixed(1)}M | 
+                                        Category: ${sku.category || 'N/A'}
+                                    </div>
+                                </div>
+                            `).join('')}
+                            ${totalSegments > 10 ? `<div class="sku-item">... and ${totalSegments - 10} more SKUs</div>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Update footer buttons
+            document.getElementById('loadModelBtn').style.display = 'inline-block';
+            document.getElementById('editModelBtn').style.display = 'inline-block';
+            document.getElementById('deleteModelBtn').style.display = 'inline-block';
+            
+            // Show the dialog
+            document.getElementById('modelDetailsDialog').style.display = 'flex';
+        }
+
+        function editSelectedModel() {
+            if (!selectedModelId) return;
+            
+            const model = window.savedModels.find(m => m.id === selectedModelId);
+            if (!model) {
+                alert('Model not found.');
+                return;
+            }
+            
+            // Close details dialog and open edit dialog
+            closeModelDetailsDialog();
+            
+            // Store the ID for editing
+            window.currentEditingModelId = selectedModelId;
+            
+            // Populate edit form
+            document.getElementById('editModelName').value = model.name;
+            document.getElementById('editModelDescription').value = model.description || '';
+            document.getElementById('editModelTags').value = model.tags ? model.tags.join(', ') : '';
+            
+            // Populate parameters
+            const params = model.data.baseParams || {};
+            document.getElementById('editProjectionMonths').value = params.projectionMonths || 12;
+            document.getElementById('editGrowthRate').value = params.growthRate || 5;
+            document.getElementById('editCostPercentage').value = params.costPercentage || 40;
+            document.getElementById('editOperatingExpenses').value = params.operatingExpenses || 0;
+            document.getElementById('editSeasonality').value = params.seasonality || 'none';
+            document.getElementById('editUsdRate').value = params.usdRate || 83.50;
+            
+            // Update dialog title
+            document.getElementById('modelEditTitle').textContent = `✏️ Edit Model: ${model.name}`;
+            
+            // Show edit dialog
+            document.getElementById('modelEditDialog').style.display = 'flex';
+            document.getElementById('editModelName').focus();
+            
+            // Clear validation messages
+            const validationDiv = document.getElementById('modelEditValidation');
+            validationDiv.style.display = 'none';
+        }
+
+        function closeModelEditDialog() {
+            document.getElementById('modelEditDialog').style.display = 'none';
+            window.currentEditingModelId = null;
+            
+            // Clear validation messages
+            const validationDiv = document.getElementById('modelEditValidation');
+            validationDiv.style.display = 'none';
+        }
+
+        function updateModel() {
+            if (!window.currentEditingModelId) return;
+            
+            // Get form values
+            const name = document.getElementById('editModelName').value.trim();
+            const description = document.getElementById('editModelDescription').value.trim();
+            const tagsText = document.getElementById('editModelTags').value.trim();
+            const tags = tagsText ? tagsText.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+            
+            // Get parameters
+            const projectionMonths = parseInt(document.getElementById('editProjectionMonths').value);
+            const growthRate = parseFloat(document.getElementById('editGrowthRate').value);
+            const costPercentage = parseFloat(document.getElementById('editCostPercentage').value);
+            const operatingExpenses = parseFloat(document.getElementById('editOperatingExpenses').value);
+            const seasonality = document.getElementById('editSeasonality').value;
+            const usdRate = parseFloat(document.getElementById('editUsdRate').value);
+            
+            // Validate data
+            const validation = validateModelEditData(name, projectionMonths, growthRate, costPercentage, operatingExpenses, usdRate);
+            if (!validation.isValid) {
+                showModelEditValidationErrors(validation.errors);
+                return;
+            }
+            
+            // Find and update the model
+            const modelIndex = window.savedModels.findIndex(m => m.id === window.currentEditingModelId);
+            if (modelIndex === -1) return;
+            
+            // Update the model
+            window.savedModels[modelIndex] = {
+                ...window.savedModels[modelIndex],
+                name,
+                description,
+                tags,
+                version: window.savedModels[modelIndex].version + 1,
+                updatedAt: new Date().toISOString(),
+                data: {
+                    ...window.savedModels[modelIndex].data,
+                    baseParams: {
+                        ...window.savedModels[modelIndex].data.baseParams,
+                        projectionMonths,
+                        growthRate,
+                        costPercentage,
+                        operatingExpenses,
+                        seasonality,
+                        usdRate
+                    }
+                }
+            };
+            
+            // Save to localStorage
+            localStorage.setItem('revenueProjectionModels', JSON.stringify(window.savedModels));
+            
+            // Close dialog and refresh UI
+            closeModelEditDialog();
+            renderModelsGrid();
+            showSuccessMessage(`Model "${name}" updated successfully! (v${window.savedModels[modelIndex].version})`);
+        }
+
+        function duplicateModelFromGrid(modelId) {
+            const originalModel = window.savedModels.find(m => m.id === modelId);
+            if (!originalModel) {
+                alert('Model not found');
+                return;
+            }
+            
+            // Prompt for new model name
+            const defaultName = `${originalModel.name} (Copy)`;
+            const newName = prompt('Enter a name for the duplicated model:', defaultName);
+            
+            if (!newName || newName.trim() === '') {
+                return; // User cancelled
+            }
+            
+            // Check if name already exists
+            if (window.savedModels.some(m => m.name === newName.trim())) {
+                alert('A model with this name already exists. Please choose a different name.');
+                return;
+            }
+            
+            // Create duplicate model
+            const duplicateModel = {
+                id: 'model-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                name: newName.trim(),
+                description: originalModel.description ? `${originalModel.description} (Duplicated)` : 'Duplicated model',
+                tags: [...(originalModel.tags || []), 'copy'],
+                version: 1,
+                baseModelId: originalModel.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                versionHistory: [],
+                data: JSON.parse(JSON.stringify(originalModel.data)) // Deep copy
+            };
+            
+            // Add to saved models and save
+            window.savedModels.push(duplicateModel);
+            saveModelsToStorage();
+            renderModelsGrid();
+            showSuccessMessage(`Model duplicated as "${newName.trim()}"!`);
+        }
+        
+        function duplicateModel() {
+            if (!window.currentEditingModelId) return;
+            
+            const originalModel = window.savedModels.find(m => m.id === window.currentEditingModelId);
+            if (!originalModel) return;
+            
+            // Get current form values (in case user made changes)
+            const name = document.getElementById('editModelName').value.trim();
+            const description = document.getElementById('editModelDescription').value.trim();
+            const tagsText = document.getElementById('editModelTags').value.trim();
+            const tags = tagsText ? tagsText.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+            
+            // Create duplicate with modified name
+            const duplicateName = `${name} (Copy)`;
+            const duplicateModel = {
+                id: 'model-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                name: duplicateName,
+                description,
+                tags: [...tags, 'copy'],
+                version: 1,
+                baseModelId: originalModel.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                data: {
+                    baseParams: {
+                        projectionMonths: parseInt(document.getElementById('editProjectionMonths').value),
+                        growthRate: parseFloat(document.getElementById('editGrowthRate').value),
+                        costPercentage: parseFloat(document.getElementById('editCostPercentage').value),
+                        operatingExpenses: parseFloat(document.getElementById('editOperatingExpenses').value),
+                        seasonality: document.getElementById('editSeasonality').value,
+                        usdRate: parseFloat(document.getElementById('editUsdRate').value)
+                    },
+                    segments: JSON.parse(JSON.stringify(originalModel.data.segments)) // Deep copy segments
+                }
+            };
+            
+            window.savedModels.push(duplicateModel);
+            localStorage.setItem('revenueProjectionModels', JSON.stringify(window.savedModels));
+            
+            closeModelEditDialog();
+            renderModelsGrid();
+            showSuccessMessage(`Model duplicated as "${duplicateName}"!`);
+        }
+
+        function validateModelEditData(name, projectionMonths, growthRate, costPercentage, operatingExpenses, usdRate) {
+            const errors = [];
+            
+            if (!name || name.length < 2) {
+                errors.push({ field: 'editModelName', message: 'Model name must be at least 2 characters' });
+            }
+            
+            // Check for duplicate names (excluding current model)
+            const existingModel = window.savedModels.find(m => 
+                m.name.toLowerCase() === name.toLowerCase() && 
+                m.id !== window.currentEditingModelId
+            );
+            if (existingModel) {
+                errors.push({ field: 'editModelName', message: 'Model name already exists' });
+            }
+            
+            if (!projectionMonths || projectionMonths < 1 || projectionMonths > 120) {
+                errors.push({ field: 'editProjectionMonths', message: 'Projection period must be between 1 and 120 months' });
+            }
+            
+            if (isNaN(growthRate)) {
+                errors.push({ field: 'editGrowthRate', message: 'Growth rate must be a valid number' });
+            }
+            
+            if (isNaN(costPercentage) || costPercentage < 0 || costPercentage > 100) {
+                errors.push({ field: 'editCostPercentage', message: 'COGS must be between 0 and 100%' });
+            }
+            
+            if (isNaN(operatingExpenses) || operatingExpenses < 0) {
+                errors.push({ field: 'editOperatingExpenses', message: 'Operating expenses cannot be negative' });
+            }
+            
+            if (isNaN(usdRate) || usdRate < 1) {
+                errors.push({ field: 'editUsdRate', message: 'USD rate must be greater than 1' });
+            }
+            
+            return {
+                isValid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        function showModelEditValidationErrors(errors) {
+            const validationDiv = document.getElementById('modelEditValidation');
+            
+            // Clear previous error styling
+            document.querySelectorAll('#modelEditForm .validation-error').forEach(el => {
+                el.classList.remove('validation-error');
+            });
+            
+            // Add error styling and messages
+            let errorHtml = '<div style="color: #dc3545; font-size: 0.9em;"><strong>Please fix the following errors:</strong><ul>';
+            
+            errors.forEach(error => {
+                const field = document.getElementById(error.field);
+                if (field) {
+                    field.classList.add('validation-error');
+                }
+                errorHtml += `<li>${error.message}</li>`;
+            });
+            
+            errorHtml += '</ul></div>';
+            validationDiv.innerHTML = errorHtml;
+            validationDiv.style.display = 'block';
+        }
+
+        function showVersionHistory(modelId) {
+            const model = window.savedModels.find(m => m.id === modelId);
+            if (!model) {
+                alert('Model not found.');
+                return;
+            }
+            
+            // For now, show a simple version info
+            // In a full implementation, this would show a complete version history
+            alert(`Version History for "${model.name}"\n\nCurrent Version: v${model.version}\nCreated: ${new Date(model.createdAt).toLocaleDateString()}\nLast Modified: ${new Date(model.updatedAt).toLocaleDateString()}\n\nNote: Complete version history tracking is planned for future releases.`);
+        }
+
+        function exportAllModels() {
+            if (window.savedModels.length === 0) {
+                alert('No models to export.');
+                return;
+            }
+
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                exportedBy: 'India Revenue Projection Tool',
+                totalModels: window.savedModels.length,
+                models: window.savedModels
+            };
+
+            // Create downloadable file
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `revenue_models_${new Date().toISOString().split('T')[0]}.json`;
+            a.style.display = 'none';
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showSuccessMessage(`Successfully exported ${window.savedModels.length} model(s) to your Downloads folder.`);
+        }
+
+        function importModels() {
+            // Trigger the hidden file input
+            const fileInput = document.getElementById('importFile');
+            if (fileInput) {
+                fileInput.click();
+            }
+        }
+
+        function handleImportFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                alert('Please select a JSON file (.json extension required).');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    // Validate file structure
+                    if (!importData.models || !Array.isArray(importData.models)) {
+                        alert('Invalid file format. The file must contain a "models" array.');
+                        return;
+                    }
+
+                    // Validate individual models
+                    const validModels = importData.models.filter(model => {
+                        return model.name && 
+                               model.data && 
+                               model.data.baseParams && 
+                               model.data.segments && 
+                               Array.isArray(model.data.segments);
+                    });
+
+                    if (validModels.length === 0) {
+                        alert('No valid models found in the file. Each model must have a name, baseParams, and segments.');
+                        return;
+                    }
+
+                    if (validModels.length < importData.models.length) {
+                        const skipped = importData.models.length - validModels.length;
+                        if (!confirm(`${skipped} invalid model(s) will be skipped. Continue importing ${validModels.length} valid model(s)?`)) {
+                            return;
+                        }
+                    }
+
+                    // Check for name conflicts
+                    const existingNames = window.savedModels.map(m => m.name);
+                    const duplicates = validModels.filter(model => existingNames.includes(model.name));
+
+                    let shouldImport = true;
+                    let importStrategy = 'add'; // 'add', 'overwrite', or 'rename'
+
+                    if (duplicates.length > 0) {
+                        const choice = confirm(
+                            `${duplicates.length} model(s) have names that already exist:\n` +
+                            `${duplicates.map(m => `• ${m.name}`).join('\n')}\n\n` +
+                            `Click OK to overwrite existing models, or Cancel to rename imported models.`
+                        );
+                        
+                        if (choice) {
+                            importStrategy = 'overwrite';
+                        } else {
+                            importStrategy = 'rename';
+                        }
+                    }
+
+                    if (shouldImport) {
+                        let importedCount = 0;
+                        const timestamp = new Date().toISOString().split('T')[0];
+
+                        validModels.forEach(model => {
+                            // Generate new ID and update timestamps
+                            const newModel = {
+                                ...model,
+                                id: Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9),
+                                updatedAt: new Date().toISOString()
+                            };
+
+                            if (importStrategy === 'overwrite' && existingNames.includes(model.name)) {
+                                // Remove existing model with same name
+                                window.savedModels = window.savedModels.filter(m => m.name !== model.name);
+                                window.savedModels.push(newModel);
+                                importedCount++;
+                            } else if (importStrategy === 'rename' && existingNames.includes(model.name)) {
+                                // Rename the imported model
+                                let newName = `${model.name} (Imported ${timestamp})`;
+                                let counter = 1;
+                                while (window.savedModels.some(m => m.name === newName)) {
+                                    newName = `${model.name} (Imported ${timestamp} ${counter})`;
+                                    counter++;
+                                }
+                                newModel.name = newName;
+                                window.savedModels.push(newModel);
+                                importedCount++;
+                            } else {
+                                // No conflict, add normally
+                                window.savedModels.push(newModel);
+                                importedCount++;
+                            }
+                        });
+
+                        // Save to storage and update UI
+                        saveModelsToStorage();
+                        renderModelsGrid();
+                        
+                        showSuccessMessage(`Successfully imported ${importedCount} model(s).`);
+                    }
+
+                } catch (error) {
+                    console.error('Import error:', error);
+                    alert('Error reading the file. Please ensure it\'s a valid JSON file exported from this tool.');
+                }
+            };
+
+            reader.onerror = function() {
+                alert('Error reading the file. Please try again.');
+            };
+
+            reader.readAsText(file);
+            event.target.value = ''; // Reset file input for future imports
+        }
+
+        function closeModelDetailsDialog() {
+            const dialog = document.getElementById('modelDetailsDialog');
+            if (dialog) {
+                dialog.style.display = 'none';
+            }
+        }
+
+        function loadSelectedModel() {
+            if (selectedModelId) {
+                loadModel(selectedModelId);
+                closeModelDetailsDialog();
+            }
+        }
+
+        function deleteSelectedModel() {
+            if (selectedModelId) {
+                deleteModel(selectedModelId);
+                closeModelDetailsDialog();
+            }
+        }
+
+        // Auto-load default model on startup
+        function autoLoadDefaultModel() {
+            try {
+                const lastModelId = localStorage.getItem('lastLoadedModelId');
+                const savedModelsData = localStorage.getItem('revenueProjectionModels');
+                const existingSavedModels = savedModelsData ? JSON.parse(savedModelsData) : [];
+                
+                if (lastModelId && existingSavedModels.length > 0) {
+                    const model = existingSavedModels.find(m => m.id === lastModelId);
+                    if (model) {
+                        loadModel(lastModelId, true); // true = silent load
+                        return;
+                    }
+                }
+                
+                // If no saved models exist, create and load the default pension model
+                if (existingSavedModels.length === 0) {
+                    try {
+                        // Load the pension model segments
+                        loadPensionModel(true); // true = silent load
+                        
+                        if (window.segments.length === 0) {
+                            loadPensionModel(false); // Try again, not silent
+                            return;
+                        }
+                        
+                        // Create and save the default model automatically
+                        const defaultModel = {
+                            id: 'default-pension-model-' + Date.now(),
+                            name: 'Default Pension Authentication Model (All States)',
+                            description: 'Comprehensive pension authentication model covering all Indian states with realistic state-wise coverage and volume projections.',
+                            tags: ['default', 'pension', 'authentication', 'biometric', 'all-states'],
+                            version: 1,
+                            baseModelId: null,
+                            parentVersionId: null,
+                            versionHistory: [],
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            data: {
+                                baseParams: {
+                                    startRevenue: 0,
+                                    growthRate: 4,
+                                    projectionMonths: 12,
+                                    costPercentage: 35,
+                                    operatingExpenses: 0,
+                                    seasonality: 'none',
+                                    usdRate: parseFloat(document.getElementById('usdRate').value) || 83.50
+                                },
+                                segments: JSON.parse(JSON.stringify(window.segments)), // Deep copy current segments
+                                currentView: 'consolidated',
+                                currentSegmentType: 'sku'
+                            }
+                        };
+                        
+                        // Save the default model
+                        window.savedModels = [defaultModel];
+                        localStorage.setItem('revenueProjectionModels', JSON.stringify(window.savedModels));
+                        localStorage.setItem('lastLoadedModelId', defaultModel.id);
+                        localStorage.setItem('currentModelName', defaultModel.name);
+                        
+                        // Update the current model indicator
+                        updateCurrentModelIndicator(defaultModel.name + ' v1 (Auto-loaded)');
+                        
+                        // Update the models grid if it exists
+                        if (document.getElementById('modelsGrid')) {
+                            renderModelsGrid();
+                        }
+                        
+                    } catch (modelCreationError) {
+                        console.error('Error creating default model:', modelCreationError);
+                        updateCurrentModelIndicator('Default Pension Model (Unsaved)');
+                    }
+                    return;
+                }
+                
+                // If there are saved models but no last model, load the most recent
+                if (existingSavedModels.length > 0) {
+                    window.savedModels = existingSavedModels; // Update global variable
+                    const mostRecent = existingSavedModels.sort((a, b) => 
+                        new Date(b.updatedAt) - new Date(a.updatedAt)
+                    )[0];
+                    
+                    // Load the most recent model silently
+                    loadModel(mostRecent.id, true);
+                    return;
+                }
+                
+                // Fallback - just render empty segments
+                window.renderSegments();
+                
+            } catch (error) {
+                console.error('Error in autoLoadDefaultModel:', error);
+                // Fallback to default model even if there's an error
+                try {
+                    loadPensionModel(false); // Load pension model with alerts
+                    updateCurrentModelIndicator('Default Pension Model v1 (Fallback)');
+                } catch (fallbackError) {
+                    console.error('Even fallback failed:', fallbackError);
+                    // Last resort - just render empty segments
+                    window.renderSegments();
+                    updateCurrentModelIndicator('Empty Model (Error Recovery)');
+                }
+            }
+        }
+
+        // Initialize the application
+        initializeSegmentTypes();
+        updatePredefinedSegments();
+        loadSavedModels();
+        
+        // Auto-load default model if no models exist
+        autoLoadDefaultModel();
+
+        // Enhanced Data Persistence Features
+        
+        // Auto-save current work every 30 seconds
+        setInterval(function() {
+            if (window.segments && window.segments.length > 0) {
+                try {
+                    const autoSaveData = {
+                        segments: window.segments,
+                        lastAutoSave: new Date().toISOString(),
+                        currentModelName: localStorage.getItem('currentModelName') || 'Unsaved Work'
+                    };
+                    localStorage.setItem('autoSaveData', JSON.stringify(autoSaveData));
+                    console.log('Auto-saved current work');
+                } catch (error) {
+                    console.warn('Auto-save failed:', error);
+                }
+            }
+        }, 30000); // Every 30 seconds
+        
+        // Check for auto-saved data on page load
+        function checkForAutoSavedData() {
+            try {
+                const autoSaveData = localStorage.getItem('autoSaveData');
+                if (autoSaveData) {
+                    const data = JSON.parse(autoSaveData);
+                    const lastSave = new Date(data.lastAutoSave);
+                    const timeDiff = Date.now() - lastSave.getTime();
+                    
+                    // If auto-save is less than 1 hour old and has segments
+                    if (timeDiff < 3600000 && data.segments && data.segments.length > 0) {
+                        const shouldRestore = confirm(
+                            `Found auto-saved work from ${lastSave.toLocaleString()}.\n\n` +
+                            `Model: ${data.currentModelName}\n` +
+                            `SKUs: ${data.segments.length}\n\n` +
+                            `Would you like to restore this work?`
+                        );
+                        
+                        if (shouldRestore) {
+                            window.segments = data.segments;
+                            window.renderSegments();
+                            showSuccessMessage(`Restored ${data.segments.length} SKU(s) from auto-save.`);
+                            return true;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Failed to check auto-saved data:', error);
+            }
+            return false;
+        }
+        
+        // Clear auto-save data when user explicitly saves a model
+        function clearAutoSaveData() {
+            try {
+                localStorage.removeItem('autoSaveData');
+            } catch (error) {
+                console.warn('Failed to clear auto-save data:', error);
+            }
+        }
+        
+        // Enhanced validation for bulk operations
+        function validateBulkOperations() {
+            if (window.segments.length === 0) {
+                showErrorMessage('No SKUs available for bulk operations.');
+                return false;
+            }
+            
+            if (window.selectedSegments.size === 0) {
+                showErrorMessage('Please select at least one SKU for bulk operations.');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Enhanced error messages
+        function showErrorMessage(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #dc3545, #c82333);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+                z-index: 10000;
+                max-width: 400px;
+                animation: slideIn 0.3s ease;
+            `;
+            errorDiv.innerHTML = `<strong>Error:</strong> ${message}`;
+            
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(errorDiv), 300);
+            }, 4000);
+        }
+
+        function showWarningMessage(message) {
+            const warningDiv = document.createElement('div');
+            warningDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+                z-index: 10000;
+                max-width: 400px;
+                animation: slideIn 0.3s ease;
+            `;
+            warningDiv.innerHTML = `<strong>Warning:</strong> ${message}`;
+            
+            document.body.appendChild(warningDiv);
+            
+            setTimeout(() => {
+                warningDiv.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => document.body.removeChild(warningDiv), 300);
+            }, 4000);
+        }
+        
+        // Check for auto-saved data on initialization
+        if (!checkForAutoSavedData()) {
+            // Only auto-load default model if no auto-save was restored
+            // (the autoLoadDefaultModel was already called above)
+        }
+        
+        // Override the existing saveModel function to clear auto-save
+        const originalSaveModel = window.saveModel;
+        window.saveModel = function() {
+            const result = originalSaveModel.apply(this, arguments);
+            clearAutoSaveData();
+            return result;
+        };
+        
+        // Add CSS animation for error messages
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Demographic Insights Functions
+        function refreshDemographicInsights() {
+            const currentCountry = window.currentCountry || 'india';
+            
+            // Get demographic data for current country
+            let demographicData = null;
+            if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+                window.externalModelConfig.regionalData[currentCountry]) {
+                const countryData = window.externalModelConfig.regionalData[currentCountry];
+                demographicData = countryData.demographicSegments || countryData.pensionStates;
+            } else if (window.externalDemographicSegments) {
+                demographicData = window.externalDemographicSegments;
+            }
+            
+            if (!demographicData) {
+                // Clear all fields
+                const fields = ['totalPopulation', 'totalSegments', 'avgAuthRate', 'avgDigitalAdoption', 
+                               'highDigitalSegments', 'avgUrbanization', 'highEconomicSegments', 
+                               'mediumEconomicSegments', 'lowEconomicSegments', 'avgGrowthRate', 
+                               'fastGrowingSegments', 'revenueOpportunity'];
+                fields.forEach(field => {
+                    const element = document.getElementById(field);
+                    if (element) element.textContent = 'N/A';
+                });
+                return;
+            }
+            
+            // Calculate insights
+            const totalPopulation = demographicData.reduce((sum, seg) => sum + (seg.population || 0), 0);
+            const totalSegments = demographicData.length;
+            const avgAuthRate = demographicData.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / totalSegments;
+            const avgPensionRate = demographicData.reduce((sum, seg) => sum + (seg.pensionPct || 0), 0) / totalSegments;
+            const avgDigitalAdoption = demographicData.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / totalSegments;
+            const avgUrbanization = demographicData.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / totalSegments;
+            const avgGrowthRate = demographicData.reduce((sum, seg) => sum + (seg.authGrowthRate || 3), 0) / totalSegments;
+            
+            // Count segments by digital adoption
+            const highDigitalSegments = demographicData.filter(seg => (seg.digitalAdoption || 0) >= 80).length;
+            
+            // Count segments by economic tier
+            const highEconomicSegments = demographicData.filter(seg => seg.economicTier === 'high').length;
+            const mediumEconomicSegments = demographicData.filter(seg => seg.economicTier === 'medium').length;
+            const lowEconomicSegments = demographicData.filter(seg => seg.economicTier === 'low').length;
+            
+            // Fast growing segments (growth rate > 10%)
+            const fastGrowingSegments = demographicData.filter(seg => (seg.authGrowthRate || 3) > 10).length;
+            
+            // Calculate revenue opportunity (simplified)
+            const revenueOpportunity = demographicData.reduce((sum, seg) => {
+                const population = seg.population || 0;
+                const authRate = (seg.authPct || 0) / 100;
+                const pensionRate = (seg.pensionPct || 0) / 100;
+                const authFreq = seg.authFreq || 1.0;
+                const monthlyVolume = population * 1000000 * (authRate + pensionRate) * authFreq;
+                
+                let price = 0.12;
+                if (seg.economicTier === 'high') price = 0.18;
+                else if (seg.economicTier === 'low') price = 0.08;
+                if ((seg.digitalAdoption || 0) >= 80) price *= 1.2;
+                
+                return sum + (monthlyVolume * price * 12); // Annual revenue
+            }, 0);
+            
+            // Update UI
+            document.getElementById('totalPopulation').textContent = totalPopulation.toFixed(1);
+            document.getElementById('totalSegments').textContent = totalSegments;
+            document.getElementById('avgAuthRate').textContent = avgAuthRate.toFixed(1);
+            document.getElementById('avgPensionRate').textContent = avgPensionRate.toFixed(1);
+            document.getElementById('avgDigitalAdoption').textContent = avgDigitalAdoption.toFixed(1);
+            document.getElementById('highDigitalSegments').textContent = highDigitalSegments;
+            document.getElementById('avgUrbanization').textContent = avgUrbanization.toFixed(1);
+            document.getElementById('highEconomicSegments').textContent = highEconomicSegments;
+            document.getElementById('mediumEconomicSegments').textContent = mediumEconomicSegments;
+            document.getElementById('lowEconomicSegments').textContent = lowEconomicSegments;
+            document.getElementById('avgGrowthRate').textContent = avgGrowthRate.toFixed(1);
+            document.getElementById('fastGrowingSegments').textContent = fastGrowingSegments;
+            
+            // Format revenue opportunity
+            const revenueInBillions = revenueOpportunity / 1000000000;
+            if (revenueInBillions >= 1) {
+                document.getElementById('revenueOpportunity').textContent = `₹${revenueInBillions.toFixed(1)}B`;
+            } else {
+                document.getElementById('revenueOpportunity').textContent = `₹${(revenueOpportunity / 1000000).toFixed(0)}M`;
+            }
+        }
+        
+        function showDemographicDetails() {
+            const currentCountry = window.currentCountry || 'india';
+            const countryName = window.currentCountryConfig?.name || currentCountry;
+            
+            // Get demographic data
+            let demographicData = null;
+            if (window.externalModelConfig && window.externalModelConfig.regionalData && 
+                window.externalModelConfig.regionalData[currentCountry]) {
+                const countryData = window.externalModelConfig.regionalData[currentCountry];
+                demographicData = countryData.demographicSegments || countryData.pensionStates;
+            } else if (window.externalDemographicSegments) {
+                demographicData = window.externalDemographicSegments;
+            }
+            
+            if (!demographicData) {
+                showErrorMessage(`No demographic data available for ${countryName}`);
+                return;
+            }
+            
+            // Create detailed demographic display
+            let detailsHTML = `<h3>📊 Demographic Details - ${countryName}</h3>`;
+            detailsHTML += `<div style="max-height: 400px; overflow-y: auto; margin: 15px 0;">`;
+            detailsHTML += `<table style="width: 100%; border-collapse: collapse; font-size: 12px;">`;
+            detailsHTML += `<thead><tr style="background: #f3f4f6; position: sticky; top: 0;">`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: left;">Segment</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Pop (M)</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Auth %</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Digital %</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: center;">Economic</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Urban %</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Growth %</th>`;
+            detailsHTML += `</tr></thead><tbody>`;
+            
+            demographicData.forEach(seg => {
+                const economicColor = seg.economicTier === 'high' ? '#10b981' : 
+                                    seg.economicTier === 'low' ? '#f59e0b' : '#6b7280';
+                detailsHTML += `<tr>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px;">${seg.name}</td>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px; text-align: right;">${seg.population || 0}</td>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px; text-align: right;">${seg.authPct || seg.pensionPct || 0}</td>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px; text-align: right;">${seg.digitalAdoption || 'N/A'}</td>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px; text-align: center; color: ${economicColor}; font-weight: bold;">${seg.economicTier || 'N/A'}</td>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px; text-align: right;">${seg.urbanization || 'N/A'}</td>`;
+                detailsHTML += `<td style="border: 1px solid #d1d5db; padding: 6px; text-align: right;">${seg.authGrowthRate || 3}</td>`;
+                detailsHTML += `</tr>`;
+            });
+            
+            detailsHTML += `</tbody></table></div>`;
+            detailsHTML += `<div style="text-align: center; margin-top: 15px;">`;
+            detailsHTML += `<button class="btn-primary" onclick="closeModal()" style="margin-right: 10px;">Close</button>`;
+            detailsHTML += `<button class="btn-warning" onclick="loadPensionModel()">Load as Segments</button>`;
+            detailsHTML += `</div>`;
+            
+            showModal('Demographic Details', detailsHTML);
+        }
+        
+        // Auto-refresh demographic insights when country changes or data loads
+        function updateDemographicInsightsOnCountryChange() {
+            // Add small delay to ensure data is loaded
+            setTimeout(refreshDemographicInsights, 500);
+        }
+        
+        // Hook into existing country change function
+        const originalChangeCountry = window.changeCountry;
+        if (originalChangeCountry) {
+            window.changeCountry = function(country) {
+                originalChangeCountry(country);
+                updateDemographicInsightsOnCountryChange();
+            };
+        }
+        
+        // Auto-refresh insights when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(refreshDemographicInsights, 1000);
+            
+            // Initialize demographic data if not already loaded
+            if (!window.externalDemographicData && !window.regionalData) {
+                initializeDemographicData();
+            }
+        });
+        
+        function initializeDemographicData() {
+            // Try to load from model config as fallback
+            if (window.modelConfig && window.modelConfig.regionalData) {
+                window.regionalData = window.modelConfig.regionalData;
+                console.log('Initialized demographic data from model config');
+            } else {
+                // Create comprehensive demographic data for all APAC countries
+                window.regionalData = {
+                    india: {
+                        demographicSegments: [
+                            {
+                                name: "Urban Metro Cities",
+                                population: 80,
+                                authPct: 75,
+                                authFreq: 2.5,
+                                digitalAdoption: 85,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 12
+                            },
+                            {
+                                name: "Rural Villages",
+                                population: 850,
+                                authPct: 45,
+                                authFreq: 1.2,
+                                digitalAdoption: 35,
+                                economicTier: "low",
+                                urbanization: 15,
+                                authGrowthRate: 8
+                            },
+                            {
+                                name: "Tier 2 Cities",
+                                population: 200,
+                                authPct: 65,
+                                authFreq: 2.0,
+                                digitalAdoption: 70,
+                                economicTier: "medium",
+                                urbanization: 75,
+                                authGrowthRate: 15
+                            },
+                            {
+                                name: "Financial Services",
+                                population: 15,
+                                authPct: 95,
+                                authFreq: 4.5,
+                                digitalAdoption: 98,
+                                economicTier: "high",
+                                urbanization: 95,
+                                authGrowthRate: 25
+                            }
+                        ]
+                    },
+                    singapore: {
+                        demographicSegments: [
+                            {
+                                name: "Financial District",
+                                population: 2.8,
+                                authPct: 95,
+                                authFreq: 2.5,
+                                digitalAdoption: 98,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 8
+                            },
+                            {
+                                name: "Residential Areas",
+                                population: 2.1,
+                                authPct: 90,
+                                authFreq: 2.0,
+                                digitalAdoption: 95,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 6
+                            },
+                            {
+                                name: "Foreign Workers",
+                                population: 1.0,
+                                authPct: 60,
+                                authFreq: 1.0,
+                                digitalAdoption: 65,
+                                economicTier: "medium",
+                                urbanization: 100,
+                                authGrowthRate: 3
+                            }
+                        ]
+                    },
+                    australia: {
+                        demographicSegments: [
+                            {
+                                name: "Sydney/Melbourne",
+                                population: 12.0,
+                                authPct: 88,
+                                authFreq: 2.2,
+                                digitalAdoption: 92,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 10
+                            },
+                            {
+                                name: "Regional Cities",
+                                population: 8.5,
+                                authPct: 82,
+                                authFreq: 1.8,
+                                digitalAdoption: 85,
+                                economicTier: "high",
+                                urbanization: 70,
+                                authGrowthRate: 8
+                            },
+                            {
+                                name: "Rural Areas",
+                                population: 4.5,
+                                authPct: 70,
+                                authFreq: 1.4,
+                                digitalAdoption: 75,
+                                economicTier: "medium",
+                                urbanization: 30,
+                                authGrowthRate: 5
+                            },
+                            {
+                                name: "Financial Sector",
+                                population: 2.0,
+                                authPct: 96,
+                                authFreq: 3.5,
+                                digitalAdoption: 99,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 15
+                            }
+                        ]
+                    },
+                    japan: {
+                        demographicSegments: [
+                            {
+                                name: "Tokyo Metropolitan",
+                                population: 38.0,
+                                authPct: 92,
+                                authFreq: 2.8,
+                                digitalAdoption: 88,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 5
+                            },
+                            {
+                                name: "Osaka/Kyoto",
+                                population: 19.0,
+                                authPct: 88,
+                                authFreq: 2.5,
+                                digitalAdoption: 85,
+                                economicTier: "high",
+                                urbanization: 95,
+                                authGrowthRate: 4
+                            },
+                            {
+                                name: "Regional Japan",
+                                population: 67.0,
+                                authPct: 75,
+                                authFreq: 1.8,
+                                digitalAdoption: 70,
+                                economicTier: "medium",
+                                urbanization: 60,
+                                authGrowthRate: 2
+                            },
+                            {
+                                name: "Tech Sector",
+                                population: 3.0,
+                                authPct: 98,
+                                authFreq: 4.0,
+                                digitalAdoption: 99,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 12
+                            }
+                        ]
+                    },
+                    south_korea: {
+                        demographicSegments: [
+                            {
+                                name: "Seoul Metropolitan",
+                                population: 25.6,
+                                authPct: 94,
+                                authFreq: 3.2,
+                                digitalAdoption: 96,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 8
+                            },
+                            {
+                                name: "Busan/Daegu",
+                                population: 8.4,
+                                authPct: 90,
+                                authFreq: 2.8,
+                                digitalAdoption: 92,
+                                economicTier: "high",
+                                urbanization: 95,
+                                authGrowthRate: 6
+                            },
+                            {
+                                name: "Provincial Areas",
+                                population: 17.8,
+                                authPct: 82,
+                                authFreq: 2.2,
+                                digitalAdoption: 85,
+                                economicTier: "medium",
+                                urbanization: 70,
+                                authGrowthRate: 4
+                            },
+                            {
+                                name: "Gaming/Fintech",
+                                population: 2.2,
+                                authPct: 99,
+                                authFreq: 5.0,
+                                digitalAdoption: 99,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 20
+                            }
+                        ]
+                    },
+                    thailand: {
+                        demographicSegments: [
+                            {
+                                name: "Bangkok Metropolitan",
+                                population: 15.2,
+                                authPct: 78,
+                                authFreq: 2.1,
+                                digitalAdoption: 82,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 12
+                            },
+                            {
+                                name: "Tourist Areas",
+                                population: 8.5,
+                                authPct: 85,
+                                authFreq: 2.5,
+                                digitalAdoption: 78,
+                                economicTier: "medium",
+                                urbanization: 80,
+                                authGrowthRate: 15
+                            },
+                            {
+                                name: "Rural Thailand",
+                                population: 45.3,
+                                authPct: 52,
+                                authFreq: 1.3,
+                                digitalAdoption: 48,
+                                economicTier: "low",
+                                urbanization: 25,
+                                authGrowthRate: 8
+                            },
+                            {
+                                name: "Banking Sector",
+                                population: 1.2,
+                                authPct: 95,
+                                authFreq: 3.8,
+                                digitalAdoption: 97,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 18
+                            }
+                        ]
+                    },
+                    indonesia: {
+                        demographicSegments: [
+                            {
+                                name: "Jakarta/Java",
+                                population: 145.0,
+                                authPct: 68,
+                                authFreq: 1.8,
+                                digitalAdoption: 75,
+                                economicTier: "medium",
+                                urbanization: 85,
+                                authGrowthRate: 15
+                            },
+                            {
+                                name: "Sumatra",
+                                population: 58.5,
+                                authPct: 55,
+                                authFreq: 1.4,
+                                digitalAdoption: 62,
+                                economicTier: "medium",
+                                urbanization: 60,
+                                authGrowthRate: 12
+                            },
+                            {
+                                name: "Eastern Islands",
+                                population: 67.4,
+                                authPct: 42,
+                                authFreq: 1.1,
+                                digitalAdoption: 45,
+                                economicTier: "low",
+                                urbanization: 35,
+                                authGrowthRate: 8
+                            },
+                            {
+                                name: "Fintech Sector",
+                                population: 2.5,
+                                authPct: 92,
+                                authFreq: 4.2,
+                                digitalAdoption: 95,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 25
+                            }
+                        ]
+                    },
+                    philippines: {
+                        demographicSegments: [
+                            {
+                                name: "Metro Manila",
+                                population: 13.5,
+                                authPct: 78,
+                                authFreq: 2.5,
+                                digitalAdoption: 88,
+                                economicTier: "high",
+                                urbanization: 100,
+                                authGrowthRate: 14
+                            },
+                            {
+                                name: "Cebu/Davao",
+                                population: 8.1,
+                                authPct: 68,
+                                authFreq: 1.9,
+                                digitalAdoption: 75,
+                                economicTier: "medium",
+                                urbanization: 80,
+                                authGrowthRate: 11
+                            },
+                            {
+                                name: "Rural Islands",
+                                population: 42.0,
+                                authPct: 35,
+                                authFreq: 0.8,
+                                digitalAdoption: 41,
+                                economicTier: "low",
+                                urbanization: 15,
+                                authGrowthRate: 4
+                            },
+                            {
+                                name: "OFW Families",
+                                population: 12.0,
+                                authPct: 88,
+                                authFreq: 3.2,
+                                digitalAdoption: 92,
+                                economicTier: "medium",
+                                urbanization: 70,
+                                authGrowthRate: 16
+                            },
+                            {
+                                name: "BPO Workers",
+                                population: 1.3,
+                                authPct: 95,
+                                authFreq: 4.0,
+                                digitalAdoption: 98,
+                                economicTier: "high",
+                                urbanization: 95,
+                                authGrowthRate: 20
+                            }
+                        ]
+                    }
+                };
+                
+                // Initialize country names mapping
+                window.countries = {
+                    india: { name: "India" },
+                    singapore: { name: "Singapore" },
+                    australia: { name: "Australia" },
+                    japan: { name: "Japan" },
+                    south_korea: { name: "South Korea" },
+                    thailand: { name: "Thailand" },
+                    indonesia: { name: "Indonesia" },
+                    philippines: { name: "Philippines" }
+                };
+                
+                console.log('Initialized comprehensive demographic data for all APAC countries');
+            }
+        }
+
+        function generateSegmentsTableRows(segments) {
+            return segments.map(segment => {
+                const populationMillion = segment.population || 0;
+                const monthlyVolume = populationMillion * 1000000 * (segment.authPct || 0) / 100 * (segment.authFreq || 1.0);
+                
+                // Revenue potential calculation
+                let pricePerTransaction = 0.12;
+                if (segment.economicTier === 'high') pricePerTransaction = 0.18;
+                else if (segment.economicTier === 'low') pricePerTransaction = 0.08;
+                
+                if ((segment.digitalAdoption || 0) >= 80) pricePerTransaction *= 1.2;
+                else if ((segment.digitalAdoption || 0) <= 50) pricePerTransaction *= 0.9;
+                
+                const monthlyRevenue = monthlyVolume * pricePerTransaction;
+                
+                return `
+                    <tr>
+                        <td>${segment.name || ''}</td>
+                        <td>${populationMillion.toFixed(1)}M</td>
+                        <td>${(segment.authPct || 0).toFixed(1)}%</td>
+                        <td>${(segment.authFreq || 1.0).toFixed(1)}</td>
+                        <td>${(segment.digitalAdoption || 0).toFixed(1)}%</td>
+                        <td><span class="economic-tier-badge ${(segment.economicTier || 'medium').toLowerCase()}">${segment.economicTier || 'medium'}</span></td>
+                        <td>${(segment.urbanization || 0).toFixed(1)}%</td>
+                        <td>${(segment.authGrowthRate || 0).toFixed(1)}%</td>
+                        <td>${Math.round(monthlyVolume).toLocaleString()}</td>
+                        <td>₹${Math.round(monthlyRevenue).toLocaleString()}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // External Demographic Data Loading Functions
+        async function loadExternalDemographicData(countryKey, demographicConfig) {
+            try {
+                const fileName = demographicConfig.filePattern.replace('{country}', countryKey);
+                const filePath = demographicConfig.demographicsDirectory + fileName;
+                
+                console.log(`Loading external demographic data from: ${filePath}`);
+                
+                const response = await fetch(filePath);
+                if (!response.ok) {
+                    throw new Error(`Failed to load demographic data: ${response.status}`);
+                }
+                
+                const demographicData = await response.json();
+                
+                // Store demographic segments
+                if (demographicData.demographicSegments) {
+                    window.externalDemographicSegments = demographicData.demographicSegments;
+                    window.currentCountryDemographicData = demographicData;
+                    
+                    console.log(`✅ Loaded ${demographicData.demographicSegments.length} demographic segments for ${demographicData.country.name}`);
+                    console.log(`📊 Population: ${demographicData.summary.totalPopulation}M, Auth Rate: ${demographicData.summary.averageAuthRate}%`);
+                    
+                    // Update demographic insights if available
+                    if (typeof refreshDemographicInsights === 'function') {
+                        setTimeout(refreshDemographicInsights, 100);
+                    }
+                } else {
+                    console.warn(`No demographic segments found in ${filePath}`);
+                }
+                
+            } catch (error) {
+                console.error(`Failed to load external demographic data for ${countryKey}:`, error);
+                
+                // Fallback to embedded data if external loading fails
+                const config = window.externalModelConfig;
+                if (config && config.regionalData && config.regionalData[countryKey]) {
+                    const regionalData = config.regionalData[countryKey];
+                    if (regionalData.demographicSegments) {
+                        window.externalDemographicSegments = regionalData.demographicSegments;
+                        console.log(`⚠️  Falling back to embedded data: ${regionalData.demographicSegments.length} segments`);
+                    }
+                }
+            }
+        }
+        
+        async function loadDemographicIndex() {
+            try {
+                const response = await fetch('./demographics/index.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load demographic index: ${response.status}`);
+                }
+                
+                const indexData = await response.json();
+                window.demographicIndex = indexData;
+                
+                console.log(`📋 Loaded demographic index: ${indexData.metadata.totalCountries} countries, ${indexData.metadata.totalSegments} segments`);
+                
+                return indexData;
+            } catch (error) {
+                console.error('Failed to load demographic index:', error);
+                return null;
+            }
+        }
+        
+        // Enhanced country change function to load appropriate demographic data
+        async function loadDemographicDataForCountry(countryKey) {
+            const config = window.externalModelConfig;
+            if (config && config.demographicDataConfig && config.demographicDataConfig.externalFiles) {
+                await loadExternalDemographicData(countryKey, config.demographicDataConfig);
+            }
+        }
+        
+        // Hook into country changes to load appropriate demographic data
+        const originalChangeCountryForDemographics = window.changeCountry;
+        if (originalChangeCountryForDemographics) {
+            window.changeCountry = async function(country) {
+                // Call original function
+                originalChangeCountryForDemographics(country);
+                
+                // Load demographic data for new country
+                await loadDemographicDataForCountry(country);
+                
+                // Update demographic insights
+                updateDemographicInsightsOnCountryChange();
+            };
+        }
+

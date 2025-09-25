@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Coverage Report - APAC Revenue Projections</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 40px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }
+        .metric { display: inline-block; background: white; padding: 20px; border-radius: 8px; margin: 10px; text-align: center; }
+        .metric h3 { margin: 0; color: #333; }
+        .metric .value { font-size: 2em; font-weight: bold; color: #667eea; }
+        .section { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .good { color: #28a745; }
+        .warning { color: #ffc107; }
+        .danger { color: #dc3545; }
+        .function-list { columns: 3; column-gap: 20px; }
+        .function-item { break-inside: avoid; margin: 5px 0; }
+        .progress-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(to right, #28a745, #20c997); transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 Test Coverage Report</h1>
+        <p>APAC Revenue Projections System - Comprehensive Testing Analysis</p>
+        <p>Generated: 9/25/2025, 11:04:00 AM</p>
+    </div>
+    
+    <div class="metrics">
+        <div class="metric">
+            <h3>Function Coverage</h3>
+            <div class="value">20.1%</div>
+            <p>31/154 functions</p>
+        </div>
+        <div class="metric">
+            <h3>UI Coverage</h3>
+            <div class="value">23.0%</div>
+            <p>62/270 elements</p>
+        </div>
+        <div class="metric">
+            <h3>Total Tests</h3>
+            <div class="value">353</div>
+            <p>Across all test suites</p>
+        </div>
+        <div class="metric">
+            <h3>Quality Score</h3>
+            <div class="value">105/100</div>
+            <p>🏆 EXCELLENT</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>📊 Test Suite Breakdown</h2>
+        
+            <div style="margin: 15px 0;">
+                <strong>🧪 UNIT</strong>
+                <div class="progress-bar" style="margin: 5px 0;">
+                    <div class="progress-fill" style="width: 100%;"></div>
+                </div>
+                <small>4 files, 86 tests</small>
+            </div>
+        
+            <div style="margin: 15px 0;">
+                <strong>🔗 INTEGRATION</strong>
+                <div class="progress-bar" style="margin: 5px 0;">
+                    <div class="progress-fill" style="width: 26%;"></div>
+                </div>
+                <small>1 files, 13 tests</small>
+            </div>
+        
+            <div style="margin: 15px 0;">
+                <strong>🎭 E2E</strong>
+                <div class="progress-bar" style="margin: 5px 0;">
+                    <div class="progress-fill" style="width: 100%;"></div>
+                </div>
+                <small>6 files, 167 tests</small>
+            </div>
+        
+            <div style="margin: 15px 0;">
+                <strong>♿ ACCESSIBILITY</strong>
+                <div class="progress-bar" style="margin: 5px 0;">
+                    <div class="progress-fill" style="width: 52%;"></div>
+                </div>
+                <small>1 files, 26 tests</small>
+            </div>
+        
+            <div style="margin: 15px 0;">
+                <strong>⚡ PERFORMANCE</strong>
+                <div class="progress-bar" style="margin: 5px 0;">
+                    <div class="progress-fill" style="width: 44%;"></div>
+                </div>
+                <small>1 files, 22 tests</small>
+            </div>
+        
+            <div style="margin: 15px 0;">
+                <strong>👁️ VISUAL</strong>
+                <div class="progress-bar" style="margin: 5px 0;">
+                    <div class="progress-fill" style="width: 78%;"></div>
+                </div>
+                <small>1 files, 39 tests</small>
+            </div>
+        
+    </div>
+    
+    <div class="section">
+        <h2>✅ Well-Tested Functions (31)</h2>
+        <div class="function-list">
+            <div class="function-item good">✓ addOrUpdateSegment</div><div class="function-item good">✓ addSegment</div><div class="function-item good">✓ addSelectedLibrarySegments</div><div class="function-item good">✓ addTestSegment</div><div class="function-item good">✓ calculateProjections</div><div class="function-item good">✓ changeCountry</div><div class="function-item good">✓ clearSegmentForm</div><div class="function-item good">✓ closeSegmentLibraryDialog</div><div class="function-item good">✓ createBlankModel</div><div class="function-item good">✓ deleteSegment</div><div class="function-item good">✓ deleteSelectedSegments</div><div class="function-item good">✓ duplicateSegment</div><div class="function-item good">✓ duplicateSelectedSegments</div><div class="function-item good">✓ editSegment</div><div class="function-item good">✓ exportAllModels</div><div class="function-item good">✓ exportToExcel</div><div class="function-item good">✓ label</div><div class="function-item good">✓ loadModel</div><div class="function-item good">✓ monthlyProfit</div><div class="function-item good">✓ newVersion</div><div class="function-item good">✓ renderSegments</div><div class="function-item good">✓ saveCurrentModel</div><div class="function-item good">✓ saveModel</div><div class="function-item good">✓ setView</div><div class="function-item good">✓ showCountryComparison</div><div class="function-item good">✓ showCountryExplorer</div><div class="function-item good">✓ showDemographicOverview</div><div class="function-item good">✓ showSegmentAnalysis</div><div class="function-item good">✓ toggleSegmentSelection</div><div class="function-item good">✓ updateChart</div><div class="function-item good">✓ validateSegmentData</div>
+        </div>
+    </div>
+    
+    
+    <div class="section">
+        <h2>❌ Functions Needing Tests (123)</h2>
+        <div class="function-list">
+            <div class="function-item danger">✗ addPredefinedSegmentSKU</div><div class="function-item danger">✗ adjustedVolumeGrowth</div><div class="function-item danger">✗ aggregateDataByYear</div><div class="function-item danger">✗ applyExternalModelConfig</div><div class="function-item danger">✗ applyUIConfig</div><div class="function-item danger">✗ authRate</div><div class="function-item danger">✗ autoLoadDefaultModel</div><div class="function-item danger">✗ calculateModelTotalRevenue</div><div class="function-item danger">✗ callback</div><div class="function-item danger">✗ cancelEditSegment</div><div class="function-item danger">✗ checkForAutoSavedData</div><div class="function-item danger">✗ clearAutoSaveData</div><div class="function-item danger">✗ clearComparison</div><div class="function-item danger">✗ clearCurrentModel</div><div class="function-item danger">✗ clearFilters</div><div class="function-item danger">✗ clearLibrarySelection</div><div class="function-item danger">✗ clearSegmentFilters</div><div class="function-item danger">✗ closeModelDetailsDialog</div><div class="function-item danger">✗ closeModelEditDialog</div><div class="function-item danger">✗ closeSaveModelDialog</div><div class="function-item danger">✗ closeSkuEditDialog</div><div class="function-item danger">✗ compareCountries</div><div class="function-item danger">✗ createNewModel</div><div class="function-item danger">✗ createNewModelVersion</div><div class="function-item danger">✗ createTelanganaModel</div><div class="function-item danger">✗ deleteCurrentSku</div><div class="function-item danger">✗ deleteModel</div><div class="function-item danger">✗ deleteSelectedModel</div><div class="function-item danger">✗ displayConsolidatedResults</div><div class="function-item danger">✗ displayConsolidatedTable</div><div class="function-item danger">✗ displayResults</div><div class="function-item danger">✗ displaySegmentBreakdown</div><div class="function-item danger">✗ displaySegmentedResults</div><div class="function-item danger">✗ displaySegmentedTable</div><div class="function-item danger">✗ duplicateCurrentSku</div><div class="function-item danger">✗ duplicateModel</div><div class="function-item danger">✗ duplicateModelFromGrid</div><div class="function-item danger">✗ editSelectedModel</div><div class="function-item danger">✗ exportDemographicData</div><div class="function-item danger">✗ exportSegments</div><div class="function-item danger">✗ exportTableData</div><div class="function-item danger">✗ exportToCSV</div><div class="function-item danger">✗ filterSegments</div><div class="function-item danger">✗ generateChartData</div><div class="function-item danger">✗ generateKeyDifferences</div><div class="function-item danger">✗ generateSegmentChartData</div><div class="function-item danger">✗ generateSegmentsTableRows</div><div class="function-item danger">✗ getCountryFlag</div><div class="function-item danger">✗ getCurrentLibraryFilter</div><div class="function-item danger">✗ getSeasonalityMultiplier</div><div class="function-item danger">✗ handleImportFile</div><div class="function-item danger">✗ handleModelConfigFile</div><div class="function-item danger">✗ handleSegmentImportFile</div><div class="function-item danger">✗ importModels</div><div class="function-item danger">✗ importSegments</div><div class="function-item danger">✗ initializeCountryComparisonDropdowns</div><div class="function-item danger">✗ initializeDemographicData</div><div class="function-item danger">✗ initializeSegmentLibrary</div><div class="function-item danger">✗ initializeSegmentTypes</div><div class="function-item danger">✗ loadCountryDefaults</div><div class="function-item danger">✗ loadCountryDetails</div><div class="function-item danger">✗ loadDemographicDataForCountry</div><div class="function-item danger">✗ loadDemographicIndex</div><div class="function-item danger">✗ loadDemographicOverview</div><div class="function-item danger">✗ loadExternalDemographicData</div><div class="function-item danger">✗ loadExternalModelConfig</div><div class="function-item danger">✗ loadPensionModel</div><div class="function-item danger">✗ loadPensionModelFromExternal</div><div class="function-item danger">✗ loadSavedModels</div><div class="function-item danger">✗ loadSegmentAnalysis</div><div class="function-item danger">✗ loadSegmentsFromExternalLibrary</div><div class="function-item danger">✗ loadSelectedModel</div><div class="function-item danger">✗ originalChangeCountryForDemographics</div><div class="function-item danger">✗ overwriteExistingModel</div><div class="function-item danger">✗ pensionRate</div><div class="function-item danger">✗ refreshDemographicInsights</div><div class="function-item danger">✗ removeToast</div><div class="function-item danger">✗ renderCountryComparison</div><div class="function-item danger">✗ renderCountrySegmentsTable</div><div class="function-item danger">✗ renderCountrySummaryTable</div><div class="function-item danger">✗ renderFilteredSegments</div><div class="function-item danger">✗ renderModelsGrid</div><div class="function-item danger">✗ renderSegmentLibrary</div><div class="function-item danger">✗ repositionToasts</div><div class="function-item danger">✗ runScenarios</div><div class="function-item danger">✗ saveModelsToStorage</div><div class="function-item danger">✗ setActiveDemographicNav</div><div class="function-item danger">✗ setLibraryFilter</div><div class="function-item danger">✗ showDemographicDetails</div><div class="function-item danger">✗ showErrorMessage</div><div class="function-item danger">✗ showModelDetails</div><div class="function-item danger">✗ showModelEditValidationErrors</div><div class="function-item danger">✗ showSaveModelDialog</div><div class="function-item danger">✗ showSegmentLibraryDialog</div><div class="function-item danger">✗ showSkuEditValidationErrors</div><div class="function-item danger">✗ showSuccessMessage</div><div class="function-item danger">✗ showUndoToast</div><div class="function-item danger">✗ showValidationErrors</div><div class="function-item danger">✗ showVersionHistory</div><div class="function-item danger">✗ showWarningMessage</div><div class="function-item danger">✗ switchTab</div><div class="function-item danger">✗ testAddSegment</div><div class="function-item danger">✗ toggleLibrarySegmentSelection</div><div class="function-item danger">✗ toggleMonthlyBreakdown</div><div class="function-item danger">✗ toggleOperatingExpenseInputs</div><div class="function-item danger">✗ toggleSegmentBreakdown</div><div class="function-item danger">✗ toggleYearExpansion</div><div class="function-item danger">✗ updateBulkActionsVisibility</div><div class="function-item danger">✗ updateCountryUI</div><div class="function-item danger">✗ updateCurrencyLabels</div><div class="function-item danger">✗ updateCurrentModelIndicator</div><div class="function-item danger">✗ updateDemographicInsightsOnCountryChange</div><div class="function-item danger">✗ updateLibrarySelectionCount</div><div class="function-item danger">✗ updateMarketContext</div><div class="function-item danger">✗ updateModel</div><div class="function-item danger">✗ updatePredefinedSegments</div><div class="function-item danger">✗ updateProfitabilityWarning</div><div class="function-item danger">✗ updateSegmentCount</div><div class="function-item danger">✗ updateSku</div><div class="function-item danger">✗ validateBulkOperations</div><div class="function-item danger">✗ validateModelEditData</div><div class="function-item danger">✗ validateProfitability</div><div class="function-item danger">✗ validateSkuEditData</div>
+        </div>
+    </div>
+    
+    
+    <div class="section">
+        <h2>📝 Test Execution Commands</h2>
+        <pre style="background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 5px;">
+npm run test                 # Run all tests
+npm run test:unit           # Run unit tests only  
+npm run test:integration    # Run integration tests
+npm run test:e2e            # Run end-to-end tests
+npm run test:coverage       # Run with coverage report
+npm run test:watch          # Run in watch mode
+        </pre>
+    </div>
+</body>
+</html>
