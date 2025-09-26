@@ -5,7 +5,109 @@
     "currency": "AUD",
     "currencySymbol": "A$",
     "exchangeRate": 1.52,
-    "population": 26.0
+    "population": 27.2,
+    "populationCount": 27200000,
+    "ageGroups": {
+      "0-14": {
+        "population": 4.95,
+        "percentage": 18.2,
+        "count": 4950400
+      },
+      "15-24": {
+        "population": 3.35,
+        "percentage": 12.3,
+        "count": 3345600
+      },
+      "25-34": {
+        "population": 4.03,
+        "percentage": 14.8,
+        "count": 4025600
+      },
+      "35-44": {
+        "population": 3.84,
+        "percentage": 14.1,
+        "count": 3835200
+      },
+      "45-54": {
+        "population": 3.54,
+        "percentage": 13.0,
+        "count": 3536000
+      },
+      "55-64": {
+        "population": 3.40,
+        "percentage": 12.5,
+        "count": 3400000
+      },
+      "65+": {
+        "population": 4.11,
+        "percentage": 15.1,
+        "count": 4107200
+      }
+    },
+    "digitalInfrastructure": {
+      "smartphonePenetration": {
+        "rate": 85.4,
+        "userCount": 23228800,
+        "by5G": {
+          "enabled": 15000000,
+          "percentage": 64.6
+        },
+        "byOperatingSystem": {
+          "android": {
+            "count": 13937280,
+            "percentage": 60.0
+          },
+          "ios": {
+            "count": 8829520,
+            "percentage": 38.0
+          },
+          "other": {
+            "count": 464576,
+            "percentage": 2.0
+          }
+        }
+      },
+      "internetPenetration": {
+        "rate": 89.2,
+        "userCount": 24262400,
+        "mobileInternet": 22000000,
+        "broadbandUsers": 9500000
+      },
+      "bankingInfrastructure": {
+        "bankAccountPenetration": 99.2,
+        "mobileWalletUsers": 15800000,
+        "mygovUsers": 22000000,
+        "creditCardUsers": 16800000,
+        "debitCardUsers": 25000000
+      }
+    },
+    "economicIndicators": {
+      "gdpPerCapita": 64674,
+      "giniCoefficient": 32.5,
+      "middleClassPopulation": 18500000,
+      "urbanPopulation": {
+        "count": 18496000,
+        "percentage": 68.0
+      },
+      "literacyRate": 99.0,
+      "englishSpeakers": 25500000
+    },
+    "authenticationMarket": {
+      "digitalIdPenetration": 88.5,
+      "biometricCapableDevices": 20000000,
+      "governmentDigitalServices": 1200,
+      "ecommerceUsers": 19500000,
+      "fintechUsers": 16200000
+    },
+    "ageMetadata": {
+      "medianAge": 38.5,
+      "youthDependencyRatio": 27.2,
+      "elderlyDependencyRatio": 24.8,
+      "totalDependencyRatio": 52.0,
+      "workingAgePopulation": 18706400,
+      "dataSource": "ABS Population Statistics 2024, Digital Economy Strategy",
+      "lastUpdated": "2025-01-25"
+    }
   },
   "metadata": {
     "version": "1.0.0",

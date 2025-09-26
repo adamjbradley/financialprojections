@@ -5,7 +5,109 @@
     "currency": "INR",
     "currencySymbol": "₹",
     "exchangeRate": 83.5,
-    "population": 1417.2
+    "population": 1417.2,
+    "populationCount": 1417200000,
+    "ageGroups": {
+      "0-14": {
+        "population": 362.8,
+        "percentage": 25.6,
+        "count": 362800000
+      },
+      "15-24": {
+        "population": 256.5,
+        "percentage": 18.1,
+        "count": 256500000
+      },
+      "25-34": {
+        "population": 238.1,
+        "percentage": 16.8,
+        "count": 238100000
+      },
+      "35-44": {
+        "population": 201.2,
+        "percentage": 14.2,
+        "count": 201200000
+      },
+      "45-54": {
+        "population": 160.1,
+        "percentage": 11.3,
+        "count": 160100000
+      },
+      "55-64": {
+        "population": 116.2,
+        "percentage": 8.2,
+        "count": 116200000
+      },
+      "65+": {
+        "population": 82.2,
+        "percentage": 5.8,
+        "count": 82200000
+      }
+    },
+    "digitalInfrastructure": {
+      "smartphonePenetration": {
+        "rate": 54.0,
+        "userCount": 765300000,
+        "by5G": {
+          "enabled": 380000000,
+          "percentage": 49.6
+        },
+        "byOperatingSystem": {
+          "android": {
+            "count": 688770000,
+            "percentage": 90.0
+          },
+          "ios": {
+            "count": 68473000,
+            "percentage": 8.9
+          },
+          "other": {
+            "count": 8407000,
+            "percentage": 1.1
+          }
+        }
+      },
+      "internetPenetration": {
+        "rate": 52.4,
+        "userCount": 742610000,
+        "mobileInternet": 658000000,
+        "broadbandUsers": 84610000
+      },
+      "bankingInfrastructure": {
+        "bankAccountPenetration": 78.0,
+        "mobileWalletUsers": 350000000,
+        "upiUsers": 400000000,
+        "creditCardUsers": 75000000,
+        "debitCardUsers": 850000000
+      }
+    },
+    "economicIndicators": {
+      "gdpPerCapita": 2730,
+      "giniCoefficient": 35.7,
+      "middleClassPopulation": 300000000,
+      "urbanPopulation": {
+        "count": 481851600,
+        "percentage": 34.0
+      },
+      "literacyRate": 77.7,
+      "englishSpeakers": 125000000
+    },
+    "authenticationMarket": {
+      "digitalIdPenetration": 93.0,
+      "biometricCapableDevices": 400000000,
+      "governmentDigitalServices": 2100,
+      "ecommerceUsers": 180000000,
+      "fintechUsers": 220000000
+    },
+    "ageMetadata": {
+      "medianAge": 28.8,
+      "youthDependencyRatio": 32.9,
+      "elderlyDependencyRatio": 10.4,
+      "totalDependencyRatio": 43.3,
+      "workingAgePopulation": 971900000,
+      "dataSource": "Census India Projections 2025, Digital India Initiative",
+      "lastUpdated": "2025-01-25"
+    }
   },
   "metadata": {
     "version": "1.0.0",
@@ -18,6 +120,72 @@
     {
       "name": "Uttar Pradesh",
       "population": 237.9,
+      "populationCount": 237900000,
+      "ageGroups": {
+        "0-14": {
+          "population": 71.37,
+          "percentage": 30.0,
+          "count": 71370000
+        },
+        "15-24": {
+          "population": 45.58,
+          "percentage": 19.2,
+          "count": 45580000
+        },
+        "25-34": {
+          "population": 40.04,
+          "percentage": 16.8,
+          "count": 40040000
+        },
+        "35-44": {
+          "population": 33.51,
+          "percentage": 14.1,
+          "count": 33510000
+        },
+        "45-54": {
+          "population": 26.07,
+          "percentage": 11.0,
+          "count": 26070000
+        },
+        "55-64": {
+          "population": 16.65,
+          "percentage": 7.0,
+          "count": 16650000
+        },
+        "65+": {
+          "population": 4.76,
+          "percentage": 2.0,
+          "count": 4760000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 42.0,
+          "userCount": 99918000,
+          "rural": 78000000,
+          "urban": 21918000
+        },
+        "internetUsers": 89500000,
+        "averageDataUsage": 12.5,
+        "4gCoverage": 87.2,
+        "5gCoverage": 45.0,
+        "fiberCoverage": 15.0
+      },
+      "economicProfile": {
+        "gdpContribution": 8.2,
+        "perCapitaIncome": 65000,
+        "urbanizationRate": 22.0,
+        "industrialCenters": 15,
+        "sezCount": 3,
+        "startupEcosystem": 1200
+      },
+      "serviceReadiness": {
+        "bankBranches": 12500,
+        "atmDensity": 8.2,
+        "postOffices": 28500,
+        "cscCenters": 35000,
+        "digitalLiteracy": 48.0
+      },
       "authPct": 11,
       "pensionPct": 6.7,
       "authFreq": 1.0,
@@ -29,6 +197,72 @@
     {
       "name": "Maharashtra",
       "population": 123.1,
+      "populationCount": 123100000,
+      "ageGroups": {
+        "0-14": {
+          "population": 24.62,
+          "percentage": 20.0,
+          "count": 24620000
+        },
+        "15-24": {
+          "population": 22.16,
+          "percentage": 18.0,
+          "count": 22160000
+        },
+        "25-34": {
+          "population": 25.85,
+          "percentage": 21.0,
+          "count": 25850000
+        },
+        "35-44": {
+          "population": 19.70,
+          "percentage": 16.0,
+          "count": 19700000
+        },
+        "45-54": {
+          "population": 14.77,
+          "percentage": 12.0,
+          "count": 14770000
+        },
+        "55-64": {
+          "population": 9.85,
+          "percentage": 8.0,
+          "count": 9850000
+        },
+        "65+": {
+          "population": 6.16,
+          "percentage": 5.0,
+          "count": 6160000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 68.0,
+          "userCount": 83708000,
+          "rural": 52000000,
+          "urban": 31708000
+        },
+        "internetUsers": 89500000,
+        "averageDataUsage": 18.5,
+        "4gCoverage": 95.2,
+        "5gCoverage": 78.0,
+        "fiberCoverage": 45.0
+      },
+      "economicProfile": {
+        "gdpContribution": 14.8,
+        "perCapitaIncome": 200000,
+        "urbanizationRate": 45.0,
+        "industrialCenters": 12,
+        "sezCount": 8,
+        "startupEcosystem": 4500
+      },
+      "serviceReadiness": {
+        "bankBranches": 8500,
+        "atmDensity": 12.5,
+        "postOffices": 15200,
+        "cscCenters": 18500,
+        "digitalLiteracy": 72.0
+      },
       "authPct": 11,
       "pensionPct": 8.9,
       "authFreq": 1.0,

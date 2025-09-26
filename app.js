@@ -6537,3 +6537,120 @@
             };
         }
 
+        // ========================================
+        // NEW: Age-Specific Market Analysis Functions
+        // ========================================
+
+        // Calculate market size by age group
+        function calculateAgeSegmentMarket(country, segment, ageGroup) {
+            if (!segment.ageGroups || !segment.ageGroups[ageGroup]) {
+                console.warn(`Age group ${ageGroup} not found in segment ${segment.name}`);
+                return 0;
+            }
+            
+            const agePopulation = segment.ageGroups[ageGroup].count;
+            const authRate = getAgeSpecificAuthRate(ageGroup, segment);
+            const avgFrequency = getAgeSpecificAuthFrequency(ageGroup);
+            
+            return agePopulation * (authRate / 100) * avgFrequency;
+        }
+
+        // Get age-specific authentication rates (can be customized by segment)
+        function getAgeSpecificAuthRate(ageGroup, segment) {
+            const baseAuthRate = segment.authPct || 50;
+            
+            // Age-based multipliers based on digital adoption patterns
+            const ageMultipliers = {
+                '0-14': 0.3,    // Low - parental controls, limited services
+                '15-24': 1.4,   // High - digital natives
+                '25-34': 1.3,   // High - peak digital adoption
+                '35-44': 1.1,   // Above average - established digital users
+                '45-54': 0.9,   // Average - moderate adoption
+                '55-64': 0.7,   // Below average - slower adoption
+                '65+': 0.4      // Low - limited digital usage
+            };
+            
+            return Math.min(95, baseAuthRate * (ageMultipliers[ageGroup] || 1.0));
+        }
+
+        // Enhanced TAM calculation with age demographics
+        function calculateEnhancedTAM(country) {
+            if (!country.ageGroups) {
+                console.warn('No age demographic data available for enhanced TAM calculation');
+                return calculateBasicTAM(country);
+            }
+            
+            let totalTAM = 0;
+            const ageGroupAnalysis = {};
+            
+            Object.keys(country.ageGroups).forEach(ageGroup => {
+                const ageData = country.ageGroups[ageGroup];
+                const authRate = getAgeSpecificAuthRate(ageGroup, { authPct: 70 }); // Average rate
+                const frequency = getAgeSpecificAuthFrequency(ageGroup);
+                const avgPrice = getAgeSpecificPricing(ageGroup, country.economicIndicators?.gdpPerCapita || 5000);
+                
+                const monthlyVolume = ageData.count * (authRate / 100) * frequency;
+                const monthlyRevenue = monthlyVolume * avgPrice;
+                const annualTAM = monthlyRevenue * 12;
+                
+                totalTAM += annualTAM;
+                
+                ageGroupAnalysis[ageGroup] = {
+                    population: ageData.count,
+                    authRate: authRate,
+                    frequency: frequency,
+                    avgPrice: avgPrice,
+                    monthlyVolume: monthlyVolume,
+                    annualTAM: annualTAM
+                };
+            });
+            
+            return {
+                totalTAM: totalTAM,
+                ageBreakdown: ageGroupAnalysis,
+                currency: country.currency || 'USD',
+                country: country.name
+            };
+        }
+
+        // Age-specific authentication frequency (monthly)
+        function getAgeSpecificAuthFrequency(ageGroup) {
+            const frequencies = {
+                '0-14': 8,      // Limited services, parental oversight
+                '15-24': 35,    // High social media, gaming, shopping
+                '25-34': 42,    // Peak working age, financial services
+                '35-44': 38,    // Established users, family services
+                '45-54': 28,    // Moderate usage, professional focus
+                '55-64': 18,    // Lower frequency, essential services
+                '65+': 12       // Limited to essential services
+            };
+            
+            return frequencies[ageGroup] || 25;
+        }
+
+        // Age-specific pricing based on economic capacity
+        function getAgeSpecificPricing(ageGroup, gdpPerCapita) {
+            const basePriceUSD = gdpPerCapita > 30000 ? 0.25 : 
+                                 gdpPerCapita > 10000 ? 0.15 : 0.08;
+            
+            const ageMultipliers = {
+                '0-14': 0.4,    // Simple services, low value
+                '15-24': 0.8,   // Basic services, price sensitive
+                '25-34': 1.3,   // Premium services, higher value
+                '35-44': 1.4,   // Peak earning, enterprise services
+                '45-54': 1.2,   // Established, quality focus
+                '55-64': 1.0,   // Standard services
+                '65+': 0.7      // Simplified services, fixed income
+            };
+            
+            return basePriceUSD * (ageMultipliers[ageGroup] || 1.0);
+        }
+
+        // Make functions globally available
+        window.calculateAgeSegmentMarket = calculateAgeSegmentMarket;
+        window.calculateEnhancedTAM = calculateEnhancedTAM;
+        window.getAgeSpecificAuthRate = getAgeSpecificAuthRate;
+        window.getAgeSpecificAuthFrequency = getAgeSpecificAuthFrequency;
+
+        console.log('✅ Enhanced age-demographic analysis functions loaded');
+
