@@ -1,3 +1,93 @@
+        // Theme System
+        window.currentTheme = 'default';
+        
+        // Load saved theme on page load
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('apac-revenue-tool-theme');
+            if (savedTheme) {
+                changeTheme(savedTheme, false); // false = don't save again
+                const themeSelect = document.getElementById('themeSelect');
+                if (themeSelect) {
+                    themeSelect.value = savedTheme;
+                }
+            }
+        }
+        
+        // Change theme function
+        window.changeTheme = function(themeName, saveToStorage = true) {
+            console.log('Changing theme to:', themeName);
+            
+            // Remove previous theme
+            document.documentElement.removeAttribute('data-theme');
+            
+            // Apply new theme
+            if (themeName !== 'default') {
+                document.documentElement.setAttribute('data-theme', themeName);
+            }
+            
+            window.currentTheme = themeName;
+            
+            // Save to localStorage
+            if (saveToStorage) {
+                localStorage.setItem('apac-revenue-tool-theme', themeName);
+            }
+            
+            // Update page title with theme branding
+            updatePageTitle();
+            
+            // Show theme change notification
+            if (saveToStorage) {
+                showSuccessMessage(`Theme changed to ${getThemeDisplayName(themeName)}!`);
+            }
+        };
+        
+        // Get theme display name
+        function getThemeDisplayName(themeName) {
+            const themeNames = {
+                'default': 'Default',
+                'mastercard': 'Mastercard',
+                'visa': 'Visa', 
+                'amex': 'American Express',
+                'paypal': 'PayPal'
+            };
+            return themeNames[themeName] || 'Default';
+        }
+        
+        // Update page title with theme branding
+        function updatePageTitle() {
+            const titleElement = document.getElementById('mainTitle');
+            const themeIcons = {
+                'default': '🌏',
+                'mastercard': '🔴',
+                'visa': '🔵', 
+                'amex': '💳',
+                'paypal': '💙'
+            };
+            
+            const icon = themeIcons[window.currentTheme] || '🌏';
+            const themeName = getThemeDisplayName(window.currentTheme);
+            
+            if (titleElement) {
+                titleElement.textContent = `${icon} APAC Revenue Projection Tool`;
+                
+                // Add theme attribution in subtitle if not default
+                const subtitle = document.querySelector('.subtitle');
+                if (subtitle) {
+                    const baseText = 'APAC Authentication Services Revenue Modeling with Segment-wise Market Intelligence (2024-25)';
+                    if (window.currentTheme !== 'default') {
+                        subtitle.innerHTML = `${baseText}<br><small style="opacity: 0.7; font-size: 0.9em;">Styled for ${themeName}</small>`;
+                    } else {
+                        subtitle.innerHTML = baseText;
+                    }
+                }
+            }
+        }
+        
+        // Load saved theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+        });
+        
         // Global variables
         window.segments = [];
         window.projectionData = [];

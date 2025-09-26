@@ -6,27 +6,39 @@
     <title>Revenue Projection Tool</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/main-DioxfV0l.css">
+  <link rel="stylesheet" crossorigin href="/assets/styles-im1iXrD8.css">
 </head>
 <body>
     <div class="container">
         <div class="header-container">
             <h1 id="mainTitle">🌏 APAC Revenue Projection Tool</h1>
-            <div class="country-selector">
-                <label for="countrySelect">Country:</label>
-                <select id="countrySelect" onchange="changeCountry(this.value)">
-                    <option value="india">🇮🇳 India</option>
-                    <option value="singapore">🇸🇬 Singapore</option>
-                    <option value="australia">🇦🇺 Australia</option>
-                    <option value="japan">🇯🇵 Japan</option>
-                    <option value="south_korea">🇰🇷 South Korea</option>
-                    <option value="thailand">🇹🇭 Thailand</option>
-                    <option value="indonesia">🇮🇩 Indonesia</option>
-                    <option value="philippines">🇵🇭 Philippines</option>
-                </select>
+            <div class="header-controls">
+                <div class="theme-selector">
+                    <label for="themeSelect">Theme:</label>
+                    <select id="themeSelect" onchange="changeTheme(this.value)">
+                        <option value="default">🎨 Default</option>
+                        <option value="mastercard">🔴 Mastercard</option>
+                        <option value="visa">🔵 Visa</option>
+                        <option value="amex">💳 American Express</option>
+                        <option value="paypal">💙 PayPal</option>
+                    </select>
+                </div>
+                <div class="country-selector">
+                    <label for="countrySelect">Country:</label>
+                    <select id="countrySelect" onchange="changeCountry(this.value)">
+                        <option value="india">🇮🇳 India</option>
+                        <option value="singapore">🇸🇬 Singapore</option>
+                        <option value="australia">🇦🇺 Australia</option>
+                        <option value="japan">🇯🇵 Japan</option>
+                        <option value="south_korea">🇰🇷 South Korea</option>
+                        <option value="thailand">🇹🇭 Thailand</option>
+                        <option value="indonesia">🇮🇩 Indonesia</option>
+                        <option value="philippines">🇵🇭 Philippines</option>
+                    </select>
+                </div>
             </div>
         </div>
-        <p class="subtitle">APAC Authentication Services Revenue Modeling with SKU-wise Market Intelligence (2024-25)</p>
+        <p class="subtitle">APAC Authentication Services Revenue Modeling with Segment-wise Market Intelligence (2024-25)</p>
         <p style="text-align: center; color: #8b5cf6; font-size: 0.9em; margin-bottom: 20px; font-weight: 500;">
             Version 2.2.0 - Enhanced CRUD Operations & Segment Management
         </p>
@@ -98,14 +110,14 @@
 
             <div class="segment-builder">
                 <div class="segment-header">
-                    <h3>SKUs (Stock Keeping Units)</h3>
+                    <h3>Segments</h3>
                     <div class="view-selector">
                         <button class="view-btn active" onclick="setView('consolidated')">Consolidated</button>
-                        <button class="view-btn" onclick="setView('segmented')">By SKU</button>
+                        <button class="view-btn" onclick="setView('segmented')">By Segment</button>
                     </div>
                 </div>
 
-                <div class="pension-context" id="marketContext">
+                <div class="market-context" id="marketContext">
                     <h4 id="marketContextTitle">🔍 Digital Authentication Market Context</h4>
                     <div id="marketContextContent">
                         <p style="margin-bottom: 10px;">
@@ -125,16 +137,16 @@
                 </div>
 
                 <div class="segment-type-selector">
-                    <button class="segment-type-btn active" data-type="sku">Authentication SKUs</button>
-                    <button class="segment-type-btn" data-type="custom">Custom SKU</button>
+                    <button class="segment-type-btn active" data-type="sku">Authentication Segments</button>
+                    <button class="segment-type-btn" data-type="custom">Custom Segment</button>
                 </div>
 
                 <div class="predefined-segments" id="predefinedSegments"></div>
 
                 <div class="add-segment-section">
                     <div class="input-group">
-                        <label for="segmentName">SKU Name</label>
-                        <input type="text" id="segmentName" placeholder="e.g., OTP SMS, Biometric Auth">
+                        <label for="segmentName">Segment Name</label>
+                        <input type="text" id="segmentName" placeholder="e.g., OTP SMS, Biometric Authentication">
                     </div>
                     <div class="input-group">
                         <label for="pricePerTransaction">Price/Transaction (₹)</label>
@@ -167,7 +179,7 @@
                         <input type="text" id="segmentNotes" placeholder="Additional details or assumptions">
                     </div>
                     <button class="btn-primary btn-small" onclick="addOrUpdateSegment()">Add Segment</button>
-                    <button class="btn-warning btn-small" onclick="addTestSegment()">Add Test SKU</button>
+                    <button class="btn-warning btn-small" onclick="addTestSegment()">Add Test Segment</button>
                     <button class="btn-secondary btn-small" onclick="clearSegmentForm()">Clear Form</button>
                 </div>
 
@@ -176,7 +188,7 @@
                         <button class="btn-primary btn-small" onclick="showSegmentLibraryDialog()">📚 Segment Library</button>
                         <button class="btn-success btn-small" onclick="exportSegments()">📤 Export Segments</button>
                         <button class="btn-success btn-small" onclick="importSegments()">📥 Import Segments</button>
-                        <button class="btn-info btn-small" onclick="loadSegmentsFromExternalLibrary()">📁 Load External SKUs</button>
+                        <button class="btn-info btn-small" onclick="loadSegmentsFromExternalLibrary()">📁 Load External Segments</button>
                         <button class="btn-primary btn-small" onclick="createTelanganaModel()">🏛️ Telangana Model</button>
                         <button class="btn-warning btn-small" onclick="duplicateSelectedSegments()">📋 Duplicate Selected</button>
                         <button class="btn-warning btn-small" onclick="deleteSelectedSegments()">🗑️ Delete Selected</button>
@@ -280,7 +292,7 @@
                         <div id="countryOverview">
                             <div>Total Population: <span id="totalPopulation">-</span>M</div>
                             <div>Available Segments: <span id="totalSegments">-</span></div>
-                            <div>Average Auth Rate: <span id="avgAuthRate">-</span>%</div>
+                            <div>Average Authentication Rate: <span id="avgAuthRate">-</span>%</div>
                             <div>Average Pension Rate: <span id="avgPensionRate">-</span>%</div>
                         </div>
                     </div>
@@ -351,7 +363,7 @@
                                 <div>Total Countries: <span id="totalCountriesOverview">8</span></div>
                                 <div>Total Segments: <span id="totalSegmentsOverview">-</span></div>
                                 <div>Combined Population: <span id="totalPopulationOverview">-</span>M</div>
-                                <div>Avg Auth Rate: <span id="avgAuthRateOverview">-</span>%</div>
+                                <div>Avg Authentication Rate: <span id="avgAuthRateOverview">-</span>%</div>
                                 <div>Avg Pension Rate: <span id="avgPensionRateOverview">-</span>%</div>
                             </div>
                         </div>
@@ -384,7 +396,7 @@
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: left;">Country</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Pop (M)</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Segments</th>
-                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Auth %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Authentication %</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Digital %</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Urban %</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: center;">Top Tier</th>
@@ -499,7 +511,7 @@
         <div class="tab-content" id="models">
             <div class="models-header">
                 <h2>📊 Saved Revenue Models</h2>
-                <p style="color: #666; margin-bottom: 30px;">Save, load, and manage your revenue projection scenarios with different SKUs, pricing, and market assumptions.</p>
+                <p style="color: #666; margin-bottom: 30px;">Save, load, and manage your revenue projection scenarios with different segments, pricing, and market assumptions.</p>
             </div>
 
             <div class="models-actions">
@@ -526,7 +538,7 @@
             <div class="modal-body">
                 <div class="input-group">
                     <label for="modelName">Model Name *</label>
-                    <input type="text" id="modelName" placeholder="e.g., Authentication SKU Mix Q1 2025" required>
+                    <input type="text" id="modelName" placeholder="e.g., Authentication Segment Mix Q1 2025" required>
                 </div>
                 <div class="input-group">
                     <label for="modelDescription">Description</label>
@@ -605,43 +617,43 @@
         </div>
     </div>
 
-    <!-- SKU Edit Dialog -->
-    <div id="skuEditDialog" class="modal" style="display: none;">
+    <!-- Segment Edit Dialog -->
+    <div id="segmentEditDialog" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="skuEditTitle">✏️ Edit SKU</h3>
-                <span class="modal-close" onclick="closeSkuEditDialog()">&times;</span>
+                <h3 id="segmentEditTitle">✏️ Edit Segment</h3>
+                <span class="modal-close" onclick="closeSegmentEditDialog()">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="skuEditForm">
+                <form id="segmentEditForm">
                     <div class="input-group">
-                        <label for="editSkuName">SKU Name</label>
-                        <input type="text" id="editSkuName" required>
+                        <label for="editSegmentName">Segment Name</label>
+                        <input type="text" id="editSegmentName" required>
                     </div>
                     
                     <div class="input-group">
-                        <label for="editSkuPrice">Price per Transaction (₹)</label>
-                        <input type="number" id="editSkuPrice" step="0.01" min="0" required>
+                        <label for="editSegmentPrice">Price per Transaction (₹)</label>
+                        <input type="number" id="editSegmentPrice" step="0.01" min="0" required>
                     </div>
                     
                     <div class="input-group">
-                        <label for="editSkuCost">Cost per Transaction (₹)</label>
-                        <input type="number" id="editSkuCost" step="0.01" min="0" required>
+                        <label for="editSegmentCost">Cost per Transaction (₹)</label>
+                        <input type="number" id="editSegmentCost" step="0.01" min="0" required>
                     </div>
                     
                     <div class="input-group">
-                        <label for="editSkuVolume">Monthly Volume</label>
-                        <input type="number" id="editSkuVolume" min="1" required>
+                        <label for="editSegmentVolume">Monthly Volume</label>
+                        <input type="number" id="editSegmentVolume" min="1" required>
                     </div>
                     
                     <div class="input-group">
-                        <label for="editSkuGrowth">Volume Growth (% monthly)</label>
-                        <input type="number" id="editSkuGrowth" step="0.1" value="5">
+                        <label for="editSegmentGrowth">Volume Growth (% monthly)</label>
+                        <input type="number" id="editSegmentGrowth" step="0.1" value="5">
                     </div>
                     
                     <div class="input-group">
-                        <label for="editSkuCategory">Category</label>
-                        <select id="editSkuCategory">
+                        <label for="editSegmentCategory">Category</label>
+                        <select id="editSegmentCategory">
                             <option value="authentication">Authentication</option>
                             <option value="verification">Verification</option>
                             <option value="biometric">Biometric</option>
@@ -653,18 +665,18 @@
                     </div>
                     
                     <div class="input-group">
-                        <label for="editSkuNotes">Notes</label>
-                        <textarea id="editSkuNotes" rows="3" placeholder="Additional details about this SKU..."></textarea>
+                        <label for="editSegmentNotes">Notes</label>
+                        <textarea id="editSegmentNotes" rows="3" placeholder="Additional details about this segment..."></textarea>
                     </div>
                     
-                    <div id="skuEditValidation" style="margin-top: 15px; display: none;"></div>
+                    <div id="segmentEditValidation" style="margin-top: 15px; display: none;"></div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn-primary" onclick="updateSku()">💾 Update SKU</button>
-                <button class="btn-warning" onclick="duplicateCurrentSku()">📋 Duplicate</button>
-                <button class="btn-danger" onclick="deleteCurrentSku()">🗑️ Delete</button>
-                <button class="btn-secondary" onclick="closeSkuEditDialog()">Cancel</button>
+                <button class="btn-primary" onclick="updateSegment()">💾 Update Segment</button>
+                <button class="btn-warning" onclick="duplicateCurrentSegment()">📋 Duplicate</button>
+                <button class="btn-danger" onclick="deleteCurrentSegment()">🗑️ Delete</button>
+                <button class="btn-secondary" onclick="closeSegmentEditDialog()">Cancel</button>
             </div>
         </div>
     </div>
@@ -750,6 +762,96 @@
     </div>
 
     <script>
+        // Theme System
+        window.currentTheme = 'default';
+        
+        // Load saved theme on page load
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('apac-revenue-tool-theme');
+            if (savedTheme) {
+                changeTheme(savedTheme, false); // false = don't save again
+                const themeSelect = document.getElementById('themeSelect');
+                if (themeSelect) {
+                    themeSelect.value = savedTheme;
+                }
+            }
+        }
+        
+        // Change theme function
+        window.changeTheme = function(themeName, saveToStorage = true) {
+            console.log('Changing theme to:', themeName);
+            
+            // Remove previous theme
+            document.documentElement.removeAttribute('data-theme');
+            
+            // Apply new theme
+            if (themeName !== 'default') {
+                document.documentElement.setAttribute('data-theme', themeName);
+            }
+            
+            window.currentTheme = themeName;
+            
+            // Save to localStorage
+            if (saveToStorage) {
+                localStorage.setItem('apac-revenue-tool-theme', themeName);
+            }
+            
+            // Update page title with theme branding
+            updatePageTitle();
+            
+            // Show theme change notification
+            if (saveToStorage) {
+                showSuccessMessage(`Theme changed to ${getThemeDisplayName(themeName)}!`);
+            }
+        };
+        
+        // Get theme display name
+        function getThemeDisplayName(themeName) {
+            const themeNames = {
+                'default': 'Default',
+                'mastercard': 'Mastercard',
+                'visa': 'Visa', 
+                'amex': 'American Express',
+                'paypal': 'PayPal'
+            };
+            return themeNames[themeName] || 'Default';
+        }
+        
+        // Update page title with theme branding
+        function updatePageTitle() {
+            const titleElement = document.getElementById('mainTitle');
+            const themeIcons = {
+                'default': '🌏',
+                'mastercard': '🔴',
+                'visa': '🔵', 
+                'amex': '💳',
+                'paypal': '💙'
+            };
+            
+            const icon = themeIcons[window.currentTheme] || '🌏';
+            const themeName = getThemeDisplayName(window.currentTheme);
+            
+            if (titleElement) {
+                titleElement.textContent = `${icon} APAC Revenue Projection Tool`;
+                
+                // Add theme attribution in subtitle if not default
+                const subtitle = document.querySelector('.subtitle');
+                if (subtitle) {
+                    const baseText = 'APAC Authentication Services Revenue Modeling with Segment-wise Market Intelligence (2024-25)';
+                    if (window.currentTheme !== 'default') {
+                        subtitle.innerHTML = `${baseText}<br><small style="opacity: 0.7; font-size: 0.9em;">Styled for ${themeName}</small>`;
+                    } else {
+                        subtitle.innerHTML = baseText;
+                    }
+                }
+            }
+        }
+        
+        // Load saved theme when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedTheme();
+        });
+        
         // Global variables
         window.segments = [];
         window.projectionData = [];
@@ -1179,59 +1281,59 @@
             }
             
             // Store the ID for the edit dialog
-            window.currentEditingSkuId = id;
+            window.currentEditingSegmentId = id;
             
             // Populate edit dialog with segment data
-            document.getElementById('editSkuName').value = segment.name;
-            document.getElementById('editSkuPrice').value = segment.pricePerTransaction;
-            document.getElementById('editSkuCost').value = segment.costPerTransaction;
-            document.getElementById('editSkuVolume').value = segment.monthlyVolume;
-            document.getElementById('editSkuGrowth').value = segment.volumeGrowth;
-            document.getElementById('editSkuCategory').value = segment.category || 'authentication';
-            document.getElementById('editSkuNotes').value = segment.notes || '';
+            document.getElementById('editSegmentName').value = segment.name;
+            document.getElementById('editSegmentPrice').value = segment.pricePerTransaction;
+            document.getElementById('editSegmentCost').value = segment.costPerTransaction;
+            document.getElementById('editSegmentVolume').value = segment.monthlyVolume;
+            document.getElementById('editSegmentGrowth').value = segment.volumeGrowth;
+            document.getElementById('editSegmentCategory').value = segment.category || 'authentication';
+            document.getElementById('editSegmentNotes').value = segment.notes || '';
             
             // Update dialog title
-            document.getElementById('skuEditTitle').textContent = `✏️ Edit SKU: ${segment.name}`;
+            document.getElementById('segmentEditTitle').textContent = `✏️ Edit Segment: ${segment.name}`;
             
             // Show the edit dialog
-            document.getElementById('skuEditDialog').style.display = 'flex';
-            document.getElementById('editSkuName').focus();
+            document.getElementById('segmentEditDialog').style.display = 'flex';
+            document.getElementById('editSegmentName').focus();
             
             // Clear any previous validation messages
-            const validationDiv = document.getElementById('skuEditValidation');
+            const validationDiv = document.getElementById('segmentEditValidation');
             validationDiv.style.display = 'none';
         };
 
-        window.closeSkuEditDialog = function() {
-            document.getElementById('skuEditDialog').style.display = 'none';
-            window.currentEditingSkuId = null;
+        window.closeSegmentEditDialog = function() {
+            document.getElementById('segmentEditDialog').style.display = 'none';
+            window.currentEditingSegmentId = null;
             
             // Clear validation messages
-            const validationDiv = document.getElementById('skuEditValidation');
+            const validationDiv = document.getElementById('segmentEditValidation');
             validationDiv.style.display = 'none';
         };
 
-        window.updateSku = function() {
-            if (!window.currentEditingSkuId) return;
+        window.updateSegment = function() {
+            if (!window.currentEditingSegmentId) return;
             
             // Get form values
-            const name = document.getElementById('editSkuName').value.trim();
-            const price = parseFloat(document.getElementById('editSkuPrice').value);
-            const cost = parseFloat(document.getElementById('editSkuCost').value);
-            const volume = parseFloat(document.getElementById('editSkuVolume').value);
-            const growth = parseFloat(document.getElementById('editSkuGrowth').value) || 5;
-            const category = document.getElementById('editSkuCategory').value;
-            const notes = document.getElementById('editSkuNotes').value.trim();
+            const name = document.getElementById('editSegmentName').value.trim();
+            const price = parseFloat(document.getElementById('editSegmentPrice').value);
+            const cost = parseFloat(document.getElementById('editSegmentCost').value);
+            const volume = parseFloat(document.getElementById('editSegmentVolume').value);
+            const growth = parseFloat(document.getElementById('editSegmentGrowth').value) || 5;
+            const category = document.getElementById('editSegmentCategory').value;
+            const notes = document.getElementById('editSegmentNotes').value.trim();
             
             // Validate data
-            const validation = validateSkuEditData(name, price, cost, volume, growth);
+            const validation = validateSegmentEditData(name, price, cost, volume, growth);
             if (!validation.isValid) {
-                showSkuEditValidationErrors(validation.errors);
+                showSegmentEditValidationErrors(validation.errors);
                 return;
             }
             
             // Find and update the segment
-            const segmentIndex = window.segments.findIndex(seg => String(seg.id) === String(window.currentEditingSkuId));
+            const segmentIndex = window.segments.findIndex(seg => String(seg.id) === String(window.currentEditingSegmentId));
             if (segmentIndex === -1) return;
             
             // Update the segment
@@ -1248,25 +1350,25 @@
             };
             
             // Close dialog and refresh UI
-            window.closeSkuEditDialog();
+            window.closeSegmentEditDialog();
             window.renderSegments();
-            showSuccessMessage(`SKU "${name}" updated successfully!`);
+            showSuccessMessage(`Segment "${name}" updated successfully!`);
         };
 
-        window.duplicateCurrentSku = function() {
-            if (!window.currentEditingSkuId) return;
+        window.duplicateCurrentSegment = function() {
+            if (!window.currentEditingSegmentId) return;
             
-            const originalSegment = window.segments.find(seg => seg.id === window.currentEditingSkuId);
+            const originalSegment = window.segments.find(seg => seg.id === window.currentEditingSegmentId);
             if (!originalSegment) return;
             
             // Get current form values (in case user made changes)
-            const name = document.getElementById('editSkuName').value.trim();
-            const price = parseFloat(document.getElementById('editSkuPrice').value);
-            const cost = parseFloat(document.getElementById('editSkuCost').value);
-            const volume = parseFloat(document.getElementById('editSkuVolume').value);
-            const growth = parseFloat(document.getElementById('editSkuGrowth').value) || 5;
-            const category = document.getElementById('editSkuCategory').value;
-            const notes = document.getElementById('editSkuNotes').value.trim();
+            const name = document.getElementById('editSegmentName').value.trim();
+            const price = parseFloat(document.getElementById('editSegmentPrice').value);
+            const cost = parseFloat(document.getElementById('editSegmentCost').value);
+            const volume = parseFloat(document.getElementById('editSegmentVolume').value);
+            const growth = parseFloat(document.getElementById('editSegmentGrowth').value) || 5;
+            const category = document.getElementById('editSegmentCategory').value;
+            const notes = document.getElementById('editSegmentNotes').value.trim();
             
             // Create duplicate with modified name
             const duplicateName = `${name} (Copy)`;
@@ -1285,59 +1387,59 @@
             };
             
             window.segments.push(duplicateSegment);
-            window.closeSkuEditDialog();
+            window.closeSegmentEditDialog();
             window.renderSegments();
-            showSuccessMessage(`SKU duplicated as "${duplicateName}"!`);
+            showSuccessMessage(`Segment duplicated as "${duplicateName}"!`);
         };
 
-        window.deleteCurrentSku = function() {
-            if (!window.currentEditingSkuId) return;
+        window.deleteCurrentSegment = function() {
+            if (!window.currentEditingSegmentId) return;
             
-            const segment = window.segments.find(seg => seg.id === window.currentEditingSkuId);
+            const segment = window.segments.find(seg => seg.id === window.currentEditingSegmentId);
             if (!segment) return;
             
-            if (confirm(`Are you sure you want to delete the SKU "${segment.name}"?\n\nThis action cannot be undone.`)) {
-                window.segments = window.segments.filter(seg => seg.id !== window.currentEditingSkuId);
-                window.closeSkuEditDialog();
+            if (confirm(`Are you sure you want to delete the segment "${segment.name}"?\n\nThis action cannot be undone.`)) {
+                window.segments = window.segments.filter(seg => seg.id !== window.currentEditingSegmentId);
+                window.closeSegmentEditDialog();
                 window.renderSegments();
-                showSuccessMessage(`SKU "${segment.name}" deleted successfully!`);
+                showSuccessMessage(`Segment "${segment.name}" deleted successfully!`);
             }
         };
 
-        function validateSkuEditData(name, price, cost, volume, growth) {
+        function validateSegmentEditData(name, price, cost, volume, growth) {
             const errors = [];
             
             if (!name || name.length < 2) {
-                errors.push({ field: 'editSkuName', message: 'SKU name must be at least 2 characters' });
+                errors.push({ field: 'editSegmentName', message: 'Segment name must be at least 2 characters' });
             }
             
-            // Check for duplicate names (excluding current SKU)
+            // Check for duplicate names (excluding current segment)
             const existingSegment = window.segments.find(seg => 
                 seg.name.toLowerCase() === name.toLowerCase() && 
-                String(seg.id) !== String(window.currentEditingSkuId)
+                String(seg.id) !== String(window.currentEditingSegmentId)
             );
             if (existingSegment) {
-                errors.push({ field: 'editSkuName', message: 'SKU name already exists' });
+                errors.push({ field: 'editSegmentName', message: 'Segment name already exists' });
             }
             
             if (!price || price <= 0) {
-                errors.push({ field: 'editSkuPrice', message: 'Price must be greater than 0' });
+                errors.push({ field: 'editSegmentPrice', message: 'Price must be greater than 0' });
             }
             
             if (isNaN(cost) || cost < 0) {
-                errors.push({ field: 'editSkuCost', message: 'Cost cannot be negative' });
+                errors.push({ field: 'editSegmentCost', message: 'Cost cannot be negative' });
             }
             
             if (cost >= price) {
-                errors.push({ field: 'editSkuCost', message: 'Cost should be less than price for profitability' });
+                errors.push({ field: 'editSegmentCost', message: 'Cost should be less than price for profitability' });
             }
             
             if (!volume || volume <= 0) {
-                errors.push({ field: 'editSkuVolume', message: 'Volume must be greater than 0' });
+                errors.push({ field: 'editSegmentVolume', message: 'Volume must be greater than 0' });
             }
             
             if (isNaN(growth)) {
-                errors.push({ field: 'editSkuGrowth', message: 'Growth rate must be a valid number' });
+                errors.push({ field: 'editSegmentGrowth', message: 'Growth rate must be a valid number' });
             }
             
             return {
@@ -1346,11 +1448,11 @@
             };
         }
 
-        function showSkuEditValidationErrors(errors) {
-            const validationDiv = document.getElementById('skuEditValidation');
+        function showSegmentEditValidationErrors(errors) {
+            const validationDiv = document.getElementById('segmentEditValidation');
             
             // Clear previous error styling
-            document.querySelectorAll('#skuEditForm .validation-error').forEach(el => {
+            document.querySelectorAll('#segmentEditForm .validation-error').forEach(el => {
                 el.classList.remove('validation-error');
             });
             
@@ -1572,7 +1674,7 @@
                         </div>
                         <div class="country-stat-card">
                             <h4>${avgAuthRate.toFixed(1)}%</h4>
-                            <p>Avg Auth Rate</p>
+                            <p>Avg Authentication Rate</p>
                         </div>
                         <div class="country-stat-card">
                             <h4>${avgDigitalAdoption.toFixed(1)}%</h4>
@@ -1596,8 +1698,8 @@
                                     <tr>
                                         <th>Segment Name</th>
                                         <th>Population (M)</th>
-                                        <th>Auth Rate (%)</th>
-                                        <th>Auth Frequency</th>
+                                        <th>Authentication Rate (%)</th>
+                                        <th>Authentication Frequency</th>
                                         <th>Digital Adoption (%)</th>
                                         <th>Economic Tier</th>
                                         <th>Urbanization (%)</th>
@@ -1852,7 +1954,7 @@
                     country2: segments2.length
                 },
                 {
-                    label: 'Avg Auth Rate',
+                    label: 'Avg Authentication Rate',
                     country1: `${(segments1.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / Math.max(segments1.length, 1)).toFixed(1)}%`,
                     country2: `${(segments2.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / Math.max(segments2.length, 1)).toFixed(1)}%`
                 },
@@ -2552,7 +2654,7 @@
             const exportData = {
                 version: '1.0',
                 exportDate: new Date().toISOString(),
-                exportedBy: 'India Revenue Projection Tool',
+                exportedBy: 'APAC Revenue Projection Tool',
                 totalSegments: window.segments.length,
                 segments: window.segments.map(seg => ({
                     name: seg.name,
@@ -2766,7 +2868,7 @@
                     const categoryClass = segment.category || 'custom';
                     
                     return `
-                        <button class="predefined-btn sku-btn" 
+                        <button class="predefined-btn segment-btn" 
                                 data-name="${segment.name}"
                                 data-price="${segment.price}"
                                 data-cost="${segment.cost}"
@@ -2776,7 +2878,7 @@
                                 data-market="${segment.market}"
                                 title="Price: ₹${segment.price}, Cost: ₹${segment.cost}, Volume: ${(segment.volume/1000000).toFixed(0)}M/month">
                             <strong>${segment.name}</strong>
-                            <div class="sku-info">
+                            <div class="segment-info">
                                 <div style="color: #059669; font-size: 9px; font-weight: 600;">₹${segment.price}/txn | Cost: ₹${segment.cost}</div>
                                 <div style="color: #7c3aed; font-size: 9px;">📊 ${(segment.volume/1000000).toFixed(0)}M txns/month</div>
                                 <div style="color: #0284c7; font-size: 9px;">💰 Revenue: ₹${monthlyRevenue.toFixed(1)}M</div>
@@ -2788,8 +2890,8 @@
                 }).join('');
             }
             
-            // Add event listeners to SKU buttons
-            container.querySelectorAll('.sku-btn').forEach(btn => {
+            // Add event listeners to segment buttons
+            container.querySelectorAll('.segment-btn').forEach(btn => {
                 btn.onclick = function() {
                     const name = this.dataset.name;
                     const price = parseFloat(this.dataset.price);
@@ -2798,12 +2900,12 @@
                     const growth = parseFloat(this.dataset.growth);
                     const category = this.dataset.category;
                     const market = this.dataset.market;
-                    addPredefinedSegmentSKU(name, price, cost, volume, growth, category, market);
+                    addPredefinedSegment(name, price, cost, volume, growth, category, market);
                 };
             });
         }
 
-        function addPredefinedSegmentSKU(name, price, cost, volume, volumeGrowth, category, market) {
+        function addPredefinedSegment(name, price, cost, volume, volumeGrowth, category, market) {
             document.getElementById('segmentName').value = name;
             document.getElementById('pricePerTransaction').value = price;
             document.getElementById('costPerTransaction').value = cost;
@@ -2914,7 +3016,7 @@
             
             // Check if we have segments
             if (window.segments.length === 0) {
-                alert('Please add at least one SKU before calculating projections.');
+                alert('Please add at least one segment before calculating projections.');
                 return;
             }
             
@@ -3385,7 +3487,7 @@
             
             document.getElementById('summaryCards').innerHTML = segmentCardsHTML;
             
-            // Display segmented table with individual SKU performance
+            // Display segmented table with individual segment performance
             displaySegmentedTable();
             
             // Hide the consolidated segment breakdown since we're showing individual segments
@@ -3399,7 +3501,7 @@
                 <thead>
                     <tr>
                         <th>Month</th>
-                        <th>SKU</th>
+                        <th>Segment</th>
                         <th>Volume</th>
                         <th>Revenue (INR)</th>
                         <th>Revenue (USD)</th>
@@ -3492,7 +3594,7 @@
             
             document.getElementById('segmentBreakdown').innerHTML = `
                 <div class="segment-breakdown-header" onclick="toggleSegmentBreakdown()">
-                    <h3 class="segment-breakdown-title">SKU Breakdown (${window.segments.length} segments)</h3>
+                    <h3 class="segment-breakdown-title">Segment Breakdown (${window.segments.length} segments)</h3>
                     <div class="collapse-toggle">
                         <span class="collapse-text">Hide Details</span>
                         <span class="collapse-icon">▼</span>
@@ -3908,24 +4010,24 @@
             
             switchTab('analysis');
             
-            // Check if we have SKU-based segments for accurate scenario modeling
+            // Check if we have segment-based segments for accurate scenario modeling
             if (window.segments.length === 0) {
                 document.getElementById('scenarioSection').innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
-                        <h3>No SKUs Available</h3>
-                        <p>No SKUs found for scenario analysis. This might happen if the auto-load failed or segments were cleared.</p>
+                        <h3>No Segments Available</h3>
+                        <p>No segments found for scenario analysis. This might happen if the auto-load failed or segments were cleared.</p>
                         <div style="margin: 20px 0;">
                             <button class="btn-primary" onclick="loadPensionModel(false); setTimeout(() => { if(window.segments.length > 0) runScenarios(); }, 1000);" style="margin: 5px;">
                                 Load Default Pension Model
                             </button>
                             <button class="btn-primary" onclick="switchTab('setup')" style="margin: 5px;">
-                                Go to Setup & Add SKUs
+                                Go to Setup & Add Segments
                             </button>
                         </div>
                         <div style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: left;">
                             <h4>Quick Debug Info:</h4>
                             <div style="font-family: monospace; font-size: 0.9em; color: #333;">
-                                • Current SKUs: ${window.segments.length}<br>
+                                • Current Segments: ${window.segments.length}<br>
                                 • Saved Models: ${window.savedModels.length}<br>
                                 • Last Model ID: ${localStorage.getItem('lastLoadedModelId') || 'None'}<br>
                                 • Auto-load Status: ${localStorage.getItem('lastLoadedModelId') ? 'Model found' : 'No saved model'}
@@ -4039,7 +4141,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h4 style="color: ${scenarioColor}; margin: 0; font-size: 1.3em;">${scenario.name}</h4>
                             <div style="background: ${scenarioColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8em; font-weight: 600;">
-                                SKU-Based Analysis
+                                Segment-Based Analysis
                             </div>
                         </div>
                         
@@ -4186,7 +4288,7 @@
                 <div class="scenario-section" id="scenarioSection">
                     <h2>Scenario Analysis</h2>
                     <p style="color: #666; margin-bottom: 20px;">
-                        Analysis based on ${window.segments.length} SKUs with realistic volume growth, pricing adjustments, and cost variations.
+                        Analysis based on ${window.segments.length} segments with realistic volume growth, pricing adjustments, and cost variations.
                     </p>
                     ${tabularHTML}
                 </div>
@@ -4308,7 +4410,7 @@
             
             // Download the file
             const timestamp = new Date().toISOString().split('T')[0];
-            const filename = `India_Revenue_Projections_${timestamp}.xlsx`;
+            const filename = `APAC_Revenue_Projections_${timestamp}.xlsx`;
             XLSX.writeFile(wb, filename);
             
             alert(`Excel file "${filename}" has been downloaded to your Downloads folder.`);
@@ -4339,7 +4441,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `India_Revenue_Projections_${new Date().toISOString().split('T')[0]}.csv`;
+            a.download = `APAC_Revenue_Projections_${new Date().toISOString().split('T')[0]}.csv`;
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
@@ -5256,7 +5358,7 @@
             // Show confirmation only if not silent
             if (!silent) {
                 alert(`Loaded Pension Authentication Model:\n\n` +
-                      `✅ ${window.segments.length} State SKUs added\n` +
+                      `✅ ${window.segments.length} State segments added\n` +
                       `✅ Total Monthly Volume: ${(totalVolume/1000000).toFixed(1)}M transactions\n` +
                       `✅ Total Monthly Revenue: ₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})} (${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})} USD)\n` +
                       `✅ Price: ₹0.08 per authentication (${(0.08/usdRate).toFixed(4)} USD)\n` +
@@ -5760,7 +5862,7 @@
             
             clearCurrentModel();
             switchTab('setup');
-            showSuccessMessage('New blank model created. Start adding SKUs to build your revenue projection.');
+            showSuccessMessage('New blank model created. Start adding segments to build your revenue projection.');
         }
 
         function showModelDetails(modelId) {
@@ -5824,7 +5926,7 @@
                         <div class="stats-grid">
                             <div class="stat-card">
                                 <div class="stat-value">${totalSegments}</div>
-                                <div class="stat-label">Total SKUs</div>
+                                <div class="stat-label">Total Segments</div>
                             </div>
                             <div class="stat-card">
                                 <div class="stat-value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
@@ -5872,20 +5974,20 @@
                     </div>
                     
                     ${totalSegments > 0 ? `
-                    <div class="model-skus-section">
-                        <h4>📦 SKUs (${totalSegments})</h4>
-                        <div class="skus-list">
-                            ${model.data.segments.slice(0, 10).map(sku => `
-                                <div class="sku-item">
-                                    <div class="sku-name">${sku.name}</div>
-                                    <div class="sku-details">
-                                        Price: ₹${sku.pricePerTransaction} | 
-                                        Volume: ${(sku.monthlyVolume/1000000).toFixed(1)}M | 
-                                        Category: ${sku.category || 'N/A'}
+                    <div class="model-segments-section">
+                        <h4>📦 Segments (${totalSegments})</h4>
+                        <div class="segments-list">
+                            ${model.data.segments.slice(0, 10).map(segment => `
+                                <div class="segment-item">
+                                    <div class="segment-name">${segment.name}</div>
+                                    <div class="segment-details">
+                                        Price: ₹${segment.pricePerTransaction} | 
+                                        Volume: ${(segment.monthlyVolume/1000000).toFixed(1)}M | 
+                                        Category: ${segment.category || 'N/A'}
                                     </div>
                                 </div>
                             `).join('')}
-                            ${totalSegments > 10 ? `<div class="sku-item">... and ${totalSegments - 10} more SKUs</div>` : ''}
+                            ${totalSegments > 10 ? `<div class="segment-item">... and ${totalSegments - 10} more segments</div>` : ''}
                         </div>
                     </div>
                     ` : ''}
@@ -6183,7 +6285,7 @@
             const exportData = {
                 version: '1.0',
                 exportDate: new Date().toISOString(),
-                exportedBy: 'India Revenue Projection Tool',
+                exportedBy: 'APAC Revenue Projection Tool',
                 totalModels: window.savedModels.length,
                 models: window.savedModels
             };
@@ -6503,14 +6605,14 @@
                         const shouldRestore = confirm(
                             `Found auto-saved work from ${lastSave.toLocaleString()}.\n\n` +
                             `Model: ${data.currentModelName}\n` +
-                            `SKUs: ${data.segments.length}\n\n` +
+                            `Segments: ${data.segments.length}\n\n` +
                             `Would you like to restore this work?`
                         );
                         
                         if (shouldRestore) {
                             window.segments = data.segments;
                             window.renderSegments();
-                            showSuccessMessage(`Restored ${data.segments.length} SKU(s) from auto-save.`);
+                            showSuccessMessage(`Restored ${data.segments.length} segment(s) from auto-save.`);
                             return true;
                         }
                     }
@@ -6533,12 +6635,12 @@
         // Enhanced validation for bulk operations
         function validateBulkOperations() {
             if (window.segments.length === 0) {
-                showErrorMessage('No SKUs available for bulk operations.');
+                showErrorMessage('No segments available for bulk operations.');
                 return false;
             }
             
             if (window.selectedSegments.size === 0) {
-                showErrorMessage('Please select at least one SKU for bulk operations.');
+                showErrorMessage('Please select at least one segment for bulk operations.');
                 return false;
             }
             
@@ -6736,7 +6838,7 @@
             detailsHTML += `<thead><tr style="background: #f3f4f6; position: sticky; top: 0;">`;
             detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: left;">Segment</th>`;
             detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Pop (M)</th>`;
-            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Auth %</th>`;
+            detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Authentication %</th>`;
             detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Digital %</th>`;
             detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: center;">Economic</th>`;
             detailsHTML += `<th style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">Urban %</th>`;

@@ -1,0 +1,597 @@
+{
+  "country": {
+    "key": "philippines",
+    "name": "Philippines",
+    "currency": "PHP",
+    "currencySymbol": "₱",
+    "exchangeRate": 58.5,
+    "population": 112.0,
+    "populationCount": 112000000,
+    "ageGroups": {
+      "0-14": {
+        "population": 32.48,
+        "percentage": 29.0,
+        "count": 32480000
+      },
+      "15-24": {
+        "population": 18.48,
+        "percentage": 16.5,
+        "count": 18480000
+      },
+      "25-34": {
+        "population": 16.80,
+        "percentage": 15.0,
+        "count": 16800000
+      },
+      "35-44": {
+        "population": 15.68,
+        "percentage": 14.0,
+        "count": 15680000
+      },
+      "45-54": {
+        "population": 12.32,
+        "percentage": 11.0,
+        "count": 12320000
+      },
+      "55-64": {
+        "population": 8.96,
+        "percentage": 8.0,
+        "count": 8960000
+      },
+      "65+": {
+        "population": 7.28,
+        "percentage": 6.5,
+        "count": 7280000
+      }
+    },
+    "digitalInfrastructure": {
+      "smartphonePenetration": {
+        "rate": 66.8,
+        "userCount": 74816000,
+        "by5G": {
+          "enabled": 25000000,
+          "percentage": 33.4
+        },
+        "byOperatingSystem": {
+          "android": {
+            "count": 67334400,
+            "percentage": 90.0
+          },
+          "ios": {
+            "count": 7481600,
+            "percentage": 10.0
+          },
+          "other": {
+            "count": 0,
+            "percentage": 0.0
+          }
+        }
+      },
+      "internetPenetration": {
+        "rate": 68.0,
+        "userCount": 76160000,
+        "mobileInternet": 72000000,
+        "broadbandUsers": 8500000
+      },
+      "bankingInfrastructure": {
+        "bankAccountPenetration": 51.2,
+        "mobileWalletUsers": 52000000,
+        "digitalIdUsers": 75000000,
+        "creditCardUsers": 8500000,
+        "debitCardUsers": 45000000
+      }
+    },
+    "economicIndicators": {
+      "gdpPerCapita": 3549,
+      "giniCoefficient": 42.3,
+      "middleClassPopulation": 42000000,
+      "urbanPopulation": {
+        "count": 52640000,
+        "percentage": 47.0
+      },
+      "literacyRate": 98.2,
+      "englishSpeakers": 64000000
+    },
+    "authenticationMarket": {
+      "digitalIdPenetration": 67.0,
+      "biometricCapableDevices": 65000000,
+      "governmentDigitalServices": 1200,
+      "ecommerceUsers": 58500000,
+      "fintechUsers": 42000000
+    },
+    "ageMetadata": {
+      "medianAge": 25.7,
+      "youthDependencyRatio": 45.8,
+      "elderlyDependencyRatio": 10.2,
+      "totalDependencyRatio": 56.0,
+      "workingAgePopulation": 71240000,
+      "dataSource": "PSA Philippines 2024, DICT Digital Philippines Framework",
+      "lastUpdated": "2025-01-25"
+    }
+  },
+  "metadata": {
+    "version": "2.0.0",
+    "lastUpdated": "2025-01-25",
+    "description": "Enhanced comprehensive demographic data for Philippines including BPO industry, remittance market, and digital authentication opportunities",
+    "dataSource": "Philippine Statistics Authority, BSP Digital Payments Transformation Roadmap 2023-2028",
+    "totalSegments": 6
+  },
+  "demographicSegments": [
+    {
+      "name": "Metro Manila",
+      "population": 13.5,
+      "populationCount": 13500000,
+      "ageGroups": {
+        "0-14": {
+          "population": 3.38,
+          "percentage": 25.0,
+          "count": 3375000
+        },
+        "15-24": {
+          "population": 2.30,
+          "percentage": 17.0,
+          "count": 2295000
+        },
+        "25-34": {
+          "population": 2.43,
+          "percentage": 18.0,
+          "count": 2430000
+        },
+        "35-44": {
+          "population": 2.16,
+          "percentage": 16.0,
+          "count": 2160000
+        },
+        "45-54": {
+          "population": 1.62,
+          "percentage": 12.0,
+          "count": 1620000
+        },
+        "55-64": {
+          "population": 1.08,
+          "percentage": 8.0,
+          "count": 1080000
+        },
+        "65+": {
+          "population": 0.54,
+          "percentage": 4.0,
+          "count": 540000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 82.0,
+          "userCount": 11070000,
+          "rural": 1500000,
+          "urban": 9570000
+        },
+        "internetUsers": 12800000,
+        "averageDataUsage": 6.8,
+        "4gCoverage": 95.0,
+        "5gCoverage": 65.0,
+        "fiberCoverage": 42.0
+      },
+      "economicProfile": {
+        "gdpContribution": 36.2,
+        "perCapitaIncome": 285000,
+        "urbanizationRate": 100.0,
+        "industrialCenters": 8,
+        "sezCount": 4,
+        "startupEcosystem": 2800
+      },
+      "serviceReadiness": {
+        "bankBranches": 1850,
+        "atmDensity": 185.2,
+        "postOffices": 285,
+        "cscCenters": 0,
+        "digitalLiteracy": 88.5
+      },
+      "authPct": 78,
+      "pensionPct": 5,
+      "authFreq": 2.8,
+      "digitalAdoption": 88,
+      "economicTier": "high",
+      "urbanization": 100,
+      "authGrowthRate": 15
+    },
+    {
+      "name": "CALABARZON (Cavite, Laguna, Batangas, Rizal, Quezon)",
+      "population": 16.2,
+      "populationCount": 16200000,
+      "ageGroups": {
+        "0-14": {
+          "population": 4.37,
+          "percentage": 27.0,
+          "count": 4374000
+        },
+        "15-24": {
+          "population": 2.67,
+          "percentage": 16.5,
+          "count": 2673000
+        },
+        "25-34": {
+          "population": 2.43,
+          "percentage": 15.0,
+          "count": 2430000
+        },
+        "35-44": {
+          "population": 2.27,
+          "percentage": 14.0,
+          "count": 2268000
+        },
+        "45-54": {
+          "population": 1.78,
+          "percentage": 11.0,
+          "count": 1782000
+        },
+        "55-64": {
+          "population": 1.30,
+          "percentage": 8.0,
+          "count": 1296000
+        },
+        "65+": {
+          "population": 1.38,
+          "percentage": 8.5,
+          "count": 1377000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 75.0,
+          "userCount": 12150000,
+          "rural": 6500000,
+          "urban": 5650000
+        },
+        "internetUsers": 14200000,
+        "averageDataUsage": 5.8,
+        "4gCoverage": 88.0,
+        "5gCoverage": 35.0,
+        "fiberCoverage": 28.0
+      },
+      "economicProfile": {
+        "gdpContribution": 17.8,
+        "perCapitaIncome": 185000,
+        "urbanizationRate": 68.0,
+        "industrialCenters": 12,
+        "sezCount": 15,
+        "startupEcosystem": 850
+      },
+      "serviceReadiness": {
+        "bankBranches": 920,
+        "atmDensity": 85.5,
+        "postOffices": 485,
+        "cscCenters": 650,
+        "digitalLiteracy": 78.2
+      },
+      "authPct": 68,
+      "pensionPct": 8,
+      "authFreq": 2.2,
+      "digitalAdoption": 82,
+      "economicTier": "medium",
+      "urbanization": 68,
+      "authGrowthRate": 12
+    },
+    {
+      "name": "Central Luzon",
+      "population": 12.8,
+      "populationCount": 12800000,
+      "ageGroups": {
+        "0-14": {
+          "population": 3.71,
+          "percentage": 29.0,
+          "count": 3712000
+        },
+        "15-24": {
+          "population": 2.11,
+          "percentage": 16.5,
+          "count": 2112000
+        },
+        "25-34": {
+          "population": 1.92,
+          "percentage": 15.0,
+          "count": 1920000
+        },
+        "35-44": {
+          "population": 1.79,
+          "percentage": 14.0,
+          "count": 1792000
+        },
+        "45-54": {
+          "population": 1.41,
+          "percentage": 11.0,
+          "count": 1408000
+        },
+        "55-64": {
+          "population": 1.02,
+          "percentage": 8.0,
+          "count": 1024000
+        },
+        "65+": {
+          "population": 0.83,
+          "percentage": 6.5,
+          "count": 832000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 70.0,
+          "userCount": 8960000,
+          "rural": 5800000,
+          "urban": 3160000
+        },
+        "internetUsers": 10500000,
+        "averageDataUsage": 5.2,
+        "4gCoverage": 85.0,
+        "5gCoverage": 25.0,
+        "fiberCoverage": 22.0
+      },
+      "economicProfile": {
+        "gdpContribution": 9.8,
+        "perCapitaIncome": 158000,
+        "urbanizationRate": 45.0,
+        "industrialCenters": 6,
+        "sezCount": 8,
+        "startupEcosystem": 420
+      },
+      "serviceReadiness": {
+        "bankBranches": 650,
+        "atmDensity": 58.5,
+        "postOffices": 420,
+        "cscCenters": 850,
+        "digitalLiteracy": 72.8
+      },
+      "authPct": 62,
+      "pensionPct": 9,
+      "authFreq": 1.9,
+      "digitalAdoption": 75,
+      "economicTier": "medium",
+      "urbanization": 45,
+      "authGrowthRate": 8
+    },
+    {
+      "name": "Visayas (Cebu, Bohol, Negros, Leyte, Samar, Panay)",
+      "population": 20.2,
+      "populationCount": 20200000,
+      "ageGroups": {
+        "0-14": {
+          "population": 5.86,
+          "percentage": 29.0,
+          "count": 5858000
+        },
+        "15-24": {
+          "population": 3.33,
+          "percentage": 16.5,
+          "count": 3333000
+        },
+        "25-34": {
+          "population": 3.03,
+          "percentage": 15.0,
+          "count": 3030000
+        },
+        "35-44": {
+          "population": 2.83,
+          "percentage": 14.0,
+          "count": 2828000
+        },
+        "45-54": {
+          "population": 2.22,
+          "percentage": 11.0,
+          "count": 2222000
+        },
+        "55-64": {
+          "population": 1.62,
+          "percentage": 8.0,
+          "count": 1616000
+        },
+        "65+": {
+          "population": 1.31,
+          "percentage": 6.5,
+          "count": 1313000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 62.0,
+          "userCount": 12524000,
+          "rural": 9500000,
+          "urban": 3024000
+        },
+        "internetUsers": 16800000,
+        "averageDataUsage": 4.2,
+        "4gCoverage": 78.0,
+        "5gCoverage": 15.0,
+        "fiberCoverage": 18.0
+      },
+      "economicProfile": {
+        "gdpContribution": 13.8,
+        "perCapitaIncome": 125000,
+        "urbanizationRate": 32.0,
+        "industrialCenters": 4,
+        "sezCount": 12,
+        "startupEcosystem": 650
+      },
+      "serviceReadiness": {
+        "bankBranches": 850,
+        "atmDensity": 38.5,
+        "postOffices": 850,
+        "cscCenters": 1850,
+        "digitalLiteracy": 65.8
+      },
+      "authPct": 55,
+      "pensionPct": 12,
+      "authFreq": 1.6,
+      "digitalAdoption": 68,
+      "economicTier": "medium",
+      "urbanization": 32,
+      "authGrowthRate": 6
+    },
+    {
+      "name": "Mindanao",
+      "population": 26.8,
+      "populationCount": 26800000,
+      "ageGroups": {
+        "0-14": {
+          "population": 7.77,
+          "percentage": 29.0,
+          "count": 7772000
+        },
+        "15-24": {
+          "population": 4.42,
+          "percentage": 16.5,
+          "count": 4422000
+        },
+        "25-34": {
+          "population": 4.02,
+          "percentage": 15.0,
+          "count": 4020000
+        },
+        "35-44": {
+          "population": 3.75,
+          "percentage": 14.0,
+          "count": 3752000
+        },
+        "45-54": {
+          "population": 2.95,
+          "percentage": 11.0,
+          "count": 2948000
+        },
+        "55-64": {
+          "population": 2.14,
+          "percentage": 8.0,
+          "count": 2144000
+        },
+        "65+": {
+          "population": 1.74,
+          "percentage": 6.5,
+          "count": 1742000
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 55.0,
+          "userCount": 14740000,
+          "rural": 12500000,
+          "urban": 2240000
+        },
+        "internetUsers": 20500000,
+        "averageDataUsage": 3.8,
+        "4gCoverage": 68.0,
+        "5gCoverage": 8.0,
+        "fiberCoverage": 12.0
+      },
+      "economicProfile": {
+        "gdpContribution": 14.2,
+        "perCapitaIncome": 95000,
+        "urbanizationRate": 28.0,
+        "industrialCenters": 3,
+        "sezCount": 8,
+        "startupEcosystem": 320
+      },
+      "serviceReadiness": {
+        "bankBranches": 950,
+        "atmDensity": 28.5,
+        "postOffices": 1200,
+        "cscCenters": 2800,
+        "digitalLiteracy": 58.2
+      },
+      "authPct": 48,
+      "pensionPct": 15,
+      "authFreq": 1.4,
+      "digitalAdoption": 62,
+      "economicTier": "low",
+      "urbanization": 28,
+      "authGrowthRate": 4
+    },
+    {
+      "name": "BPO & OFW (Overseas Filipino Workers) Ecosystem",
+      "population": 22.5,
+      "populationCount": 22500000,
+      "ageGroups": {
+        "0-14": {
+          "population": 4.50,
+          "percentage": 20.0,
+          "count": 4500000
+        },
+        "15-24": {
+          "population": 3.38,
+          "percentage": 15.0,
+          "count": 3375000
+        },
+        "25-34": {
+          "population": 6.75,
+          "percentage": 30.0,
+          "count": 6750000
+        },
+        "35-44": {
+          "population": 4.95,
+          "percentage": 22.0,
+          "count": 4950000
+        },
+        "45-54": {
+          "population": 2.25,
+          "percentage": 10.0,
+          "count": 2250000
+        },
+        "55-64": {
+          "population": 0.68,
+          "percentage": 3.0,
+          "count": 675000
+        },
+        "65+": {
+          "population": 0.00,
+          "percentage": 0.0,
+          "count": 0
+        }
+      },
+      "digitalProfile": {
+        "smartphonePenetration": {
+          "rate": 88.0,
+          "userCount": 19800000,
+          "rural": 4500000,
+          "urban": 15300000
+        },
+        "internetUsers": 21800000,
+        "averageDataUsage": 12.5,
+        "4gCoverage": 95.0,
+        "5gCoverage": 58.0,
+        "fiberCoverage": 48.0
+      },
+      "economicProfile": {
+        "gdpContribution": 8.2,
+        "perCapitaIncome": 358000,
+        "urbanizationRate": 78.0,
+        "industrialCenters": 0,
+        "sezCount": 0,
+        "startupEcosystem": 1200
+      },
+      "serviceReadiness": {
+        "bankBranches": 0,
+        "atmDensity": 0,
+        "postOffices": 0,
+        "cscCenters": 0,
+        "digitalLiteracy": 92.5
+      },
+      "authPct": 85,
+      "pensionPct": 3,
+      "authFreq": 4.2,
+      "digitalAdoption": 92,
+      "economicTier": "high",
+      "urbanization": 78,
+      "authGrowthRate": 18
+    }
+  ],
+  "summary": {
+    "totalPopulation": 112.0,
+    "averageAuthRate": 66.0,
+    "averagePensionRate": 8.7,
+    "averageDigitalAdoption": 77.2,
+    "highEconomicTierSegments": 2,
+    "mediumEconomicTierSegments": 3,
+    "lowEconomicTierSegments": 1,
+    "averageUrbanization": 47.0,
+    "averageGrowthRate": 10.5,
+    "remittanceVolume": "$36.1 billion annually from 2.2M OFWs",
+    "bpoIndustry": "1.3M employees in IT-BPO sector requiring authentication",
+    "marketOpportunity": "Remittance authentication, BPO identity verification, financial inclusion"
+  }
+}
