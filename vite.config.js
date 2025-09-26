@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { copyFileSync } from 'fs';
 
 export default defineConfig({
   root: '.',
@@ -11,6 +12,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         working: resolve(__dirname, 'index-working.html')
       },
+      external: [],
       output: {
         entryFileNames: 'assets/[name]-[hash].js',
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -28,7 +30,8 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    open: true
+    open: true,
+    allowedHosts: ["forsam.theaustraliahack.com", "forliz.theaustraliahack.com", "localhost", "127.0.0.1"]
   },
   preview: {
     port: 4173,
@@ -41,5 +44,14 @@ export default defineConfig({
   // Skip optimization for CDN dependencies
   optimizeDeps: {
     exclude: ['chart.js', 'xlsx']
-  }
+  },
+  // Copy app.js to dist after build
+  plugins: [
+    {
+      name: 'copy-app-js',
+      writeBundle() {
+        copyFileSync('app.js', 'dist/app.js');
+      }
+    }
+  ]
 });

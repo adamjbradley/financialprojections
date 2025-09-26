@@ -2,6 +2,51 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚨 CRITICAL: WHICH HTML FILE TO USE 🚨
+
+**ALWAYS USE `index-working.html` FOR ALL DEVELOPMENT!**
+
+### File Structure Explanation:
+- **`index-working.html` (468KB)** ✅ **ACTIVE VERSION - USE THIS**
+  - Complete monolithic file with all JavaScript inline
+  - Fully functional with all features working
+  - All recent development happens here
+  - URL: `http://localhost:4174/index-working.html`
+  
+- **`index.html` (47KB)** ❌ **INCOMPLETE - DO NOT USE**
+  - Failed modularization attempt
+  - Loads external `app.js` file
+  - Has JavaScript scope issues
+  - Preserved for future migration only
+
+**Why two files exist:** The project attempted modularization (splitting into modules) but it broke ~377 functions due to scope issues. Development rolled back to the monolithic version (`index-working.html`) while preserving the modular work for future attempts.
+
+**For all development, testing, and deployment: Use `index-working.html`**
+
+## 🚨 CRITICAL TESTING MANDATE 🚨
+
+**⚠️ NEVER USE CHROME/PUPPETEER FOR TESTING - ALWAYS USE PLAYWRIGHT! ⚠️**
+
+**Chrome WebSocket connection issues on macOS are persistent and will cause test failures.** 
+
+### **MANDATORY Testing Commands:**
+```bash
+# ✅ CORRECT - Use Microsoft Edge with Playwright
+npm run test:playwright:headed:edge
+node test-edge-simple.cjs
+HEADLESS=false node test-edge-simple.cjs
+
+# ✅ CORRECT - Headless Playwright
+npm run test:playwright
+
+# ❌ WRONG - Never use these Chrome/Puppeteer commands
+# node comprehensive-test.cjs
+# HEADLESS=false npm run test:e2e
+# Any puppeteer-based tests in visible mode
+```
+
+**If you need to create new tests, always use Playwright with Edge browser support.**
+
 ## Project Overview
 
 This is the **APAC Revenue Projections System** - a comprehensive web-based financial modeling tool for projecting revenue opportunities from digital authentication services across Asia-Pacific countries, with specialized focus on India's Aadhaar authentication services following the January 2025 policy change allowing commercial entity access.
@@ -605,6 +650,10 @@ npm run test:playwright:safari              # Safari (native macOS)
 4. **✅ Better Error Handling** - Clearer error messages and recovery
 5. **✅ Native Safari Support** - Test on Apple's actual rendering engine
 6. **✅ Cross-Platform** - Same tests work on macOS, Windows, Linux
+
+### **🚨 REMINDER: Chrome/Puppeteer is FORBIDDEN for visible testing! 🚨**
+
+**Chrome WebSocket Protocol errors will cause test failures. Always use Playwright with Edge browser.**
 
 ### **📂 New Test Structure:**
 ```

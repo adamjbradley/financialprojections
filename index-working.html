@@ -1,4 +1,12 @@
 <!DOCTYPE html>
+<!-- 
+    ✅ THIS IS THE ACTIVE DEVELOPMENT FILE ✅
+    
+    All development, bug fixes, and new features should be added here.
+    This monolithic version contains all JavaScript inline and is fully functional.
+    
+    See PROJECT-STRUCTURE.md for project architecture details.
+-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -222,6 +230,7 @@
                 <button class="btn-warning" onclick="runScenarios()">Run Scenarios</button>
                 <button class="btn-success" onclick="showSaveModelDialog()">💾 Save Current Model</button>
                 <button class="btn-primary" onclick="loadExternalModelConfig()">📁 Load External Config</button>
+                <button class="btn-secondary" onclick="refreshCurrencyRates()" title="Refresh current exchange rates for all APAC currencies">💹 Refresh Rates</button>
                 <input type="file" id="modelConfigFile" accept=".json" style="display: none;" onchange="handleModelConfigFile(event)">
             </div>
         </div>
@@ -348,6 +357,7 @@
                     <button type="button" class="demo-nav-btn" data-section="explorer" onclick="showCountryExplorer()">🔍 Country Explorer</button>
                     <button type="button" class="demo-nav-btn" data-section="comparison" onclick="showCountryComparison()">⚖️ Compare Countries</button>
                     <button type="button" class="demo-nav-btn" data-section="analysis" onclick="showSegmentAnalysis()">🎯 Segment Analysis</button>
+                    <button type="button" class="demo-nav-btn" data-section="opportunity" onclick="showMarketOpportunity()">💰 Market Opportunity</button>
                     <button type="button" class="demo-nav-btn" data-section="export" onclick="exportDemographicData()">📤 Export Data</button>
                 </div>
             </div>
@@ -385,6 +395,31 @@
                                 <div>Revenue Opportunity: <span id="revenueOpportunityOverview">-</span></div>
                             </div>
                         </div>
+                        <div class="overview-card" style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white;">
+                            <h4 style="margin: 0 0 15px 0;">📱 Technology Infrastructure</h4>
+                            <div id="technologyInfrastructure">
+                                <div>Avg Smartphone Penetration: <span id="avgSmartphoneOverview">-</span>%</div>
+                                <div>Avg Internet Penetration: <span id="avgInternetOverview">-</span>%</div>
+                                <div>5G Ready Population: <span id="avg5GReadyOverview">-</span>M</div>
+                                <div>Banking Infrastructure: <span id="avgBankingOverview">-</span>%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="currency-status-section" style="margin: 25px 0; padding: 15px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; border-left: 4px solid var(--primary-gradient-start);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <h4 style="margin: 0; color: var(--text-color); display: flex; align-items: center; gap: 8px;">
+                                    💹 APAC Currency Rates Status
+                                </h4>
+                                <div id="currencyStatusText" style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                    Loading currency rate information...
+                                </div>
+                            </div>
+                            <button class="btn-small btn-primary" onclick="refreshCurrencyRates()" style="white-space: nowrap;">
+                                🔄 Update Rates
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="country-summary-table" style="margin-top: 25px;">
@@ -396,10 +431,12 @@
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: left;">Country</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Pop (M)</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Segments</th>
-                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Authentication %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Auth %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">📱 Phone %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">🌐 Internet %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">🏦 Banking %</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Digital %</th>
-                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Urban %</th>
-                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: center;">Top Tier</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: center;">Tier</th>
                                         <th style="border: 1px solid #d1d5db; padding: 12px; text-align: center;">Actions</th>
                                     </tr>
                                 </thead>
@@ -503,6 +540,119 @@
                 </div>
                 <div id="segmentAnalysisContent">
                     <p style="color: #666; text-align: center; padding: 40px;">Use the filters above to analyze segments across all APAC countries.</p>
+                </div>
+            </div>
+            
+            <!-- Market Opportunity Calculator Section -->
+            <div id="marketOpportunitySection" class="demographic-section" style="display: none;">
+                <h3>💰 Market Opportunity Calculator</h3>
+                <div class="opportunity-controls" style="margin-bottom: 25px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                        <!-- Country Selection -->
+                        <div class="input-group">
+                            <label for="opportunityCountry" style="font-weight: bold;">Target Country</label>
+                            <select id="opportunityCountry" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;" onchange="updateOpportunityCalculation()">
+                                <option value="india">🇮🇳 India</option>
+                                <option value="singapore">🇸🇬 Singapore</option>
+                                <option value="australia">🇦🇺 Australia</option>
+                                <option value="japan">🇯🇵 Japan</option>
+                                <option value="south_korea">🇰🇷 South Korea</option>
+                                <option value="thailand">🇹🇭 Thailand</option>
+                                <option value="philippines">🇵🇭 Philippines</option>
+                                <option value="indonesia">🇮🇩 Indonesia</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Service Type -->
+                        <div class="input-group">
+                            <label for="serviceType" style="font-weight: bold;">Service Type</label>
+                            <select id="serviceType" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;" onchange="updateOpportunityCalculation()">
+                                <option value="authentication">🔐 Authentication</option>
+                                <option value="pension">💰 Pension Services</option>
+                                <option value="financial">🏦 Financial Services</option>
+                                <option value="government">🏛️ Government Services</option>
+                                <option value="healthcare">🏥 Healthcare</option>
+                                <option value="ecommerce">🛒 E-commerce</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Market Penetration -->
+                        <div class="input-group">
+                            <label for="marketPenetration" style="font-weight: bold;">Target Penetration (%)</label>
+                            <input type="number" id="marketPenetration" min="1" max="100" value="25" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;" oninput="updateOpportunityCalculation()">
+                        </div>
+                        
+                        <!-- Price Per Transaction -->
+                        <div class="input-group">
+                            <label for="pricePerAuth" style="font-weight: bold;">Price per Transaction</label>
+                            <input type="number" id="pricePerAuth" min="0.01" step="0.01" value="1.50" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;" oninput="updateOpportunityCalculation()">
+                        </div>
+                        
+                        <!-- Auth Frequency -->
+                        <div class="input-group">
+                            <label for="authFrequency" style="font-weight: bold;">Monthly Frequency</label>
+                            <input type="number" id="authFrequency" min="0.1" step="0.1" value="2.0" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;" oninput="updateOpportunityCalculation()">
+                        </div>
+                        
+                        <!-- Growth Rate -->
+                        <div class="input-group">
+                            <label for="growthRate" style="font-weight: bold;">Annual Growth (%)</label>
+                            <input type="number" id="opportunityGrowthRate" min="0" max="50" value="15" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; width: 100%;" oninput="updateOpportunityCalculation()">
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 20px 0;">
+                        <button class="btn-primary" onclick="calculateMarketOpportunity()" style="padding: 12px 24px; font-size: 1.1em;">
+                            🧮 Calculate Market Opportunity
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Results Display -->
+                <div id="opportunityResults" style="display: none;">
+                    <div class="opportunity-results-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                        <!-- Market Size -->
+                        <div class="opportunity-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
+                            <h4 style="margin: 0 0 15px 0; font-size: 1.2em;">📊 Total Addressable Market</h4>
+                            <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;" id="tamValue">-</div>
+                            <div style="font-size: 1em; opacity: 0.9;" id="tamValueUSD">-</div>
+                            <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;" id="tamDetails">-</div>
+                        </div>
+                        
+                        <!-- Monthly Revenue -->
+                        <div class="opportunity-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 25px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; text-align: center;">
+                            <h4 style="margin: 0 0 15px 0; font-size: 1.2em;">💰 Monthly Revenue Potential</h4>
+                            <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;" id="monthlyRevenue">-</div>
+                            <div style="font-size: 1em; opacity: 0.9;" id="monthlyRevenueUSD">-</div>
+                            <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;" id="monthlyDetails">-</div>
+                        </div>
+                        
+                        <!-- Growth Projection -->
+                        <div class="opportunity-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 25px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; text-align: center;">
+                            <h4 style="margin: 0 0 15px 0; font-size: 1.2em;">📈 3-Year Projection</h4>
+                            <div style="font-size: 2.5em; font-weight: bold; margin: 10px 0;" id="threeYearValue">-</div>
+                            <div style="font-size: 1em; opacity: 0.9;" id="threeYearValueUSD">-</div>
+                            <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.8;" id="threeYearDetails">-</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Market Breakdown -->
+                    <div class="market-breakdown" style="background: #f8fafc; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                        <h4 style="margin: 0 0 20px 0; color: #374151;">🎯 Market Breakdown & Assumptions</h4>
+                        <div id="marketBreakdownContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <!-- Content will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Export Options -->
+                    <div style="text-align: center; margin-top: 25px;">
+                        <button class="btn-success" onclick="exportOpportunityAnalysis()" style="margin-right: 10px;">
+                            📊 Export Analysis
+                        </button>
+                        <button class="btn-warning" onclick="createModelFromOpportunity()">
+                            🚀 Create Revenue Model
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -750,6 +900,18 @@
                         </div>
                     </div>
                     
+                    <!-- Segment Management Section -->
+                    <div class="model-segments-edit" style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+                        <h4 style="margin-top: 0; color: #667eea;">Segments Management</h4>
+                        <div class="segments-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="font-weight: 600;">Current Segments: <span id="editSegmentCount" style="color: #667eea;">0</span></span>
+                            <button type="button" class="btn-success" onclick="addSegmentToModel()" style="background: #22c55e; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">+ Add Segment</button>
+                        </div>
+                        <div id="editModelSegments" class="edit-segments-list" style="max-height: 300px; overflow-y: auto;">
+                            <!-- Segments will be populated here -->
+                        </div>
+                    </div>
+                    
                     <div id="modelEditValidation" style="margin-top: 15px; display: none;"></div>
                 </form>
             </div>
@@ -762,6 +924,38 @@
     </div>
 
     <script>
+        // Tab switching function - defined first for HTML onclick handlers
+        window.switchTab = function(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Find the tab that matches the name
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
+                    (tabName === 'setup' && tab.textContent.includes('Setup')) ||
+                    (tabName === 'projections' && tab.textContent.includes('Projections')) ||
+                    (tabName === 'analysis' && tab.textContent.includes('Analysis')) ||
+                    (tabName === 'demographics' && tab.textContent.includes('Demographics')) ||
+                    (tabName === 'models' && tab.textContent.includes('Saved'))) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Activate the content
+            const contentElement = document.getElementById(tabName);
+            if (contentElement) {
+                contentElement.classList.add('active');
+                
+                // Special handling for demographics tab
+                if (tabName === 'demographics') {
+                    // Show demographic overview by default
+                    window.showDemographicOverview();
+                }
+            }
+        };
+
         // Theme System
         window.currentTheme = 'default';
         
@@ -850,7 +1044,28 @@
         // Load saved theme when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadSavedTheme();
+            updateCurrencyLabels(); // Initialize currency labels on page load
+            
+            // Initialize currency rate system
+            initializeCurrencySystem();
         });
+
+        // Initialize currency rate management system
+        async function initializeCurrencySystem() {
+            console.log('🚀 Initializing currency rate management system...');
+            
+            // Load cached rates first
+            const hasCachedRates = loadExchangeRates();
+            
+            if (!hasCachedRates) {
+                console.log('📊 No cached rates found, fetching initial rates...');
+                // No cached rates, fetch immediately
+                await fetchCurrentExchangeRates();
+            } else {
+                // Check if we need to refresh (done automatically in loadExchangeRates)
+                console.log('✅ Currency rate system initialized with cached data');
+            }
+        }
         
         // Global variables
         window.segments = [];
@@ -866,6 +1081,8 @@
         window.librarySelectedSegments = new Set();
         window.segmentLibrary = [];
         window.activeToasts = []; // Track active undo toasts
+        window.toastHoverCount = 0; // Track how many toasts are being hovered
+        window.repositionPending = false; // Track if repositioning is waiting for hover to end
 
         // Enhanced predefined segments data with categories
         const predefinedSegments = {
@@ -1069,7 +1286,9 @@
                 gap: 15px;
                 min-width: 300px;
                 animation: slideInFromRight 0.3s ease-out;
-                transition: top 0.3s ease-out;
+                transition: top 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.2s ease;
+                will-change: top, transform;
+                pointer-events: auto;
             `;
 
             // Add animation keyframes to document if not already present
@@ -1096,6 +1315,17 @@
                             opacity: 0;
                             transform: translateX(100%);
                         }
+                    }
+                    @keyframes gentleBounce {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-2px); }
+                    }
+                    .toast-hover-state {
+                        transform: scale(1.02) !important;
+                        box-shadow: 0 6px 16px rgba(0,0,0,0.35) !important;
+                    }
+                    .toast-repositioning {
+                        animation: gentleBounce 0.4s ease-in-out;
                     }
                 `;
                 document.head.appendChild(style);
@@ -1146,14 +1376,43 @@
             toastDiv.appendChild(messageSpan);
             toastDiv.appendChild(undoButton);
             toastDiv.appendChild(closeButton);
-            document.body.appendChild(toastDiv);
-
+            
             // Track this toast
             const toastData = {
                 id: toastId,
                 element: toastDiv,
-                timeout: null
+                timeout: null,
+                pausedForHover: false
             };
+            
+            // Add hover event listeners
+            toastDiv.addEventListener('mouseenter', function() {
+                window.toastHoverCount++;
+                this.classList.add('toast-hover-state');
+                // Pause auto-dismiss while hovering
+                if (toastData.timeout) {
+                    clearTimeout(toastData.timeout);
+                    toastData.timeout = null;
+                    toastData.pausedForHover = true;
+                }
+            });
+            
+            toastDiv.addEventListener('mouseleave', function() {
+                window.toastHoverCount = Math.max(0, window.toastHoverCount - 1);
+                this.classList.remove('toast-hover-state');
+                // Resume auto-dismiss after hovering
+                if (toastData.pausedForHover) {
+                    toastData.timeout = setTimeout(() => removeToast(toastId), 3000); // 3 more seconds
+                    toastData.pausedForHover = false;
+                }
+                // Trigger repositioning if it was delayed due to hover
+                if (window.toastHoverCount === 0 && window.repositionPending) {
+                    window.repositionPending = false;
+                    setTimeout(repositionToasts, 100);
+                }
+            });
+            
+            document.body.appendChild(toastDiv);
             
             function removeToast(id) {
                 const toastIndex = window.activeToasts.findIndex(t => t.id === id);
@@ -1181,16 +1440,43 @@
             }
             
             function repositionToasts() {
-                window.activeToasts.forEach((toast, index) => {
-                    const newTop = 20 + (index * 80);
-                    toast.element.style.top = `${newTop}px`;
-                    toast.element.setAttribute('data-toast-index', index);
-                    toast.element.style.zIndex = 1002 + index;
-                });
+                // Don't reposition if any toasts are being hovered
+                if (window.toastHoverCount > 0) {
+                    window.repositionPending = true;
+                    return;
+                }
+                
+                window.repositionPending = false;
+                
+                // Add a small delay to allow users to react to the toast removal
+                setTimeout(() => {
+                    window.activeToasts.forEach((toast, index) => {
+                        const newTop = 20 + (index * 80);
+                        const currentTop = parseInt(toast.element.style.top) || 0;
+                        
+                        // Only reposition if the position actually needs to change
+                        if (currentTop !== newTop) {
+                            // Add repositioning animation class
+                            toast.element.classList.add('toast-repositioning');
+                            
+                            // Stagger the repositioning with a small delay per toast
+                            setTimeout(() => {
+                                toast.element.style.top = `${newTop}px`;
+                                toast.element.setAttribute('data-toast-index', index);
+                                toast.element.style.zIndex = 1002 + index;
+                                
+                                // Remove animation class after animation completes
+                                setTimeout(() => {
+                                    toast.element.classList.remove('toast-repositioning');
+                                }, 400);
+                            }, index * 50); // 50ms stagger between toasts
+                        }
+                    });
+                }, 100); // 100ms delay before starting repositioning
             }
 
-            // Auto-remove after 8 seconds (increased from 5)
-            toastData.timeout = setTimeout(() => removeToast(toastId), 8000);
+            // Auto-remove after 10 seconds (increased for better UX)
+            toastData.timeout = setTimeout(() => removeToast(toastId), 10000);
             window.activeToasts.push(toastData);
         }
 
@@ -1262,7 +1548,7 @@
             const profitMargin = totalGrossProfit > 0 ? (netProfit / totalGrossProfit) * 100 : 0;
             
             if (netProfit < 0) {
-                return `⚠️ Warning: Current configuration will result in negative profit (₹${Math.abs(netProfit).toLocaleString('en-IN')} loss). Consider reducing operating expenses or increasing segment pricing/volume.`;
+                return `⚠️ Warning: Current configuration will result in negative profit (${formatCurrency(Math.abs(netProfit))} loss). Consider reducing operating expenses or increasing segment pricing/volume.`;
             } else if (profitMargin < 10) {
                 return `⚠️ Warning: Low profit margin (${profitMargin.toFixed(1)}%). Consider optimizing costs or pricing.`;
             } else if (profitMargin > 80) {
@@ -1592,6 +1878,7 @@
             document.getElementById('countryExplorerSection').style.display = 'none';
             document.getElementById('countryComparisonSection').style.display = 'none';
             document.getElementById('segmentAnalysisSection').style.display = 'none';
+            document.getElementById('marketOpportunitySection').style.display = 'none';
             
             // Load demographic overview data
             loadDemographicOverview();
@@ -1603,6 +1890,7 @@
             document.getElementById('countryExplorerSection').style.display = 'block';
             document.getElementById('countryComparisonSection').style.display = 'none';
             document.getElementById('segmentAnalysisSection').style.display = 'none';
+            document.getElementById('marketOpportunitySection').style.display = 'none';
         };
 
         window.showCountryComparison = function() {
@@ -1611,6 +1899,7 @@
             document.getElementById('countryExplorerSection').style.display = 'none';
             document.getElementById('countryComparisonSection').style.display = 'block';
             document.getElementById('segmentAnalysisSection').style.display = 'none';
+            document.getElementById('marketOpportunitySection').style.display = 'none';
             
             // Initialize comparison dropdowns
             initializeCountryComparisonDropdowns();
@@ -1622,9 +1911,22 @@
             document.getElementById('countryExplorerSection').style.display = 'none';
             document.getElementById('countryComparisonSection').style.display = 'none';
             document.getElementById('segmentAnalysisSection').style.display = 'block';
+            document.getElementById('marketOpportunitySection').style.display = 'none';
             
             // Load segment analysis
             loadSegmentAnalysis();
+        };
+        
+        window.showMarketOpportunity = function() {
+            setActiveDemographicNav('opportunity');
+            document.getElementById('demographicOverviewSection').style.display = 'none';
+            document.getElementById('countryExplorerSection').style.display = 'none';
+            document.getElementById('countryComparisonSection').style.display = 'none';
+            document.getElementById('segmentAnalysisSection').style.display = 'none';
+            document.getElementById('marketOpportunitySection').style.display = 'block';
+            
+            // Initialize the calculator with default values
+            initializeMarketOpportunityCalculator();
         };
 
         window.loadCountryDetails = function(countryKey) {
@@ -1655,60 +1957,113 @@
             const highEconomicSegments = segments.filter(seg => seg.economicTier === 'high').length;
             const avgUrbanization = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / segments.length : 0;
             
+            // Extract infrastructure data
+            const digitalInfra = countryData.country?.digitalInfrastructure || {};
+            const ageGroups = countryData.country?.ageGroups || {};
+            const smartphonePenetration = digitalInfra.smartphonePenetration?.rate || 0;
+            const internetPenetration = digitalInfra.internetPenetration?.rate || 0;
+            const bankingInfrastructure = digitalInfra.bankingInfrastructure?.bankAccountPenetration || 0;
+            const fiveGUsers = digitalInfra.smartphonePenetration?.by5G?.enabled || 0;
+            const fiveGPercentage = digitalInfra.smartphonePenetration?.by5G?.percentage || 0;
+            
             // Generate country details content dynamically
             const countryDetailsContent = document.getElementById('countryDetailsContent');
             if (countryDetailsContent) {
+                // Generate age groups visualization
+                const ageGroupsHtml = Object.keys(ageGroups).length > 0 ? `
+                    <div class="age-demographics-section" style="margin-top: 30px;">
+                        <h4>👥 Age Demographics</h4>
+                        <div class="age-groups-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin: 20px 0;">
+                            ${Object.entries(ageGroups).map(([ageRange, data]) => `
+                                <div class="age-group-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                                    <div style="font-size: 1.2em; font-weight: bold;">${ageRange}</div>
+                                    <div style="font-size: 0.9em; margin: 5px 0;">${data.population || 0}M</div>
+                                    <div style="font-size: 0.8em; opacity: 0.9;">${data.percentage || 0}%</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : '';
+                
                 countryDetailsContent.innerHTML = `
                     <div class="country-explorer-header">
-                        <h2>${countryName}</h2>
+                        <h2>🇮🇳 ${countryName}</h2>
+                        <p style="color: #666; margin-top: 5px;">Enhanced demographic intelligence and infrastructure analysis</p>
                     </div>
                     
-                    <div class="country-stats-grid">
-                        <div class="country-stat-card">
-                            <h4>${totalPopulation.toFixed(1)}M</h4>
-                            <p>Total Population</p>
+                    <div class="country-overview-tabs" style="display: flex; gap: 10px; margin: 20px 0; border-bottom: 2px solid #e5e7eb;">
+                        <button class="country-tab active" onclick="showCountryTab(this, 'overview')" style="padding: 10px 20px; border: none; background: none; font-weight: 600; border-bottom: 3px solid var(--primary-gradient-start); color: var(--primary-gradient-start);">Overview</button>
+                        <button class="country-tab" onclick="showCountryTab(this, 'infrastructure')" style="padding: 10px 20px; border: none; background: none; font-weight: 600; color: #666;">📱 Infrastructure</button>
+                        <button class="country-tab" onclick="showCountryTab(this, 'segments')" style="padding: 10px 20px; border: none; background: none; font-weight: 600; color: #666;">📊 Segments</button>
+                    </div>
+                    
+                    <div id="country-overview-content" class="country-tab-content">
+                        <div class="country-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                            <div class="country-stat-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <h3 style="margin: 0; font-size: 2em;">${totalPopulation.toFixed(1)}M</h3>
+                                <p style="margin: 10px 0 0 0; opacity: 0.9;">Total Population</p>
+                            </div>
+                            <div class="country-stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <h3 style="margin: 0; font-size: 2em;">${segments.length}</h3>
+                                <p style="margin: 10px 0 0 0; opacity: 0.9;">Demographic Segments</p>
+                            </div>
+                            <div class="country-stat-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <h3 style="margin: 0; font-size: 2em;">${avgAuthRate.toFixed(1)}%</h3>
+                                <p style="margin: 10px 0 0 0; opacity: 0.9;">Authentication Rate</p>
+                            </div>
+                            <div class="country-stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                                <h3 style="margin: 0; font-size: 2em;">${avgDigitalAdoption.toFixed(1)}%</h3>
+                                <p style="margin: 10px 0 0 0; opacity: 0.9;">Digital Adoption</p>
+                            </div>
                         </div>
-                        <div class="country-stat-card">
-                            <h4>${segments.length}</h4>
-                            <p>Demographic Segments</p>
-                        </div>
-                        <div class="country-stat-card">
-                            <h4>${avgAuthRate.toFixed(1)}%</h4>
-                            <p>Avg Authentication Rate</p>
-                        </div>
-                        <div class="country-stat-card">
-                            <h4>${avgDigitalAdoption.toFixed(1)}%</h4>
-                            <p>Avg Digital Adoption</p>
-                        </div>
-                        <div class="country-stat-card">
-                            <h4>${highEconomicSegments}</h4>
-                            <p>High Economic Segments</p>
-                        </div>
-                        <div class="country-stat-card">
-                            <h4>${avgUrbanization.toFixed(1)}%</h4>
-                            <p>Avg Urbanization</p>
+                        ${ageGroupsHtml}
+                    </div>
+                    
+                    <div id="country-infrastructure-content" class="country-tab-content" style="display: none;">
+                        <div class="infrastructure-dashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div class="infra-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: white;">
+                                <h4 style="color: #1f2937; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">📱 Smartphone Infrastructure</h4>
+                                <div style="font-size: 2em; font-weight: bold; color: var(--primary-gradient-start);">${smartphonePenetration ? smartphonePenetration.toFixed(1) + '%' : 'N/A'}</div>
+                                <div style="margin: 10px 0; color: #666; font-size: 0.9em;">Penetration Rate</div>
+                                ${fiveGUsers > 0 ? `<div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; font-size: 0.9em;">🚀 5G Ready: ${(fiveGUsers/1000000).toFixed(1)}M users (${fiveGPercentage.toFixed(1)}%)</div>` : ''}
+                            </div>
+                            
+                            <div class="infra-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: white;">
+                                <h4 style="color: #1f2937; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">🌐 Internet Connectivity</h4>
+                                <div style="font-size: 2em; font-weight: bold; color: var(--primary-gradient-start);">${internetPenetration ? internetPenetration.toFixed(1) + '%' : 'N/A'}</div>
+                                <div style="margin: 10px 0; color: #666; font-size: 0.9em;">Internet Penetration</div>
+                                ${digitalInfra.internetPenetration?.mobileInternet ? `<div style="margin-top: 10px; color: #059669; font-size: 0.85em;">Mobile: ${(digitalInfra.internetPenetration.mobileInternet/1000000).toFixed(0)}M users</div>` : ''}
+                                ${digitalInfra.internetPenetration?.broadbandUsers ? `<div style="color: #0ea5e9; font-size: 0.85em;">Broadband: ${(digitalInfra.internetPenetration.broadbandUsers/1000000).toFixed(0)}M users</div>` : ''}
+                            </div>
+                            
+                            <div class="infra-card" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; background: white;">
+                                <h4 style="color: #1f2937; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px;">🏦 Banking Infrastructure</h4>
+                                <div style="font-size: 2em; font-weight: bold; color: var(--primary-gradient-start);">${bankingInfrastructure ? bankingInfrastructure.toFixed(1) + '%' : 'N/A'}</div>
+                                <div style="margin: 10px 0; color: #666; font-size: 0.9em;">Bank Account Penetration</div>
+                                ${digitalInfra.bankingInfrastructure?.mobileWalletUsers ? `<div style="margin-top: 10px; color: #7c3aed; font-size: 0.85em;">Mobile Wallets: ${(digitalInfra.bankingInfrastructure.mobileWalletUsers/1000000).toFixed(0)}M</div>` : ''}
+                                ${digitalInfra.bankingInfrastructure?.upiUsers ? `<div style="color: #ea580c; font-size: 0.85em;">UPI Users: ${(digitalInfra.bankingInfrastructure.upiUsers/1000000).toFixed(0)}M</div>` : ''}
+                            </div>
                         </div>
                     </div>
                     
-                    <div style="margin-top: 30px;">
-                        <h4>Demographic Segments</h4>
+                    <div id="country-segments-content" class="country-tab-content" style="display: none;">
                         <div style="overflow-x: auto;">
-                            <table class="country-segments-table">
+                            <table class="country-segments-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
                                 <thead>
-                                    <tr>
-                                        <th>Segment Name</th>
-                                        <th>Population (M)</th>
-                                        <th>Authentication Rate (%)</th>
-                                        <th>Authentication Frequency</th>
-                                        <th>Digital Adoption (%)</th>
-                                        <th>Economic Tier</th>
-                                        <th>Urbanization (%)</th>
-                                        <th>Growth Rate (%)</th>
-                                        <th>Monthly Volume</th>
-                                        <th>Revenue Potential</th>
+                                    <tr style="background: #f3f4f6;">
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: left;">Segment Name</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Population (M)</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Auth %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Auth Freq</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Digital %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: center;">Economic Tier</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Urban %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Growth %</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Monthly Volume</th>
+                                        <th style="border: 1px solid #d1d5db; padding: 12px; text-align: right;">Revenue Potential</th>
                                     </tr>
                                 </thead>
-                                <tbody id="countrySegmentsTableBody">
+                                <tbody>
                                     ${generateSegmentsTableRows(segments)}
                                 </tbody>
                             </table>
@@ -1720,6 +2075,32 @@
             } catch (error) {
                 console.error('Error loading country details:', error);
                 alert('Error loading country demographic data. Please try again.');
+            }
+        };
+
+        // Tab switching function for country details
+        window.showCountryTab = function(button, tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.country-tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.style.borderBottom = 'none';
+                tab.style.color = '#666';
+            });
+            
+            // Hide all tab content
+            document.querySelectorAll('.country-tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // Activate clicked tab
+            button.classList.add('active');
+            button.style.borderBottom = '3px solid var(--primary-gradient-start)';
+            button.style.color = 'var(--primary-gradient-start)';
+            
+            // Show corresponding content
+            const content = document.getElementById(`country-${tabName}-content`);
+            if (content) {
+                content.style.display = 'block';
             }
         };
 
@@ -1762,7 +2143,9 @@
                         { id: 'totalPopulationOverview', value: 'Loading...' },
                         { id: 'avgAuthRateOverview', value: 'Loading...' },
                         { id: 'avgPensionRateOverview', value: 'Loading...' },
-                        { id: 'avgDigitalAdoptionOverview', value: 'Loading...' }
+                        { id: 'avgDigitalAdoptionOverview', value: 'Loading...' },
+                        { id: 'avgSmartphoneOverview', value: 'Loading...' },
+                        { id: 'avgInternetOverview', value: 'Loading...' }
                     ];
                     
                     placeholders.forEach(placeholder => {
@@ -1773,7 +2156,7 @@
                     // Show loading message in table
                     const tbody = document.getElementById('countrySummaryTableBody');
                     if (tbody) {
-                        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #666;">Loading demographic data...</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px; color: #666;">Loading demographic data...</td></tr>';
                     }
                     
                     return;
@@ -1786,6 +2169,10 @@
             let weightedAuthRate = 0;
             let weightedPensionRate = 0;
             let weightedDigitalAdoption = 0;
+            let weightedSmartphonePenetration = 0;
+            let weightedInternetPenetration = 0;
+            let weightedBankingInfrastructure = 0;
+            let total5GReady = 0;
             let countryCount = 0;
             
             const regionData = [];
@@ -1804,11 +2191,22 @@
                 const highEconomicSegments = segments.filter(seg => seg.economicTier === 'high').length;
                 const avgUrbanization = segments.length > 0 ? segments.reduce((sum, seg) => sum + (seg.urbanization || 0), 0) / segments.length : 0;
                 
+                // Extract infrastructure data from enhanced demographics
+                const digitalInfra = countryData.country?.digitalInfrastructure || {};
+                const smartphonePenetration = digitalInfra.smartphonePenetration?.rate || 0;
+                const internetPenetration = digitalInfra.internetPenetration?.rate || 0;
+                const bankingInfrastructure = digitalInfra.bankingInfrastructure?.bankAccountPenetration || 0;
+                const fiveGReady = digitalInfra.smartphonePenetration?.by5G?.enabled || 0;
+                
                 totalPopulation += countryPopulation;
                 totalSegments += countrySegmentCount;
                 weightedAuthRate += countryAvgAuthRate * countryPopulation;
                 weightedPensionRate += countryAvgPensionRate * countryPopulation;
                 weightedDigitalAdoption += countryAvgDigitalAdoption * countryPopulation;
+                weightedSmartphonePenetration += smartphonePenetration * countryPopulation;
+                weightedInternetPenetration += internetPenetration * countryPopulation;
+                weightedBankingInfrastructure += bankingInfrastructure * countryPopulation;
+                total5GReady += fiveGReady / 1000000; // Convert to millions
                 countryCount++;
                 
                 regionData.push({
@@ -1818,6 +2216,9 @@
                     segments: countrySegmentCount,
                     authRate: countryAvgAuthRate,
                     digitalAdoption: countryAvgDigitalAdoption,
+                    smartphonePenetration: smartphonePenetration,
+                    internetPenetration: internetPenetration,
+                    bankingInfrastructure: bankingInfrastructure,
                     highEconomicSegments,
                     urbanization: avgUrbanization
                 });
@@ -1827,6 +2228,9 @@
             const finalWeightedAuthRate = totalPopulation > 0 ? weightedAuthRate / totalPopulation : 0;
             const finalWeightedPensionRate = totalPopulation > 0 ? weightedPensionRate / totalPopulation : 0;
             const finalWeightedDigitalAdoption = totalPopulation > 0 ? weightedDigitalAdoption / totalPopulation : 0;
+            const finalWeightedSmartphonePenetration = totalPopulation > 0 ? weightedSmartphonePenetration / totalPopulation : 0;
+            const finalWeightedInternetPenetration = totalPopulation > 0 ? weightedInternetPenetration / totalPopulation : 0;
+            const finalWeightedBankingInfrastructure = totalPopulation > 0 ? weightedBankingInfrastructure / totalPopulation : 0;
             
             // Update overview cards with correct element IDs
             const totalCountriesEl = document.getElementById('totalCountriesOverview');
@@ -1835,6 +2239,10 @@
             const avgAuthRateEl = document.getElementById('avgAuthRateOverview');
             const avgPensionRateEl = document.getElementById('avgPensionRateOverview');
             const avgDigitalAdoptionEl = document.getElementById('avgDigitalAdoptionOverview');
+            const avgSmartphoneEl = document.getElementById('avgSmartphoneOverview');
+            const avgInternetEl = document.getElementById('avgInternetOverview');
+            const avg5GReadyEl = document.getElementById('avg5GReadyOverview');
+            const avgBankingEl = document.getElementById('avgBankingOverview');
             
             if (totalCountriesEl) totalCountriesEl.textContent = countryCount;
             if (totalSegmentsEl) totalSegmentsEl.textContent = totalSegments;
@@ -1842,9 +2250,16 @@
             if (avgAuthRateEl) avgAuthRateEl.textContent = `${finalWeightedAuthRate.toFixed(1)}`;
             if (avgPensionRateEl) avgPensionRateEl.textContent = `${finalWeightedPensionRate.toFixed(1)}`;
             if (avgDigitalAdoptionEl) avgDigitalAdoptionEl.textContent = `${finalWeightedDigitalAdoption.toFixed(1)}`;
+            if (avgSmartphoneEl) avgSmartphoneEl.textContent = `${finalWeightedSmartphonePenetration.toFixed(1)}`;
+            if (avgInternetEl) avgInternetEl.textContent = `${finalWeightedInternetPenetration.toFixed(1)}`;
+            if (avg5GReadyEl) avg5GReadyEl.textContent = `${total5GReady.toFixed(1)}`;
+            if (avgBankingEl) avgBankingEl.textContent = `${finalWeightedBankingInfrastructure.toFixed(1)}`;
             
             // Render country summary table
             renderCountrySummaryTable(regionData);
+            
+            // Update currency status display
+            updateCurrencyStatusDisplay();
             
             } catch (error) {
                 console.error('Error loading demographic overview:', error);
@@ -1865,17 +2280,26 @@
                 return;
             }
             
-            const rows = regionData.map(country => `
-                <tr onclick="loadCountryDetails('${country.countryKey}'); showCountryExplorer();" style="cursor: pointer;">
-                    <td>${country.countryName}</td>
-                    <td>${country.population.toFixed(1)}M</td>
-                    <td>${country.segments}</td>
-                    <td>${country.authRate.toFixed(1)}%</td>
-                    <td>${country.digitalAdoption.toFixed(1)}%</td>
-                    <td>${country.highEconomicSegments}</td>
-                    <td>${country.urbanization.toFixed(1)}%</td>
+            const rows = regionData.map(country => {
+                const smartphoneText = country.smartphonePenetration ? `${country.smartphonePenetration.toFixed(1)}%` : 'N/A';
+                const internetText = country.internetPenetration ? `${country.internetPenetration.toFixed(1)}%` : 'N/A';
+                const bankingText = country.bankingInfrastructure ? `${country.bankingInfrastructure.toFixed(1)}%` : 'N/A';
+                
+                return `
+                <tr onclick="loadCountryDetails('${country.countryKey}'); showCountryExplorer();" style="cursor: pointer; transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='#f8f9fa'" onmouseout="this.style.backgroundColor=''">
+                    <td style="border: 1px solid #d1d5db; padding: 8px; font-weight: 500;">${country.countryName}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">${country.population.toFixed(1)}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">${country.segments}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">${country.authRate.toFixed(1)}%</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: #1f2937;">${smartphoneText}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: #1f2937;">${internetText}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right; color: #1f2937;">${bankingText}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: right;">${country.digitalAdoption.toFixed(1)}%</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: center;">${country.highEconomicSegments}</td>
+                    <td style="border: 1px solid #d1d5db; padding: 8px; text-align: center;"><button class="btn-small btn-primary" onclick="event.stopPropagation(); loadCountryDetails('${country.countryKey}'); showCountryExplorer();">View</button></td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
             
             tbody.innerHTML = rows;
         }
@@ -2219,6 +2643,254 @@
             showSuccessMessage('Demographic data exported successfully!');
         };
 
+        // ==================== MARKET OPPORTUNITY CALCULATOR ====================
+        
+        // Initialize market opportunity calculator
+        function initializeMarketOpportunityCalculator() {
+            // Set default values and update labels
+            window.updateOpportunityCalculation();
+        }
+        
+        // Update opportunity calculation based on current inputs
+        window.updateOpportunityCalculation = function() {
+            // This is called when inputs change, but calculation happens when button is clicked
+            const country = document.getElementById('opportunityCountry').value;
+            const countryData = window.externalDemographicData?.[country] || {};
+            
+            // Update price label with currency
+            const currencySymbol = countryData.country?.currencySymbol || '₹';
+            const priceLabel = document.querySelector('label[for="pricePerAuth"]');
+            if (priceLabel) {
+                priceLabel.textContent = `Price per Transaction (${currencySymbol})`;
+            }
+        }
+        
+        // Calculate market opportunity
+        window.calculateMarketOpportunity = function() {
+            const country = document.getElementById('opportunityCountry').value;
+            const serviceType = document.getElementById('serviceType').value;
+            const marketPenetration = parseFloat(document.getElementById('marketPenetration').value) || 25;
+            const pricePerAuth = parseFloat(document.getElementById('pricePerAuth').value) || 1.50;
+            const authFrequency = parseFloat(document.getElementById('authFrequency').value) || 2.0;
+            const growthRate = parseFloat(document.getElementById('opportunityGrowthRate').value) || 15;
+            
+            try {
+                const countryData = window.externalDemographicData?.[country] || {};
+                const segments = countryData.demographicSegments || [];
+                
+                if (segments.length === 0) {
+                    showErrorMessage('No demographic data available for the selected country.');
+                    return;
+                }
+                
+                // Calculate total addressable population
+                const totalPopulation = segments.reduce((sum, seg) => sum + (seg.population || 0), 0) * 1000000; // Convert to actual count
+                
+                // Service-specific calculations
+                let serviceMultiplier = 1.0;
+                let baseAdoptionRate = marketPenetration / 100;
+                
+                switch(serviceType) {
+                    case 'pension':
+                        serviceMultiplier = segments.reduce((sum, seg) => sum + (seg.pensionPct || 0), 0) / segments.length / 100;
+                        break;
+                    case 'authentication':
+                        serviceMultiplier = segments.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / segments.length / 100;
+                        break;
+                    case 'financial':
+                        serviceMultiplier = segments.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / segments.length / 100 * 0.6; // Assume 60% of digital users use financial services
+                        break;
+                    case 'government':
+                        serviceMultiplier = segments.reduce((sum, seg) => sum + (seg.authPct || 0), 0) / segments.length / 100 * 0.8;
+                        break;
+                    case 'healthcare':
+                        serviceMultiplier = 0.7; // Assume 70% need healthcare services
+                        break;
+                    case 'ecommerce':
+                        serviceMultiplier = segments.reduce((sum, seg) => sum + (seg.digitalAdoption || 0), 0) / segments.length / 100 * 0.4;
+                        break;
+                }
+                
+                // Calculate market metrics
+                const addressablePopulation = Math.round(totalPopulation * serviceMultiplier * baseAdoptionRate);
+                const monthlyTransactions = addressablePopulation * authFrequency;
+                const monthlyRevenue = monthlyTransactions * pricePerAuth;
+                const annualRevenue = monthlyRevenue * 12;
+                const threeYearRevenue = annualRevenue * (1 + (growthRate / 100)) ** 2; // Compound growth over 3 years
+                
+                // Get currency info
+                const currencySymbol = countryData.country?.currencySymbol || '₹';
+                const exchangeRate = countryData.country?.exchangeRate || 83.5;
+                
+                // Display results
+                displayOpportunityResults({
+                    addressablePopulation,
+                    monthlyTransactions,
+                    monthlyRevenue,
+                    annualRevenue,
+                    threeYearRevenue,
+                    currencySymbol,
+                    exchangeRate,
+                    country,
+                    serviceType,
+                    marketPenetration,
+                    pricePerAuth,
+                    authFrequency,
+                    growthRate,
+                    serviceMultiplier,
+                    totalPopulation,
+                    segments
+                });
+                
+                showSuccessMessage('Market opportunity calculated successfully!');
+                
+            } catch (error) {
+                console.error('Error calculating market opportunity:', error);
+                showErrorMessage('Error calculating market opportunity. Please check your inputs and try again.');
+            }
+        };
+        
+        // Display opportunity results
+        function displayOpportunityResults(data) {
+            // Show results section
+            document.getElementById('opportunityResults').style.display = 'block';
+            
+            // Update TAM (Total Addressable Market)
+            document.getElementById('tamValue').textContent = `${data.currencySymbol}${data.annualRevenue.toLocaleString('en-IN')}`;
+            document.getElementById('tamValueUSD').textContent = `$${(data.annualRevenue / data.exchangeRate).toLocaleString('en-US')} USD`;
+            document.getElementById('tamDetails').textContent = `${data.addressablePopulation.toLocaleString()} target users`;
+            
+            // Update Monthly Revenue
+            document.getElementById('monthlyRevenue').textContent = `${data.currencySymbol}${data.monthlyRevenue.toLocaleString('en-IN')}`;
+            document.getElementById('monthlyRevenueUSD').textContent = `$${(data.monthlyRevenue / data.exchangeRate).toLocaleString('en-US')} USD`;
+            document.getElementById('monthlyDetails').textContent = `${data.monthlyTransactions.toLocaleString()} transactions/month`;
+            
+            // Update 3-Year Projection
+            document.getElementById('threeYearValue').textContent = `${data.currencySymbol}${data.threeYearRevenue.toLocaleString('en-IN')}`;
+            document.getElementById('threeYearValueUSD').textContent = `$${(data.threeYearRevenue / data.exchangeRate).toLocaleString('en-US')} USD`;
+            document.getElementById('threeYearDetails').textContent = `${data.growthRate}% annual growth`;
+            
+            // Update market breakdown
+            const breakdownContent = document.getElementById('marketBreakdownContent');
+            breakdownContent.innerHTML = `
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <h5 style="margin: 0 0 10px 0; color: #374151;">📊 Population Analysis</h5>
+                    <div style="font-size: 0.9em; color: #6b7280;">
+                        <div>Total Population: ${(data.totalPopulation / 1000000).toFixed(1)}M</div>
+                        <div>Service Adoption: ${(data.serviceMultiplier * 100).toFixed(1)}%</div>
+                        <div>Target Penetration: ${data.marketPenetration}%</div>
+                        <div>Addressable Users: ${data.addressablePopulation.toLocaleString()}</div>
+                    </div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <h5 style="margin: 0 0 10px 0; color: #374151;">💰 Revenue Model</h5>
+                    <div style="font-size: 0.9em; color: #6b7280;">
+                        <div>Price: ${data.currencySymbol}${data.pricePerAuth}/transaction</div>
+                        <div>Frequency: ${data.authFrequency}x/month</div>
+                        <div>Monthly Volume: ${data.monthlyTransactions.toLocaleString()}</div>
+                        <div>Growth Rate: ${data.growthRate}%/year</div>
+                    </div>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <h5 style="margin: 0 0 10px 0; color: #374151;">🎯 Market Context</h5>
+                    <div style="font-size: 0.9em; color: #6b7280;">
+                        <div>Country: ${data.country.charAt(0).toUpperCase() + data.country.slice(1)}</div>
+                        <div>Service: ${data.serviceType.charAt(0).toUpperCase() + data.serviceType.slice(1)}</div>
+                        <div>Segments: ${data.segments.length}</div>
+                        <div>Currency: ${data.currencySymbol} (${data.exchangeRate} per USD)</div>
+                    </div>
+                </div>
+            `;
+            
+            // Scroll to results
+            document.getElementById('opportunityResults').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Export opportunity analysis
+        window.exportOpportunityAnalysis = function() {
+            const country = document.getElementById('opportunityCountry').value;
+            const serviceType = document.getElementById('serviceType').value;
+            const countryData = window.externalDemographicData?.[country] || {};
+            const currencySymbol = countryData.country?.currencySymbol || '₹';
+            
+            // Get displayed values
+            const tamValue = document.getElementById('tamValue').textContent;
+            const monthlyRevenue = document.getElementById('monthlyRevenue').textContent;
+            const threeYearValue = document.getElementById('threeYearValue').textContent;
+            
+            const analysisData = {
+                country: country.charAt(0).toUpperCase() + country.slice(1),
+                serviceType: serviceType.charAt(0).toUpperCase() + serviceType.slice(1),
+                marketPenetration: document.getElementById('marketPenetration').value + '%',
+                pricePerTransaction: currencySymbol + document.getElementById('pricePerAuth').value,
+                authFrequency: document.getElementById('authFrequency').value + 'x/month',
+                growthRate: document.getElementById('opportunityGrowthRate').value + '%/year',
+                totalAddressableMarket: tamValue,
+                monthlyRevenuePotential: monthlyRevenue,
+                threeYearProjection: threeYearValue,
+                analysisDate: new Date().toISOString().split('T')[0],
+                exportedBy: 'APAC Market Opportunity Calculator'
+            };
+            
+            const jsonString = JSON.stringify(analysisData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `market-opportunity-${country}-${serviceType}-${new Date().getTime()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showSuccessMessage('Market opportunity analysis exported successfully!');
+        };
+        
+        // Create revenue model from opportunity analysis
+        window.createModelFromOpportunity = function() {
+            const country = document.getElementById('opportunityCountry').value;
+            const serviceType = document.getElementById('serviceType').value;
+            const marketPenetration = parseFloat(document.getElementById('marketPenetration').value) || 25;
+            const pricePerAuth = parseFloat(document.getElementById('pricePerAuth').value) || 1.50;
+            const authFrequency = parseFloat(document.getElementById('authFrequency').value) || 2.0;
+            const growthRate = parseFloat(document.getElementById('opportunityGrowthRate').value) || 15;
+            
+            // Get calculated values from displayed results
+            const monthlyTransactions = parseFloat(document.getElementById('monthlyDetails').textContent.replace(/[^0-9]/g, ''));
+            
+            if (!monthlyTransactions) {
+                showErrorMessage('Please calculate market opportunity first.');
+                return;
+            }
+            
+            // Clear existing segments and create new one based on opportunity
+            window.segments = [{
+                id: Date.now() + Math.random(),
+                name: `${serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} - ${country.charAt(0).toUpperCase() + country.slice(1)}`,
+                type: 'sku',
+                pricePerTransaction: pricePerAuth,
+                costPerTransaction: Math.round(pricePerAuth * 0.25 * 100) / 100, // Assume 25% cost ratio
+                monthlyVolume: monthlyTransactions,
+                volumeGrowth: growthRate,
+                category: serviceType,
+                notes: `Market opportunity model: ${marketPenetration}% penetration, ${authFrequency}x frequency`,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            }];
+            
+            // Update segments display
+            window.renderSegments();
+            updateSegmentCount();
+            
+            // Switch to setup tab for further editing
+            switchTab('setup');
+            
+            showSuccessMessage(`Revenue model created with ${monthlyTransactions.toLocaleString()} monthly transactions!`);
+        };
+        
         // Function to create Telangana-only model
         window.createTelanganaModel = function() {
             // Clear existing segments
@@ -2407,15 +3079,15 @@
                                 <div class="segment-stats">
                                     <div class="segment-stat">
                                         <span class="label">Monthly Revenue:</span>
-                                        <span class="value">₹${monthlyRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})} ($${(monthlyRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                                        <span class="value">${formatCurrency(monthlyRevenue, null, true)}</span>
                                     </div>
                                     <div class="segment-stat">
                                         <span class="label">Monthly Cost:</span>
-                                        <span class="value">₹${monthlyCost.toLocaleString('en-IN', {maximumFractionDigits: 0})} ($${(monthlyCost/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                                        <span class="value">${formatCurrency(monthlyCost, null, true)}</span>
                                     </div>
                                     <div class="segment-stat">
                                         <span class="label">Monthly Profit:</span>
-                                        <span class="value">₹${monthlyProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})} ($${(monthlyProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})})</span>
+                                        <span class="value">${formatCurrency(monthlyProfit, null, true)}</span>
                                     </div>
                                     <div class="segment-stat">
                                         <span class="label">Margin:</span>
@@ -2943,37 +3615,6 @@
             window.addOrUpdateSegment();
         }
 
-        function switchTab(tabName) {
-            // Remove active class from all tabs and content
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            // Find the tab that matches the name
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                if (tab.textContent.toLowerCase().includes(tabName.toLowerCase()) || 
-                    (tabName === 'setup' && tab.textContent.includes('Setup')) ||
-                    (tabName === 'projections' && tab.textContent.includes('Projections')) ||
-                    (tabName === 'analysis' && tab.textContent.includes('Analysis')) ||
-                    (tabName === 'demographics' && tab.textContent.includes('Demographics')) ||
-                    (tabName === 'models' && tab.textContent.includes('Saved'))) {
-                    tab.classList.add('active');
-                }
-            });
-            
-            // Activate the content
-            const contentElement = document.getElementById(tabName);
-            if (contentElement) {
-                contentElement.classList.add('active');
-                
-                // Special handling for demographics tab
-                if (tabName === 'demographics') {
-                    // Show demographic overview by default
-                    window.showDemographicOverview();
-                }
-            }
-        }
-
         function setView(view) {
             window.currentView = view;
             document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
@@ -3099,6 +3740,9 @@
             // Switch to projections tab and display results
             switchTab('projections');
             displayResults();
+            
+            // Refresh analysis tab data for the latest projections
+            refreshAnalysisData();
         }
 
         function displayResults() {
@@ -3118,6 +3762,77 @@
             
             updateChart();
         }
+        
+        // Refresh analysis tab data after projections are calculated
+        function refreshAnalysisData() {
+            try {
+                console.log('🔄 Refreshing analysis tab data with latest projections...');
+                
+                // Refresh demographic insights with current country data
+                if (typeof refreshDemographicInsights === 'function') {
+                    refreshDemographicInsights();
+                }
+                
+                // Update revenue opportunity with latest projection data
+                updateRevenueOpportunity();
+                
+                // Update growth potential metrics
+                updateGrowthPotentialMetrics();
+                
+                console.log('✅ Analysis tab data refreshed successfully');
+                
+            } catch (error) {
+                console.error('Error refreshing analysis data:', error);
+            }
+        }
+        
+        // Update revenue opportunity based on projection data
+        function updateRevenueOpportunity() {
+            if (!window.projectionData || window.projectionData.length === 0) {
+                return;
+            }
+            
+            // Calculate total revenue from projections
+            const totalRevenue = window.projectionData.reduce((sum, month) => sum + month.revenue, 0);
+            const averageMonthlyRevenue = totalRevenue / window.projectionData.length;
+            
+            // Update revenue opportunity display
+            const revenueOpportunityElement = document.getElementById('revenueOpportunity');
+            if (revenueOpportunityElement) {
+                const currencySymbol = getCurrentCurrencySymbol();
+                const formattedRevenue = `${currencySymbol}${(totalRevenue / 10000000).toFixed(1)}Cr`;
+                revenueOpportunityElement.textContent = formattedRevenue;
+            }
+        }
+        
+        // Update growth potential metrics based on segments and projections
+        function updateGrowthPotentialMetrics() {
+            if (!window.segments || window.segments.length === 0) {
+                return;
+            }
+            
+            // Calculate average growth rate from segments
+            const totalGrowthRate = window.segments.reduce((sum, segment) => {
+                return sum + (segment.volumeGrowth || 5);
+            }, 0);
+            const avgGrowthRate = (totalGrowthRate / window.segments.length).toFixed(1);
+            
+            // Count fast-growing segments (>10% growth)
+            const fastGrowingSegments = window.segments.filter(segment => 
+                (segment.volumeGrowth || 5) > 10
+            ).length;
+            
+            // Update display elements
+            const avgGrowthRateElement = document.getElementById('avgGrowthRate');
+            if (avgGrowthRateElement) {
+                avgGrowthRateElement.textContent = avgGrowthRate;
+            }
+            
+            const fastGrowingSegmentsElement = document.getElementById('fastGrowingSegments');
+            if (fastGrowingSegmentsElement) {
+                fastGrowingSegmentsElement.textContent = fastGrowingSegments;
+            }
+        }
 
         function displayConsolidatedResults() {
             const tableData = window.currentTableData || window.projectionData;
@@ -3136,17 +3851,17 @@
             document.getElementById('summaryCards').innerHTML = `
                 <div class="summary-card">
                     <h3>Total Revenue</h3>
-                    <div class="value">₹${totalRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div class="value">${formatCurrency(totalRevenue)}</div>
                     <div style="font-size: 1em; opacity: 0.9;">$${(totalRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
                 </div>
                 <div class="summary-card">
                     <h3>Total Net Profit</h3>
-                    <div class="value">₹${totalProfit.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div class="value">${formatCurrency(totalProfit)}</div>
                     <div style="font-size: 1em; opacity: 0.9;">$${(totalProfit/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
                 </div>
                 <div class="summary-card">
                     <h3>Avg ${periodLabel} Revenue</h3>
-                    <div class="value">₹${avgPeriodRevenue.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+                    <div class="value">${formatCurrency(avgPeriodRevenue)}</div>
                     <div style="font-size: 1em; opacity: 0.9;">$${(avgPeriodRevenue/usdRate).toLocaleString('en-US', {maximumFractionDigits: 0})}</div>
                 </div>
                 <div class="summary-card">
@@ -3155,6 +3870,15 @@
                     <div style="font-size: 0.9em; opacity: 0.9;">Exchange Rate: ₹${usdRate}/USD</div>
                 </div>
             `;
+            
+            // Add currency impact analysis
+            const currencyImpact = generateCurrencyImpactSummary(tableData);
+            if (currencyImpact) {
+                const summaryCardsContainer = document.getElementById('summaryCards');
+                if (summaryCardsContainer) {
+                    summaryCardsContainer.insertAdjacentHTML('afterend', currencyImpact);
+                }
+            }
             
             displayConsolidatedTable();
             
@@ -4458,6 +5182,450 @@
         window.currentCountry = 'india';
         window.currentCountryConfig = null;
 
+        // Currency formatting function
+        function formatCurrency(amount, countryKey = null, showUSD = false) {
+            // Get currency info from current country or specified country
+            let currencySymbol = '₹';
+            let currencyCode = 'INR';
+            let exchangeRate = 83.5;
+            
+            if (countryKey) {
+                const demographicData = window.externalDemographicData || {};
+                const countryData = demographicData[countryKey];
+                if (countryData && countryData.country) {
+                    currencySymbol = countryData.country.currencySymbol || '₹';
+                    currencyCode = countryData.country.currency || 'INR';
+                    exchangeRate = countryData.country.exchangeRate || 83.5;
+                }
+            } else if (window.currentCountryConfig) {
+                currencySymbol = window.currentCountryConfig.currencySymbol || '₹';
+                currencyCode = window.currentCountryConfig.currency || 'INR';
+                exchangeRate = window.currentCountryConfig.exchangeRate || 83.5;
+            } else {
+                // Try to get from external demographic data for current country
+                const demographicData = window.externalDemographicData || {};
+                const currentCountryData = demographicData[window.currentCountry];
+                if (currentCountryData && currentCountryData.country) {
+                    currencySymbol = currentCountryData.country.currencySymbol || '₹';
+                    currencyCode = currentCountryData.country.currency || 'INR';
+                    exchangeRate = currentCountryData.country.exchangeRate || 83.5;
+                }
+            }
+            
+            const formattedAmount = Math.round(amount).toLocaleString('en-IN', {maximumFractionDigits: 0});
+            const result = `${currencySymbol}${formattedAmount}`;
+            
+            if (showUSD && currencyCode !== 'USD') {
+                const usdAmount = (amount / exchangeRate).toLocaleString('en-US', {maximumFractionDigits: 0});
+                return `${result} ($${usdAmount})`;
+            }
+            
+            return result;
+        }
+
+        // Get current currency symbol
+        function getCurrentCurrencySymbol() {
+            if (window.currentCountryConfig) {
+                return window.currentCountryConfig.currencySymbol || '₹';
+            }
+            
+            const demographicData = window.externalDemographicData || {};
+            const currentCountryData = demographicData[window.currentCountry];
+            if (currentCountryData && currentCountryData.country) {
+                return currentCountryData.country.currencySymbol || '₹';
+            }
+            
+            return '₹';
+        }
+
+        // Update currency labels throughout the interface
+        function updateCurrencyLabels() {
+            const currencySymbol = getCurrentCurrencySymbol();
+            
+            // Update form labels
+            const labels = [
+                { id: 'startRevenue', text: `Base Monthly Revenue (${currencySymbol})` },
+                { id: 'operatingExpenses', text: `Base Operating Expenses (${currencySymbol})` },
+                { id: 'pricePerTransaction', text: `Price/Transaction (${currencySymbol})` },
+                { id: 'costPerTransaction', text: `Cost/Transaction (${currencySymbol})` },
+                { id: 'editSegmentPrice', text: `Price per Transaction (${currencySymbol})` },
+                { id: 'editSegmentCost', text: `Cost per Transaction (${currencySymbol})` },
+                { id: 'editOperatingExpenses', text: `Operating Expenses (${currencySymbol})` }
+            ];
+            
+            labels.forEach(label => {
+                const labelElement = document.querySelector(`label[for="${label.id}"]`);
+                if (labelElement) {
+                    labelElement.textContent = label.text;
+                }
+            });
+        }
+
+        // ==================== CURRENCY RATE MANAGEMENT SYSTEM ====================
+        
+        // Global currency rate storage
+        window.currencyRates = {
+            current: {},
+            historical: [],
+            lastUpdated: null,
+            baseCurrency: 'USD'
+        };
+
+        // APAC currencies to track
+        const APAC_CURRENCIES = {
+            'INR': { name: 'Indian Rupee', symbol: '₹', country: 'india' },
+            'SGD': { name: 'Singapore Dollar', symbol: 'S$', country: 'singapore' },
+            'AUD': { name: 'Australian Dollar', symbol: 'A$', country: 'australia' },
+            'JPY': { name: 'Japanese Yen', symbol: '¥', country: 'japan' },
+            'KRW': { name: 'South Korean Won', symbol: '₩', country: 'south_korea' },
+            'THB': { name: 'Thai Baht', symbol: '฿', country: 'thailand' },
+            'IDR': { name: 'Indonesian Rupiah', symbol: 'Rp', country: 'indonesia' },
+            'PHP': { name: 'Philippine Peso', symbol: '₱', country: 'philippines' }
+        };
+
+        // Fetch current exchange rates from a free API
+        async function fetchCurrentExchangeRates() {
+            try {
+                console.log('🔄 Fetching current exchange rates...');
+                
+                // Using exchangerate-api.com (free tier allows 1,500 requests/month)
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                
+                if (!response.ok) {
+                    throw new Error(`Exchange rate API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const timestamp = new Date().toISOString();
+                
+                // Extract APAC currency rates
+                const apacRates = {};
+                Object.keys(APAC_CURRENCIES).forEach(currency => {
+                    if (data.rates[currency]) {
+                        apacRates[currency] = {
+                            rate: data.rates[currency],
+                            lastUpdated: timestamp,
+                            source: 'exchangerate-api.com'
+                        };
+                    }
+                });
+                
+                // Store current rates
+                window.currencyRates.current = apacRates;
+                window.currencyRates.lastUpdated = timestamp;
+                
+                // Add to historical data
+                addHistoricalRateEntry(apacRates, timestamp);
+                
+                // Save to localStorage
+                saveExchangeRates();
+                
+                console.log('✅ Exchange rates updated successfully:', apacRates);
+                showSuccessMessage(`Currency rates updated! ${Object.keys(apacRates).length} APAC currencies refreshed.`);
+                
+                // Update demographic data with new rates
+                updateDemographicDataWithRates();
+                
+                return apacRates;
+                
+            } catch (error) {
+                console.error('❌ Failed to fetch exchange rates:', error);
+                showWarningMessage('Unable to fetch live currency rates. Using cached/default rates.');
+                
+                // Fallback to default rates if API fails
+                return getDefaultExchangeRates();
+            }
+        }
+
+        // Add entry to historical rates
+        function addHistoricalRateEntry(rates, timestamp) {
+            const entry = {
+                timestamp: timestamp,
+                date: new Date(timestamp).toDateString(),
+                rates: { ...rates }
+            };
+            
+            // Keep only last 30 days of historical data
+            window.currencyRates.historical.push(entry);
+            window.currencyRates.historical = window.currencyRates.historical.slice(-30);
+        }
+
+        // Get default/fallback exchange rates
+        function getDefaultExchangeRates() {
+            const defaultRates = {
+                'INR': { rate: 83.5, lastUpdated: new Date().toISOString(), source: 'default' },
+                'SGD': { rate: 1.35, lastUpdated: new Date().toISOString(), source: 'default' },
+                'AUD': { rate: 1.55, lastUpdated: new Date().toISOString(), source: 'default' },
+                'JPY': { rate: 150.0, lastUpdated: new Date().toISOString(), source: 'default' },
+                'KRW': { rate: 1320.0, lastUpdated: new Date().toISOString(), source: 'default' },
+                'THB': { rate: 36.5, lastUpdated: new Date().toISOString(), source: 'default' },
+                'IDR': { rate: 15800.0, lastUpdated: new Date().toISOString(), source: 'default' },
+                'PHP': { rate: 56.0, lastUpdated: new Date().toISOString(), source: 'default' }
+            };
+            
+            window.currencyRates.current = defaultRates;
+            window.currencyRates.lastUpdated = new Date().toISOString();
+            
+            return defaultRates;
+        }
+
+        // Save exchange rates to localStorage
+        function saveExchangeRates() {
+            try {
+                localStorage.setItem('apac-currency-rates', JSON.stringify(window.currencyRates));
+            } catch (error) {
+                console.error('Failed to save exchange rates to localStorage:', error);
+            }
+        }
+
+        // Load exchange rates from localStorage
+        function loadExchangeRates() {
+            try {
+                const saved = localStorage.getItem('apac-currency-rates');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    window.currencyRates = { ...window.currencyRates, ...parsed };
+                    
+                    const lastUpdate = new Date(window.currencyRates.lastUpdated);
+                    const hoursOld = (new Date() - lastUpdate) / (1000 * 60 * 60);
+                    
+                    console.log(`📊 Loaded cached currency rates (${hoursOld.toFixed(1)} hours old)`);
+                    
+                    // If rates are older than 24 hours, fetch new ones
+                    if (hoursOld > 24) {
+                        console.log('🔄 Cached rates are stale, fetching fresh rates...');
+                        setTimeout(fetchCurrentExchangeRates, 1000);
+                    }
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('Failed to load exchange rates from localStorage:', error);
+            }
+            return false;
+        }
+
+        // Update demographic data with current exchange rates
+        function updateDemographicDataWithRates() {
+            if (!window.externalDemographicData || !window.currencyRates.current) return;
+            
+            Object.keys(window.externalDemographicData).forEach(countryKey => {
+                const countryData = window.externalDemographicData[countryKey];
+                if (countryData.country && countryData.country.currency) {
+                    const currency = countryData.country.currency;
+                    const rateData = window.currencyRates.current[currency];
+                    
+                    if (rateData) {
+                        // Update exchange rate in demographic data
+                        countryData.country.exchangeRate = rateData.rate;
+                        countryData.country.rateLastUpdated = rateData.lastUpdated;
+                        countryData.country.rateSource = rateData.source;
+                    }
+                }
+            });
+            
+            // Update the USD rate input field with current rate for the selected country
+            updateSetupPageExchangeRate();
+            
+            console.log('✅ Updated demographic data with current exchange rates');
+        }
+        
+        // Update the Setup & Segments page exchange rate input
+        function updateSetupPageExchangeRate() {
+            const currentCountry = window.currentCountry || 'india';
+            const demographicData = window.externalDemographicData || {};
+            const countryData = demographicData[currentCountry];
+            
+            if (countryData && countryData.country && countryData.country.exchangeRate) {
+                const usdRateInput = document.getElementById('usdRate');
+                if (usdRateInput) {
+                    const newRate = countryData.country.exchangeRate;
+                    usdRateInput.value = newRate;
+                    console.log(`💱 Updated Setup page exchange rate to ${newRate} for ${currentCountry.toUpperCase()}`);
+                    
+                    // Update the label to show correct currency
+                    const currencySymbol = countryData.country.currencySymbol || '₹';
+                    const usdRateLabel = usdRateInput.parentElement.querySelector('label');
+                    if (usdRateLabel) {
+                        usdRateLabel.textContent = `USD Exchange Rate (${currencySymbol}/USD)`;
+                    }
+                }
+            }
+        }
+
+        // ==================== CURRENCY IMPACT ANALYSIS ====================
+
+        // Calculate currency impact on projections
+        function calculateCurrencyImpact(projectionData, baseCurrency = 'USD') {
+            if (!window.currencyRates.historical.length || !window.currencyRates.current) {
+                return null;
+            }
+
+            const currentCountryData = window.externalDemographicData?.[window.currentCountry];
+            if (!currentCountryData?.country?.currency) return null;
+
+            const localCurrency = currentCountryData.country.currency;
+            const currentRate = window.currencyRates.current[localCurrency]?.rate;
+            
+            if (!currentRate) return null;
+
+            // Find rate from 7 days ago and 30 days ago for comparison
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            
+            const rateSevenDaysAgo = findHistoricalRate(localCurrency, sevenDaysAgo);
+            const rateThirtyDaysAgo = findHistoricalRate(localCurrency, thirtyDaysAgo);
+
+            // Calculate percentage changes
+            const weeklyChange = rateSevenDaysAgo ? ((currentRate - rateSevenDaysAgo) / rateSevenDaysAgo * 100) : 0;
+            const monthlyChange = rateThirtyDaysAgo ? ((currentRate - rateThirtyDaysAgo) / rateThirtyDaysAgo * 100) : 0;
+
+            // Calculate impact on total revenue (stronger local currency = lower USD equivalent)
+            const totalRevenue = projectionData.reduce((sum, item) => sum + item.revenue, 0);
+            const revenueImpactWeekly = rateSevenDaysAgo ? totalRevenue * (rateSevenDaysAgo - currentRate) / currentRate : 0;
+            const revenueImpactMonthly = rateThirtyDaysAgo ? totalRevenue * (rateThirtyDaysAgo - currentRate) / currentRate : 0;
+
+            return {
+                localCurrency,
+                currentRate,
+                rates: {
+                    current: currentRate,
+                    sevenDaysAgo: rateSevenDaysAgo,
+                    thirtyDaysAgo: rateThirtyDaysAgo
+                },
+                changes: {
+                    weekly: weeklyChange,
+                    monthly: monthlyChange
+                },
+                revenueImpact: {
+                    weekly: revenueImpactWeekly,
+                    monthly: revenueImpactMonthly
+                },
+                trend: {
+                    weekly: weeklyChange > 0.5 ? 'strengthening' : weeklyChange < -0.5 ? 'weakening' : 'stable',
+                    monthly: monthlyChange > 2 ? 'strengthening' : monthlyChange < -2 ? 'weakening' : 'stable'
+                }
+            };
+        }
+
+        // Find historical rate closest to a specific date
+        function findHistoricalRate(currency, targetDate) {
+            if (!window.currencyRates.historical.length) return null;
+            
+            let closestRate = null;
+            let closestDiff = Infinity;
+            
+            window.currencyRates.historical.forEach(entry => {
+                const entryDate = new Date(entry.timestamp);
+                const diff = Math.abs(entryDate - targetDate);
+                
+                if (diff < closestDiff && entry.rates[currency]) {
+                    closestDiff = diff;
+                    closestRate = entry.rates[currency].rate;
+                }
+            });
+            
+            return closestRate;
+        }
+
+        // Generate currency impact summary for display
+        function generateCurrencyImpactSummary(projectionData) {
+            const impact = calculateCurrencyImpact(projectionData);
+            if (!impact) return '';
+
+            const currencyInfo = APAC_CURRENCIES[impact.localCurrency];
+            const symbol = currencyInfo?.symbol || impact.localCurrency;
+            
+            // Format the summary
+            let summary = `
+                <div class="currency-impact-section" style="margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; border-left: 4px solid var(--primary-gradient-start);">
+                    <h4 style="margin: 0 0 15px 0; color: var(--text-color); display: flex; align-items: center; gap: 8px;">
+                        💹 Currency Impact Analysis - ${symbol} vs USD
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="impact-card" style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">Current Rate</div>
+                            <div style="font-size: 1.1em; font-weight: bold; color: var(--text-color);">${impact.currentRate.toFixed(4)} ${impact.localCurrency}/USD</div>
+                        </div>
+                        <div class="impact-card" style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">7-Day Change</div>
+                            <div style="font-size: 1.1em; font-weight: bold; color: ${impact.changes.weekly >= 0 ? '#059669' : '#dc2626'};">
+                                ${impact.changes.weekly >= 0 ? '↗️' : '↘️'} ${Math.abs(impact.changes.weekly).toFixed(2)}%
+                            </div>
+                        </div>
+                        <div class="impact-card" style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">30-Day Change</div>
+                            <div style="font-size: 1.1em; font-weight: bold; color: ${impact.changes.monthly >= 0 ? '#059669' : '#dc2626'};">
+                                ${impact.changes.monthly >= 0 ? '↗️' : '↘️'} ${Math.abs(impact.changes.monthly).toFixed(2)}%
+                            </div>
+                        </div>
+                        <div class="impact-card" style="background: white; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="font-size: 0.85em; color: #666; margin-bottom: 5px;">Revenue Impact (30d)</div>
+                            <div style="font-size: 1.1em; font-weight: bold; color: ${impact.revenueImpact.monthly >= 0 ? '#059669' : '#dc2626'};">
+                                ${formatCurrency(Math.abs(impact.revenueImpact.monthly))} ${impact.revenueImpact.monthly >= 0 ? 'gain' : 'loss'}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; font-size: 0.9em; color: #666;">
+                        💡 <strong>Trend:</strong> ${impact.localCurrency} is ${impact.trend.monthly} against USD over the past month.
+                        ${impact.trend.monthly === 'strengthening' ? 'This reduces USD-equivalent revenue but increases local purchasing power.' : 
+                          impact.trend.monthly === 'weakening' ? 'This increases USD-equivalent revenue but reduces local purchasing power.' : 
+                          'Currency is relatively stable with minimal impact on projections.'}
+                    </div>
+                </div>
+            `;
+            
+            return summary;
+        }
+
+        // Manual refresh of currency rates (for button/manual trigger)
+        window.refreshCurrencyRates = async function() {
+            showSuccessMessage('🔄 Refreshing currency rates...');
+            await fetchCurrentExchangeRates();
+            
+            // Update any displayed projections with new rates
+            if (window.projectionData && window.projectionData.length > 0) {
+                displayResults(); // Refresh the display
+            }
+            
+            // Update currency status display
+            updateCurrencyStatusDisplay();
+        };
+
+        // Update currency status display
+        function updateCurrencyStatusDisplay() {
+            const statusElement = document.getElementById('currencyStatusText');
+            if (!statusElement) return;
+            
+            if (!window.currencyRates || !window.currencyRates.lastUpdated) {
+                statusElement.innerHTML = '⚠️ Currency rates not loaded. Click "Update Rates" to fetch current rates.';
+                return;
+            }
+            
+            const lastUpdate = new Date(window.currencyRates.lastUpdated);
+            const hoursOld = (new Date() - lastUpdate) / (1000 * 60 * 60);
+            const rateCount = Object.keys(window.currencyRates.current || {}).length;
+            
+            let statusText = '';
+            let statusColor = '#059669'; // green
+            
+            if (hoursOld < 1) {
+                statusText = `✅ ${rateCount} currencies updated ${Math.round(hoursOld * 60)} minutes ago`;
+            } else if (hoursOld < 24) {
+                statusText = `✅ ${rateCount} currencies updated ${Math.round(hoursOld)} hours ago`;
+            } else {
+                statusText = `⚠️ ${rateCount} currencies updated ${Math.round(hoursOld/24)} days ago - consider refreshing`;
+                statusColor = '#f59e0b'; // amber
+            }
+            
+            if (hoursOld > 168) { // 7 days
+                statusColor = '#dc2626'; // red
+            }
+            
+            statusElement.innerHTML = statusText;
+            statusElement.style.color = statusColor;
+        }
+
         // Function to change country
         function changeCountry(countryCode) {
             if (!window.externalModelConfig || !window.externalModelConfig.countries) {
@@ -4476,6 +5644,9 @@
             
             // Update UI elements
             updateCountryUI();
+            
+            // Update currency labels
+            updateCurrencyLabels();
             
             // Load country-specific defaults
             loadCountryDefaults();
@@ -5383,10 +6554,33 @@
 
         function saveModelsToStorage() {
             try {
-                localStorage.setItem('revenueProjectionModels', JSON.stringify(window.savedModels));
+                if (!window.savedModels) {
+                    console.warn('No savedModels array found, initializing...');
+                    window.savedModels = [];
+                }
+                
+                const modelData = JSON.stringify(window.savedModels);
+                localStorage.setItem('revenueProjectionModels', modelData);
+                console.log(`✅ Successfully saved ${window.savedModels.length} models to localStorage`);
+                
+                // Verify the save worked
+                const savedData = localStorage.getItem('revenueProjectionModels');
+                if (!savedData) {
+                    throw new Error('Failed to verify model save - data not found in localStorage');
+                }
+                
+                return true;
             } catch (error) {
-                console.error('Error saving models:', error);
-                alert('Error saving model. Please check your browser storage.');
+                console.error('❌ Error saving models:', error);
+                
+                // Try to provide helpful error message
+                if (error.name === 'QuotaExceededError') {
+                    alert('Error saving model: Browser storage is full. Please delete some old models or clear browser data.');
+                } else {
+                    alert(`Error saving model: ${error.message}. Please check your browser storage.`);
+                }
+                
+                return false;
             }
         }
 
@@ -5505,14 +6699,22 @@
             
             // Save to storage and update UI
             try {
-                saveModelsToStorage();
-                renderModelsGrid();
-                closeSaveModelDialog();
-                
-                showSuccessMessage(`New model "${model.name}" v${model.version} created successfully!`);
+                const saveSuccess = saveModelsToStorage();
+                if (saveSuccess) {
+                    renderModelsGrid();
+                    closeSaveModelDialog();
+                    showSuccessMessage(`New model "${model.name}" v${model.version} created and saved successfully!`);
+                } else {
+                    // Remove the model from memory since save failed
+                    const modelIndex = window.savedModels.findIndex(m => m.id === model.id);
+                    if (modelIndex > -1) {
+                        window.savedModels.splice(modelIndex, 1);
+                    }
+                    throw new Error('Model save verification failed');
+                }
             } catch (error) {
                 console.error('Error saving model:', error);
-                alert('Error saving model: ' + error.message);
+                showErrorMessage(`Error saving model "${model.name}": ${error.message}`);
             } finally {
                 window.isSaving = false;
             }
@@ -5575,10 +6777,14 @@
             localStorage.setItem('currentModelName', existingModel.name);
             updateCurrentModelIndicator(`${existingModel.name} v${existingModel.version}`);
             
-            saveModelsToStorage();
-            renderModelsGrid();
-            closeSaveModelDialog();
-            showSuccessMessage(`Model "${existingModel.name}" updated to v${existingModel.version}!`);
+            const saveSuccess = saveModelsToStorage();
+            if (saveSuccess) {
+                renderModelsGrid();
+                closeSaveModelDialog();
+                showSuccessMessage(`Model "${existingModel.name}" updated to v${existingModel.version} and saved successfully!`);
+            } else {
+                showErrorMessage(`Failed to save model version update for "${existingModel.name}". Please try again.`);
+            }
             window.isSaving = false;
         }
 
@@ -5607,10 +6813,14 @@
             localStorage.setItem('currentModelName', existingModel.name);
             updateCurrentModelIndicator(`${existingModel.name} v${existingModel.version || 1}`);
             
-            saveModelsToStorage();
-            renderModelsGrid();
-            closeSaveModelDialog();
-            showSuccessMessage(`Model "${existingModel.name}" v${existingModel.version || 1} overwritten successfully!`);
+            const saveSuccess = saveModelsToStorage();
+            if (saveSuccess) {
+                renderModelsGrid();
+                closeSaveModelDialog();
+                showSuccessMessage(`Model "${existingModel.name}" v${existingModel.version || 1} overwritten and saved successfully!`);
+            } else {
+                showErrorMessage(`Failed to save model overwrite for "${existingModel.name}". Please try again.`);
+            }
             window.isSaving = false;
         }
 
@@ -5654,7 +6864,7 @@
                                 ${hasVersionHistory ? `<div style="font-size: 0.7em; color: #8b5cf6;">📚 ${model.versionHistory.length} previous version(s)</div>` : ''}
                             </div>
                             <div class="model-actions">
-                                <button class="model-action-btn load" onclick="loadModel('${model.id}')" title="Load Model">
+                                <button class="model-action-btn load" onclick="loadModelWithConfirmation('${model.id}')" title="Load Model">
                                     📂
                                 </button>
                                 ${hasVersionHistory ? `<button class="model-action-btn" style="background: #8b5cf6;" onclick="showVersionHistory('${model.id}')" title="Version History">📚</button>` : ''}
@@ -5720,6 +6930,31 @@
             }, 0);
         }
 
+        function loadModelWithConfirmation(modelId) {
+            const model = window.savedModels.find(m => m.id === modelId);
+            if (!model) {
+                alert('Model not found.');
+                return;
+            }
+
+            const modelCountry = model.data.country?.name || model.data.country?.code || 'Unknown';
+            const segmentCount = model.data.segments?.length || 0;
+            const version = model.version || 1;
+            const updatedDate = new Date(model.updatedAt).toLocaleDateString();
+            
+            const confirmMessage = `Load Model: "${model.name}"?\n\n` +
+                `📊 ${segmentCount} segment(s)\n` +
+                `🌏 Country: ${modelCountry}\n` +
+                `📅 Last updated: ${updatedDate}\n` +
+                `📝 Version: v${version}\n\n` +
+                `This will replace your current segments and settings.\n\n` +
+                `Continue loading this model?`;
+
+            if (confirm(confirmMessage)) {
+                loadModel(modelId);
+            }
+        }
+
         function loadModel(modelId, silent = false) {
             const model = window.savedModels.find(m => m.id === modelId);
             if (!model) {
@@ -5752,6 +6987,14 @@
             document.getElementById('costPercentage').value = model.data.baseParams.costPercentage;
             document.getElementById('operatingExpenses').value = model.data.baseParams.operatingExpenses || 0;
             document.getElementById('seasonality').value = model.data.baseParams.seasonality;
+            
+            // Load exchange rate if available
+            if (model.data.baseParams.usdRate) {
+                document.getElementById('usdRate').value = model.data.baseParams.usdRate;
+            } else {
+                // Update with current exchange rate for the model's country
+                updateSetupPageExchangeRate();
+            }
 
             // Load segments
             window.segments = [...model.data.segments];
@@ -6035,6 +7278,9 @@
             // Update dialog title
             document.getElementById('modelEditTitle').textContent = `✏️ Edit Model: ${model.name}`;
             
+            // Populate segments for editing
+            populateModelEditSegments(model);
+            
             // Show edit dialog
             document.getElementById('modelEditDialog').style.display = 'flex';
             document.getElementById('editModelName').focus();
@@ -6051,6 +7297,144 @@
             // Clear validation messages
             const validationDiv = document.getElementById('modelEditValidation');
             validationDiv.style.display = 'none';
+        }
+
+        // Segment management functions for model editing
+        function populateModelEditSegments(model) {
+            const segments = model.data.segments || [];
+            const segmentsList = document.getElementById('editModelSegments');
+            const segmentCount = document.getElementById('editSegmentCount');
+            
+            segmentCount.textContent = segments.length;
+            
+            if (segments.length === 0) {
+                segmentsList.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">No segments in this model. Click "Add Segment" to create one.</div>';
+                return;
+            }
+            
+            segmentsList.innerHTML = segments.map(segment => `
+                <div class="edit-segment-card" style="border: 1px solid #ddd; margin: 8px 0; padding: 12px; border-radius: 6px; background: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <input type="text" value="${segment.name}" onchange="updateSegmentProperty('${segment.id}', 'name', this.value)" 
+                               style="font-weight: bold; color: #667eea; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 14px; flex: 1; margin-right: 10px;">
+                        <button onclick="removeSegmentFromModel('${segment.id}')" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Remove</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                        <div>
+                            <label style="font-size: 0.8em; color: #666; display: block;">Price per Transaction (₹)</label>
+                            <input type="number" value="${segment.pricePerTransaction}" step="0.01" onchange="updateSegmentProperty('${segment.id}', 'pricePerTransaction', parseFloat(this.value))" 
+                                   style="width: 100%; border: 1px solid #ddd; padding: 4px 6px; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8em; color: #666; display: block;">Monthly Volume</label>
+                            <input type="number" value="${segment.monthlyVolume || 0}" onchange="updateSegmentProperty('${segment.id}', 'monthlyVolume', parseInt(this.value))" 
+                                   style="width: 100%; border: 1px solid #ddd; padding: 4px 6px; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8em; color: #666; display: block;">Volume Growth (%)</label>
+                            <input type="number" value="${segment.volumeGrowth || 0}" step="0.1" onchange="updateSegmentProperty('${segment.id}', 'volumeGrowth', parseFloat(this.value))" 
+                                   style="width: 100%; border: 1px solid #ddd; padding: 4px 6px; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8em; color: #666; display: block;">Category</label>
+                            <select onchange="updateSegmentProperty('${segment.id}', 'category', this.value)" 
+                                    style="width: 100%; border: 1px solid #ddd; padding: 4px 6px; border-radius: 4px;">
+                                <option value="authentication" ${segment.category === 'authentication' ? 'selected' : ''}>Authentication</option>
+                                <option value="pension" ${segment.category === 'pension' ? 'selected' : ''}>Pension</option>
+                                <option value="healthcare" ${segment.category === 'healthcare' ? 'selected' : ''}>Healthcare</option>
+                                <option value="fintech" ${segment.category === 'fintech' ? 'selected' : ''}>Fintech</option>
+                                <option value="ecommerce" ${segment.category === 'ecommerce' ? 'selected' : ''}>E-commerce</option>
+                                <option value="new" ${segment.category === 'new' ? 'selected' : ''}>New</option>
+                                <option value="uncategorized" ${segment.category === 'uncategorized' || !segment.category ? 'selected' : ''}>Uncategorized</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addSegmentToModel() {
+            // Generate a new segment ID
+            const newSegmentId = 'edit-segment-' + Date.now();
+            
+            // Create new segment with default values
+            const newSegment = {
+                id: newSegmentId,
+                name: 'New Segment',
+                type: 'sku',
+                pricePerTransaction: 1.00,
+                costPerTransaction: 0.30,
+                monthlyVolume: 100000,
+                volumeGrowth: 5,
+                category: 'new',
+                notes: 'Added during model editing'
+            };
+            
+            // Get current model being edited
+            const model = window.savedModels.find(m => m.id === window.currentEditingModelId);
+            if (!model) {
+                alert('Error: Cannot find model to edit');
+                return;
+            }
+            
+            // Add segment to model
+            if (!model.data.segments) {
+                model.data.segments = [];
+            }
+            model.data.segments.push(newSegment);
+            
+            // Refresh the segment display
+            populateModelEditSegments(model);
+            
+            // Show success message
+            showSuccessMessage('Segment added to model! Remember to click "Update Model" to save changes.');
+        }
+
+        function removeSegmentFromModel(segmentId) {
+            if (!confirm('Remove this segment from the model?')) {
+                return;
+            }
+            
+            // Get current model being edited
+            const model = window.savedModels.find(m => m.id === window.currentEditingModelId);
+            if (!model) {
+                alert('Error: Cannot find model to edit');
+                return;
+            }
+            
+            // Remove segment from model
+            model.data.segments = model.data.segments.filter(s => s.id !== segmentId);
+            
+            // Refresh the segment display
+            populateModelEditSegments(model);
+            
+            // Show success message
+            showSuccessMessage('Segment removed from model! Remember to click "Update Model" to save changes.');
+        }
+
+        function updateSegmentProperty(segmentId, property, value) {
+            // Get current model being edited
+            const model = window.savedModels.find(m => m.id === window.currentEditingModelId);
+            if (!model) {
+                alert('Error: Cannot find model to edit');
+                return;
+            }
+            
+            // Find and update the segment
+            const segment = model.data.segments.find(s => s.id === segmentId);
+            if (!segment) {
+                alert('Error: Cannot find segment to update');
+                return;
+            }
+            
+            // Update the property
+            segment[property] = value;
+            
+            // Update last modified timestamp
+            model.updatedAt = new Date().toISOString();
+            
+            // Optional: Show subtle feedback
+            console.log(`Updated ${property} for segment "${segment.name}" to: ${value}`);
         }
 
         function updateModel() {
@@ -6149,9 +7533,18 @@
             
             // Add to saved models and save
             window.savedModels.push(duplicateModel);
-            saveModelsToStorage();
-            renderModelsGrid();
-            showSuccessMessage(`Model duplicated as "${newName.trim()}"!`);
+            const saveSuccess = saveModelsToStorage();
+            if (saveSuccess) {
+                renderModelsGrid();
+                showSuccessMessage(`Model duplicated as "${newName.trim()}" and saved successfully!`);
+            } else {
+                // Remove the duplicate from memory since save failed
+                const duplicateIndex = window.savedModels.findIndex(m => m.id === duplicateModel.id);
+                if (duplicateIndex > -1) {
+                    window.savedModels.splice(duplicateIndex, 1);
+                }
+                showErrorMessage(`Failed to save duplicated model "${newName.trim()}". Please try again.`);
+            }
         }
         
         function duplicateModel() {
@@ -6191,11 +7584,20 @@
             };
             
             window.savedModels.push(duplicateModel);
-            localStorage.setItem('revenueProjectionModels', JSON.stringify(window.savedModels));
+            const saveSuccess = saveModelsToStorage();
             
-            closeModelEditDialog();
-            renderModelsGrid();
-            showSuccessMessage(`Model duplicated as "${duplicateName}"!`);
+            if (saveSuccess) {
+                closeModelEditDialog();
+                renderModelsGrid();
+                showSuccessMessage(`Model duplicated as "${duplicateName}" and saved successfully!`);
+            } else {
+                // Remove the duplicate from memory since save failed
+                const duplicateIndex = window.savedModels.findIndex(m => m.id === duplicateModel.id);
+                if (duplicateIndex > -1) {
+                    window.savedModels.splice(duplicateIndex, 1);
+                }
+                showErrorMessage(`Failed to save duplicated model "${duplicateName}". Please try again.`);
+            }
         }
 
         function validateModelEditData(name, projectionMonths, growthRate, costPercentage, operatingExpenses, usdRate) {
@@ -6462,16 +7864,18 @@
         // Auto-load default model on startup
         function autoLoadDefaultModel() {
             try {
-                const lastModelId = localStorage.getItem('lastLoadedModelId');
                 const savedModelsData = localStorage.getItem('revenueProjectionModels');
                 const existingSavedModels = savedModelsData ? JSON.parse(savedModelsData) : [];
                 
-                if (lastModelId && existingSavedModels.length > 0) {
-                    const model = existingSavedModels.find(m => m.id === lastModelId);
-                    if (model) {
-                        loadModel(lastModelId, true); // true = silent load
-                        return;
-                    }
+                if (existingSavedModels.length > 0) {
+                    // Load the most recently updated model automatically
+                    const mostRecentModel = existingSavedModels.sort((a, b) => 
+                        new Date(b.updatedAt) - new Date(a.updatedAt)
+                    )[0];
+                    
+                    console.log(`🔄 Auto-loading most recent model: "${mostRecentModel.name}" (updated: ${new Date(mostRecentModel.updatedAt).toLocaleDateString()})`);
+                    loadModel(mostRecentModel.id, true); // true = silent load
+                    return;
                 }
                 
                 // If no saved models exist, create and load the default pension model
@@ -6602,19 +8006,15 @@
                     
                     // If auto-save is less than 1 hour old and has segments
                     if (timeDiff < 3600000 && data.segments && data.segments.length > 0) {
-                        const shouldRestore = confirm(
-                            `Found auto-saved work from ${lastSave.toLocaleString()}.\n\n` +
-                            `Model: ${data.currentModelName}\n` +
-                            `Segments: ${data.segments.length}\n\n` +
-                            `Would you like to restore this work?`
-                        );
-                        
-                        if (shouldRestore) {
-                            window.segments = data.segments;
-                            window.renderSegments();
-                            showSuccessMessage(`Restored ${data.segments.length} segment(s) from auto-save.`);
-                            return true;
-                        }
+                        // Automatically restore without prompting (removed dialog)
+                        window.segments = data.segments;
+                        window.renderSegments();
+                        console.log(`Auto-restored ${data.segments.length} segment(s) from ${lastSave.toLocaleString()}`);
+                        // Show subtle notification instead of dialog
+                        setTimeout(() => {
+                            showSuccessMessage(`Restored ${data.segments.length} segment(s) from previous session.`);
+                        }, 1000);
+                        return true;
                     }
                 }
             } catch (error) {
@@ -7297,7 +8697,7 @@
                         <td>${(segment.urbanization || 0).toFixed(1)}%</td>
                         <td>${(segment.authGrowthRate || 0).toFixed(1)}%</td>
                         <td>${Math.round(monthlyVolume).toLocaleString()}</td>
-                        <td>₹${Math.round(monthlyRevenue).toLocaleString()}</td>
+                        <td>${formatCurrency(monthlyRevenue)}</td>
                     </tr>
                 `;
             }).join('');

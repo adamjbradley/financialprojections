@@ -1,6 +1,6 @@
 {
   "name": "apac-revenue-projections",
-  "version": "2.2.0",
+  "version": "2.3.0-analysis-refresh",
   "description": "APAC Revenue Projections System - Financial modeling tool for digital authentication services",
   "type": "module",
   "scripts": {
