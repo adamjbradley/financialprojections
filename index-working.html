@@ -953,6 +953,65 @@
                     // Show demographic overview by default
                     window.showDemographicOverview();
                 }
+                
+                // Special handling for projections tab - auto-run if not yet calculated
+                if (tabName === 'projections') {
+                    // Check if projections have been run
+                    const resultsSection = document.getElementById('results');
+                    const hasProjections = window.projectionData && window.projectionData.length > 0;
+                    
+                    // Check if segments have changed since last projection
+                    let segmentsChanged = false;
+                    if (hasProjections && window.lastProjectionSegmentCount !== undefined) {
+                        segmentsChanged = window.segments.length !== window.lastProjectionSegmentCount;
+                    }
+                    
+                    if (!hasProjections || resultsSection.style.display === 'none' || segmentsChanged) {
+                        // Check if we have segments to calculate projections
+                        if (window.segments && window.segments.length > 0) {
+                            if (!hasProjections) {
+                                console.log('📊 Auto-running projections as none exist yet...');
+                                showSuccessMessage('📊 Calculating projections...', 1500);
+                            } else if (segmentsChanged) {
+                                console.log('📊 Segments have changed, recalculating projections...');
+                                showSuccessMessage('📊 Recalculating projections with updated segments...', 2000);
+                            } else {
+                                console.log('📊 Displaying existing projections...');
+                                resultsSection.style.display = 'block';
+                                return;
+                            }
+                            
+                            // Run projections after a brief delay to allow tab to render
+                            setTimeout(() => {
+                                // Don't switch tabs since we're already on projections
+                                const originalSwitchTab = window.switchTab;
+                                window.switchTab = function(tab) {
+                                    if (tab !== 'projections') {
+                                        originalSwitchTab(tab);
+                                    }
+                                };
+                                
+                                calculateProjections();
+                                
+                                // Restore original function
+                                window.switchTab = originalSwitchTab;
+                                
+                                // Track segment count for change detection
+                                window.lastProjectionSegmentCount = window.segments.length;
+                            }, 100);
+                        } else {
+                            // No segments available, show helpful message
+                            resultsSection.style.display = 'block';
+                            resultsSection.innerHTML = `
+                                <div style="text-align: center; padding: 40px; background: #f9fafb; border-radius: 12px; margin: 20px;">
+                                    <h3 style="color: #667eea; margin-bottom: 20px;">No Projections Available</h3>
+                                    <p style="color: #666; margin-bottom: 20px;">Please add segments in the Setup tab before calculating projections.</p>
+                                    <button class="btn-primary" onclick="switchTab('setup')">Go to Setup & Add Segments</button>
+                                </div>
+                            `;
+                        }
+                    }
+                }
             }
         };
 
@@ -1065,6 +1124,13 @@
                 // Check if we need to refresh (done automatically in loadExchangeRates)
                 console.log('✅ Currency rate system initialized with cached data');
             }
+            
+            // After loading/fetching rates, update the Setup page exchange rate
+            // This ensures the correct rate is shown on initial load
+            setTimeout(() => {
+                updateSetupPageExchangeRate(true); // Silent mode for initial load
+                console.log('💱 Updated Setup page exchange rate on initialization');
+            }, 500);
         }
         
         // Global variables
@@ -1235,7 +1301,7 @@
             }
         }
 
-        function showSuccessMessage(message) {
+        function showSuccessMessage(message, duration = 3000) {
             // Create a temporary success message
             const successDiv = document.createElement('div');
             successDiv.style.cssText = `
@@ -1249,13 +1315,16 @@
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
                 z-index: 1001;
                 font-weight: 500;
+                max-width: 400px;
+                line-height: 1.4;
             `;
-            successDiv.textContent = message;
+            // Support HTML content for richer messages
+            successDiv.innerHTML = message;
             document.body.appendChild(successDiv);
             
             setTimeout(() => {
                 document.body.removeChild(successDiv);
-            }, 3000);
+            }, duration);
         }
 
         function showUndoToast(message, undoCallback) {
@@ -3741,6 +3810,9 @@
             switchTab('projections');
             displayResults();
             
+            // Track segment count for change detection
+            window.lastProjectionSegmentCount = window.segments.length;
+            
             // Refresh analysis tab data for the latest projections
             refreshAnalysisData();
         }
@@ -5431,20 +5503,66 @@
         }
         
         // Update the Setup & Segments page exchange rate input
-        function updateSetupPageExchangeRate() {
+        function updateSetupPageExchangeRate(silent = false) {
             const currentCountry = window.currentCountry || 'india';
+            let newRate = null;
+            let currencySymbol = '₹';
+            let currencyCode = 'INR';
+            let countryName = 'India';
+            
+            // Try to get rate from demographic data first
             const demographicData = window.externalDemographicData || {};
             const countryData = demographicData[currentCountry];
             
             if (countryData && countryData.country && countryData.country.exchangeRate) {
+                newRate = countryData.country.exchangeRate;
+                currencySymbol = countryData.country.currencySymbol || '₹';
+                currencyCode = countryData.country.currency || 'INR';
+                countryName = countryData.country.name || currentCountry;
+            } else if (window.currentCountryConfig && window.currentCountryConfig.exchangeRate) {
+                // Fall back to current country config
+                newRate = window.currentCountryConfig.exchangeRate;
+                currencySymbol = window.currentCountryConfig.currencySymbol || '₹';
+                currencyCode = window.currentCountryConfig.currency || 'INR';
+                countryName = window.currentCountryConfig.name || currentCountry;
+            }
+            
+            if (newRate) {
                 const usdRateInput = document.getElementById('usdRate');
                 if (usdRateInput) {
-                    const newRate = countryData.country.exchangeRate;
-                    usdRateInput.value = newRate;
-                    console.log(`💱 Updated Setup page exchange rate to ${newRate} for ${currentCountry.toUpperCase()}`);
+                    const oldRate = parseFloat(usdRateInput.value);
+                    
+                    // Only update if the rate actually changed
+                    if (Math.abs(oldRate - newRate) > 0.01) {
+                        usdRateInput.value = newRate;
+                        
+                        // Highlight the field briefly to show it updated
+                        usdRateInput.style.transition = 'background-color 0.3s';
+                        usdRateInput.style.backgroundColor = '#e0f2fe';
+                        setTimeout(() => {
+                            usdRateInput.style.backgroundColor = '';
+                        }, 1500);
+                        
+                        console.log(`💱 Updated Setup page exchange rate from ${oldRate} to ${newRate} for ${currentCountry.toUpperCase()}`);
+                        
+                        // Show toast notification unless silent mode
+                        if (!silent) {
+                            const percentChange = ((newRate - oldRate) / oldRate * 100).toFixed(1);
+                            const direction = newRate > oldRate ? '↑' : '↓';
+                            const changeColor = newRate > oldRate ? '#ef4444' : '#22c55e';
+                            
+                            showSuccessMessage(
+                                `💱 Exchange Rate Updated for ${countryName}<br>` +
+                                `<span style="font-size: 0.9em;">` +
+                                `${currencySymbol}${oldRate.toFixed(2)} → ${currencySymbol}${newRate.toFixed(2)} per USD ` +
+                                `<span style="color: ${changeColor};">(${direction} ${Math.abs(percentChange)}%)</span>` +
+                                `</span>`,
+                                4000
+                            );
+                        }
+                    }
                     
                     // Update the label to show correct currency
-                    const currencySymbol = countryData.country.currencySymbol || '₹';
                     const usdRateLabel = usdRateInput.parentElement.querySelector('label');
                     if (usdRateLabel) {
                         usdRateLabel.textContent = `USD Exchange Rate (${currencySymbol}/USD)`;
@@ -5583,6 +5701,9 @@
             showSuccessMessage('🔄 Refreshing currency rates...');
             await fetchCurrentExchangeRates();
             
+            // Update the exchange rate on the Setup page (with notification)
+            updateSetupPageExchangeRate(false); // Show toast notification
+            
             // Update any displayed projections with new rates
             if (window.projectionData && window.projectionData.length > 0) {
                 displayResults(); // Refresh the display
@@ -5628,30 +5749,80 @@
 
         // Function to change country
         function changeCountry(countryCode) {
-            if (!window.externalModelConfig || !window.externalModelConfig.countries) {
-                showErrorMessage('Country data not loaded. Please load the external model configuration first.');
-                return;
+            // First, try to use external model config if available
+            if (window.externalModelConfig && window.externalModelConfig.countries) {
+                const countryData = window.externalModelConfig.countries[countryCode];
+                if (countryData) {
+                    window.currentCountry = countryCode;
+                    window.currentCountryConfig = countryData;
+                    
+                    // Update UI elements
+                    updateCountryUI();
+                    
+                    // Update currency labels
+                    updateCurrencyLabels();
+                    
+                    // Load country-specific defaults
+                    loadCountryDefaults();
+                    
+                    showSuccessMessage(`Switched to ${countryData.name}!`);
+                    return;
+                }
             }
-
-            const countryData = window.externalModelConfig.countries[countryCode];
-            if (!countryData) {
-                showErrorMessage(`Country "${countryCode}" not found in configuration.`);
-                return;
-            }
-
-            window.currentCountry = countryCode;
-            window.currentCountryConfig = countryData;
             
-            // Update UI elements
-            updateCountryUI();
+            // Fallback to demographic data if external config not available
+            window.currentCountry = countryCode;
+            
+            // Try to get exchange rate from demographic data
+            if (window.externalDemographicData && window.externalDemographicData[countryCode]) {
+                const demographicCountryData = window.externalDemographicData[countryCode];
+                if (demographicCountryData.country) {
+                    // Create a minimal country config from demographic data
+                    window.currentCountryConfig = {
+                        name: demographicCountryData.country.name || countryCode,
+                        currencySymbol: demographicCountryData.country.currencySymbol || '₹',
+                        currency: demographicCountryData.country.currency || 'INR',
+                        exchangeRate: demographicCountryData.country.exchangeRate || 83.5
+                    };
+                    
+                    // Update exchange rate on Setup page
+                    updateSetupPageExchangeRate();
+                    
+                    // Update currency labels
+                    updateCurrencyLabels();
+                    
+                    showSuccessMessage(`Switched to ${window.currentCountryConfig.name}!`);
+                    return;
+                }
+            }
+            
+            // Final fallback - use default values
+            const defaultRates = {
+                'india': { name: 'India', symbol: '₹', rate: 83.5, currency: 'INR' },
+                'singapore': { name: 'Singapore', symbol: 'S$', rate: 1.35, currency: 'SGD' },
+                'australia': { name: 'Australia', symbol: 'A$', rate: 1.55, currency: 'AUD' },
+                'japan': { name: 'Japan', symbol: '¥', rate: 149.5, currency: 'JPY' },
+                'south_korea': { name: 'South Korea', symbol: '₩', rate: 1335, currency: 'KRW' },
+                'thailand': { name: 'Thailand', symbol: '฿', rate: 35.5, currency: 'THB' },
+                'indonesia': { name: 'Indonesia', symbol: 'Rp', rate: 15650, currency: 'IDR' },
+                'philippines': { name: 'Philippines', symbol: '₱', rate: 56.5, currency: 'PHP' }
+            };
+            
+            const fallbackData = defaultRates[countryCode] || defaultRates['india'];
+            window.currentCountryConfig = {
+                name: fallbackData.name,
+                currencySymbol: fallbackData.symbol,
+                currency: fallbackData.currency,
+                exchangeRate: fallbackData.rate
+            };
+            
+            // Update exchange rate on Setup page
+            updateSetupPageExchangeRate();
             
             // Update currency labels
             updateCurrencyLabels();
             
-            // Load country-specific defaults
-            loadCountryDefaults();
-            
-            showSuccessMessage(`Switched to ${countryData.name}!`);
+            showSuccessMessage(`Switched to ${window.currentCountryConfig.name}!`);
         }
 
         // Function to update UI with country-specific information
@@ -8272,6 +8443,8 @@
         function updateDemographicInsightsOnCountryChange() {
             // Add small delay to ensure data is loaded
             setTimeout(refreshDemographicInsights, 500);
+            // Also update exchange rate when demographic data changes
+            setTimeout(updateSetupPageExchangeRate, 600);
         }
         
         // Hook into existing country change function
@@ -8291,6 +8464,12 @@
             if (!window.externalDemographicData && !window.regionalData) {
                 initializeDemographicData();
             }
+            
+            // Ensure exchange rate is updated after demographic data loads on startup
+            setTimeout(() => {
+                updateSetupPageExchangeRate(true); // Silent mode for initial load
+                console.log('💱 Exchange rate updated after initial demographic data load');
+            }, 1500);
         });
         
         function initializeDemographicData() {
@@ -8788,6 +8967,11 @@
                 
                 // Update demographic insights
                 updateDemographicInsightsOnCountryChange();
+                
+                // Ensure exchange rate is updated after demographic data loads
+                setTimeout(() => {
+                    updateSetupPageExchangeRate();
+                }, 200);
             };
         }
 
