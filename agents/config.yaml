@@ -1,0 +1,46 @@
+research_areas:
+  - use-cases
+  - tam-sam-som
+  - growth-rates
+  - competitive-landscape
+  - regulatory-environment
+  - technology-adoption
+  - market-maturity
+
+data_sources:
+  - web-search
+  - world-bank
+  - central-banks
+  - government-reports
+  - industry-analysis
+
+update_schedule:
+  frequency: daily
+  time: "02:00"
+  timezone: "UTC"
+
+countries:
+  - india
+  - singapore
+  - australia
+  - japan
+  - south_korea
+  - thailand
+  - indonesia
+  - philippines
+
+research_depth:
+  quick: 5      # minutes
+  standard: 15  # minutes (default)
+  deep: 45      # minutes
+
+output:
+  directory: "../market-intelligence"
+  format: "json"
+  include_history: true
+  history_directory: "../market-intelligence/research_history"
+
+quality:
+  min_sources: 5
+  min_data_points: 50
+  min_confidence: 0.7

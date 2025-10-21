@@ -149,20 +149,20 @@
   },
   "suites": [
     {
-      "title": "apac-app.spec.js",
-      "file": "apac-app.spec.js",
+      "title": "currency-exchange-rate.spec.js",
+      "file": "currency-exchange-rate.spec.js",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "APAC Revenue Projections System",
-          "file": "apac-app.spec.js",
-          "line": 8,
+          "title": "Currency Exchange Rate Updates",
+          "file": "currency-exchange-rate.spec.js",
+          "line": 9,
           "column": 6,
           "specs": [
             {
-              "title": "should load application successfully",
+              "title": "should display correct exchange rate on initial page load (India)",
               "ok": true,
               "tags": [],
               "tests": [
@@ -177,22 +177,63 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1907,
+                      "duration": 4240,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "Testing on: chromium\n"
+                          "text": "✅ Initial exchange rate value: 83.50\n"
                         },
                         {
-                          "text": "✅ Main heading: \"🌏 APAC Revenue Projection Tool\"\n"
+                          "text": "✅ Exchange rate label: USD Exchange Rate (₹/USD)\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-30T03:47:24.110Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "59841d7960b6b8c7ec70-5f3e23559622a027e97a",
+              "file": "currency-exchange-rate.spec.js",
+              "line": 16,
+              "column": 5
+            },
+            {
+              "title": "should update exchange rate value when switching to Singapore",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "edge",
+                  "projectName": "edge",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4570,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "📊 Initial value (India): 83.50\n"
                         },
                         {
-                          "text": "✅ Found 158 buttons, 55 inputs, 15 selects\n"
+                          "text": "📊 New value (Singapore): 1.35\n"
+                        },
+                        {
+                          "text": "✅ Exchange rate value updated successfully\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-26T06:12:58.896Z",
+                      "startTime": "2025-09-30T03:47:30.328Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -200,13 +241,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "b866f024b34731af1a33-a2e422324ef6352b170f",
-              "file": "apac-app.spec.js",
-              "line": 18,
-              "column": 3
+              "id": "59841d7960b6b8c7ec70-0a0f8c6532c72b234ea4",
+              "file": "currency-exchange-rate.spec.js",
+              "line": 36,
+              "column": 5
             },
             {
-              "title": "should handle basic interactions",
+              "title": "should update exchange rate label when switching to Singapore",
               "ok": true,
               "tags": [],
               "tests": [
@@ -221,16 +262,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2395,
+                      "duration": 4307,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "✅ Button interaction successful\n"
+                          "text": "🏷️  Initial label (India): USD Exchange Rate (₹/USD)\n"
+                        },
+                        {
+                          "text": "🏷️  New label (Singapore): USD Exchange Rate (S$/USD)\n"
+                        },
+                        {
+                          "text": "✅ Exchange rate label updated successfully\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-26T06:13:01.584Z",
+                      "startTime": "2025-09-30T03:47:34.905Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -238,13 +285,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "b866f024b34731af1a33-49948d374e7eed14c72a",
-              "file": "apac-app.spec.js",
-              "line": 57,
-              "column": 3
+              "id": "59841d7960b6b8c7ec70-dd9634d62fe1ccb47295",
+              "file": "currency-exchange-rate.spec.js",
+              "line": 63,
+              "column": 5
             },
             {
-              "title": "should handle form inputs",
+              "title": "should update exchange rate for Australia",
               "ok": true,
               "tags": [],
               "tests": [
@@ -259,16 +306,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1252,
+                      "duration": 4426,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "✅ Form input successful\n"
+                          "text": "🦘 Australia exchange rate: 1.55\n"
+                        },
+                        {
+                          "text": "🦘 Australia label: USD Exchange Rate (A$/USD)\n"
+                        },
+                        {
+                          "text": "✅ Australia exchange rate correct\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-26T06:13:03.985Z",
+                      "startTime": "2025-09-30T03:47:39.219Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -276,13 +329,13 @@
                   "status": "expected"
                 }
               ],
-              "id": "b866f024b34731af1a33-0947fe04cb24c0870ae0",
-              "file": "apac-app.spec.js",
-              "line": 76,
-              "column": 3
+              "id": "59841d7960b6b8c7ec70-e7c7c5db25de7a7ceec8",
+              "file": "currency-exchange-rate.spec.js",
+              "line": 89,
+              "column": 5
             },
             {
-              "title": "should load within acceptable time",
+              "title": "should update exchange rate for Japan (high value currency)",
               "ok": true,
               "tags": [],
               "tests": [
@@ -297,16 +350,22 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1950,
+                      "duration": 4321,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "⚡ Page load time: 718ms\n"
+                          "text": "🗾 Japan exchange rate: 149.5\n"
+                        },
+                        {
+                          "text": "🗾 Japan label: USD Exchange Rate (¥/USD)\n"
+                        },
+                        {
+                          "text": "✅ Japan exchange rate correct\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-09-26T06:13:05.243Z",
+                      "startTime": "2025-09-30T03:47:43.650Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -314,48 +373,110 @@
                   "status": "expected"
                 }
               ],
-              "id": "b866f024b34731af1a33-13d6515234cc19a6a3ca",
-              "file": "apac-app.spec.js",
-              "line": 103,
-              "column": 3
-            },
-            {
-              "title": "should be responsive on mobile viewports",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "edge",
-                  "projectName": "edge",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 1304,
-                      "errors": [],
-                      "stdout": [
-                        {
-                          "text": "✅ Mobile responsive test passed\n"
-                        }
-                      ],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2025-09-26T06:13:07.200Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "b866f024b34731af1a33-8f159abedc33853decb1",
-              "file": "apac-app.spec.js",
+              "id": "59841d7960b6b8c7ec70-53eb0a9c655b81278137",
+              "file": "currency-exchange-rate.spec.js",
               "line": 115,
-              "column": 3
+              "column": 5
+            },
+            {
+              "title": "should show toast notification when switching countries",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "edge",
+                  "projectName": "edge",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3318,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "🍞 Toast notification visible: \u001b[33mtrue\u001b[39m\n"
+                        },
+                        {
+                          "text": "✅ Toast notification shown\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-30T03:47:47.977Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "59841d7960b6b8c7ec70-3539c3dbc68cdc01f65d",
+              "file": "currency-exchange-rate.spec.js",
+              "line": 141,
+              "column": 5
+            },
+            {
+              "title": "should test all APAC countries exchange rate updates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "edge",
+                  "projectName": "edge",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 14111,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "singapore: rate=1.35, label=\"USD Exchange Rate (S$/USD)\"\n"
+                        },
+                        {
+                          "text": "australia: rate=1.55, label=\"USD Exchange Rate (A$/USD)\"\n"
+                        },
+                        {
+                          "text": "japan: rate=149.5, label=\"USD Exchange Rate (¥/USD)\"\n"
+                        },
+                        {
+                          "text": "south_korea: rate=1335, label=\"USD Exchange Rate (₩/USD)\"\n"
+                        },
+                        {
+                          "text": "thailand: rate=35.5, label=\"USD Exchange Rate (฿/USD)\"\n"
+                        },
+                        {
+                          "text": "indonesia: rate=15650, label=\"USD Exchange Rate (Rp/USD)\"\n"
+                        },
+                        {
+                          "text": "philippines: rate=56.5, label=\"USD Exchange Rate (₱/USD)\"\n"
+                        },
+                        {
+                          "text": "✅ All APAC countries tested successfully\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-09-30T03:47:51.301Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "59841d7960b6b8c7ec70-5b223d34cd8744a7f6b5",
+              "file": "currency-exchange-rate.spec.js",
+              "line": 158,
+              "column": 5
             }
           ]
         }
@@ -364,9 +485,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-09-26T06:12:57.520Z",
-    "duration": 15522,
-    "expected": 5,
+    "startTime": "2025-09-30T03:47:23.698Z",
+    "duration": 54789.227999999996,
+    "expected": 7,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

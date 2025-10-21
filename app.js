@@ -3561,7 +3561,7 @@
                     ${tabularHTML}
                 </div>
                 <div class="buttons" style="margin-top: 30px;">
-                    <button class="btn-success" onclick="exportToExcel()">Export to Excel</button>
+                    <button class="btn-success" onclick="exportProjectionsToExcel()">Export to Excel</button>
                 </div>
             `;
             
@@ -3570,7 +3570,7 @@
             document.getElementById('scenarioSection').classList.add('fade-in');
         }
 
-        function exportToExcel() {
+        function exportProjectionsToExcel() {
             if (window.projectionData.length === 0) {
                 alert('No projection data to export. Please calculate projections first.');
                 return;
@@ -3579,7 +3579,7 @@
             // Check if XLSX library is available
             if (typeof XLSX === 'undefined') {
                 alert('Excel export requires the XLSX library. This feature exports data as CSV instead.');
-                exportToCSV();
+                exportProjectionsToCSV();
                 return;
             }
 
@@ -3685,7 +3685,7 @@
         }
 
         // Fallback CSV export function
-        function exportToCSV() {
+        function exportProjectionsToCSV() {
             const usdRate = parseFloat(document.getElementById('usdRate').value) || 83.50;
             
             // Create CSV content
