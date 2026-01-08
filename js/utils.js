@@ -12,6 +12,12 @@
  * @version 1.0.0
  */
 
+// Wrap entire module in try-catch to prevent breaking the page on errors
+(function() {
+'use strict';
+
+try {
+
 // ============================================================================
 // ENCRYPTION UTILITIES
 // ============================================================================
@@ -844,3 +850,19 @@ window.showWarningMessage = (msg, duration) => Toast.warning(msg, duration);
 window.showUndoToast = (msg, callback) => Toast.undo(msg, callback);
 
 console.log('📦 APAC Utils module loaded - v1.0.0');
+
+} catch (error) {
+    // If utils module fails, provide minimal fallbacks so page still works
+    console.error('APAC Utils module failed to load:', error);
+
+    // Minimal fallback implementations
+    window.APACUtils = window.APACUtils || {};
+
+    // Fallback toast functions that use alert
+    window.showSuccessMessage = window.showSuccessMessage || function(msg) { console.log('Success:', msg); };
+    window.showErrorMessage = window.showErrorMessage || function(msg) { alert('Error: ' + msg); };
+    window.showWarningMessage = window.showWarningMessage || function(msg) { console.warn('Warning:', msg); };
+    window.showUndoToast = window.showUndoToast || function(msg) { console.log(msg); };
+}
+
+})(); // End of IIFE
