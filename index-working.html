@@ -12,8 +12,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Revenue Projection Tool</title>
+    <!-- CDN Libraries with Fallback Support -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // XLSX fallback
+        if (typeof XLSX === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+        }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Chart.js fallback
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"><\/script>');
+        }
+    </script>
+    <!-- Consolidated Utilities Module -->
+    <script src="js/utils.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -6789,12 +6804,27 @@
 
         function loadSavedModels() {
             try {
+                // Try SecureStorage first (handles both encrypted and plain data)
+                if (window.APACUtils && window.APACUtils.SecureStorage) {
+                    const models = window.APACUtils.SecureStorage.get('revenueProjectionModels', null);
+                    if (models !== null) {
+                        window.savedModels = models;
+                        console.log(`🔒 Loaded ${window.savedModels.length} models from secure storage`);
+                        renderModelsGrid();
+                        return;
+                    }
+                }
+
+                // Fallback to standard localStorage
                 const models = localStorage.getItem('revenueProjectionModels');
                 window.savedModels = models ? JSON.parse(models) : [];
                 renderModelsGrid();
             } catch (error) {
                 console.error('Error loading saved models:', error);
                 window.savedModels = [];
+                if (window.APACUtils && window.APACUtils.Toast) {
+                    window.APACUtils.Toast.warning('Could not load saved models. Starting fresh.');
+                }
             }
         }
 
@@ -6804,28 +6834,42 @@
                     console.warn('No savedModels array found, initializing...');
                     window.savedModels = [];
                 }
-                
+
+                // Use SecureStorage for encrypted model storage (if available)
+                if (window.APACUtils && window.APACUtils.SecureStorage) {
+                    const success = window.APACUtils.SecureStorage.set('revenueProjectionModels', window.savedModels, true);
+                    if (success) {
+                        console.log(`🔒 Successfully saved ${window.savedModels.length} models with encryption`);
+                        return true;
+                    }
+                }
+
+                // Fallback to standard localStorage
                 const modelData = JSON.stringify(window.savedModels);
                 localStorage.setItem('revenueProjectionModels', modelData);
                 console.log(`✅ Successfully saved ${window.savedModels.length} models to localStorage`);
-                
+
                 // Verify the save worked
                 const savedData = localStorage.getItem('revenueProjectionModels');
                 if (!savedData) {
                     throw new Error('Failed to verify model save - data not found in localStorage');
                 }
-                
+
                 return true;
             } catch (error) {
                 console.error('❌ Error saving models:', error);
-                
-                // Try to provide helpful error message
-                if (error.name === 'QuotaExceededError') {
-                    alert('Error saving model: Browser storage is full. Please delete some old models or clear browser data.');
+
+                // Use toast notification if available, otherwise alert
+                const errorMsg = error.name === 'QuotaExceededError'
+                    ? 'Browser storage is full. Please delete some old models or clear browser data.'
+                    : `${error.message}. Please check your browser storage.`;
+
+                if (window.APACUtils && window.APACUtils.Toast) {
+                    window.APACUtils.Toast.error(`Error saving model: ${errorMsg}`);
                 } else {
-                    alert(`Error saving model: ${error.message}. Please check your browser storage.`);
+                    alert(`Error saving model: ${errorMsg}`);
                 }
-                
+
                 return false;
             }
         }
